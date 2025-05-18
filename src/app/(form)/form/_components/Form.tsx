@@ -89,7 +89,10 @@ export default function Form({
               input.checked = input.value === value;
             }
           });
-        } else if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        } else if (
+          el instanceof HTMLInputElement ||
+          el instanceof HTMLTextAreaElement
+        ) {
           el.value = value;
         }
       });
