@@ -33,6 +33,7 @@ export default function Form({
 }: FormProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const storageKey = `form-draft-${b}`;
 
   useEffect(() => {
     const form = document.querySelector("#formApp");
@@ -70,6 +71,39 @@ export default function Form({
 
     init();
   }, []);
+  useEffect(() => {
+    const formEl = document.querySelector<HTMLFormElement>("#formApp");
+    if (!formEl) return;
+    const raw = sessionStorage.getItem(storageKey);
+    if (raw) {
+      const data = JSON.parse(raw) as Record<string, any>;
+      Object.entries(data).forEach(([name, value]) => {
+        const el = formEl.elements.namedItem(name);
+        if (!el) return;
+        if (el instanceof RadioNodeList) {
+          // checkbox / radio group
+          Array.from(el).forEach((input: any) => {
+            if (Array.isArray(value)) {
+              input.checked = value.includes(input.value);
+            } else {
+              input.checked = input.value === value;
+            }
+          });
+        } else if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+          el.value = value;
+        }
+      });
+    }
+
+    // 2) Save on every input
+    const handleInput = () => {
+      sessionStorage.setItem(storageKey, JSON.stringify(formToJSON(formEl)));
+    };
+    formEl.addEventListener("input", handleInput);
+    return () => {
+      formEl.removeEventListener("input", handleInput);
+    };
+  }, [b]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
