@@ -7,7 +7,7 @@ import {
   createAspiration,
   findAllAspirations,
 } from "@/utils/database/aspiration.query";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 
 export type aspirationType = "ORGANISASI" | "SEKOLAH" | "EVENT";
 
@@ -17,7 +17,7 @@ export async function submitAspiration(
   type: aspirationType,
   recipent: string,
 ) {
-  const session = await nextGetServerSession();
+  const session = await auth();
   if (!session?.user) return { success: false, message: "Unauthorized" };
 
   const judul_aspirasi = (data.get("judulAspirasi") as string) || "";

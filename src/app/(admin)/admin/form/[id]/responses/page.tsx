@@ -48,10 +48,11 @@ function StatsCard({
 export default async function FormResponses({
   params,
 }: Readonly<{
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }>) {
+  const { id } = await params;
   const form = (await findFormWithSubmission({
-    id: params.id,
+    id,
   })) as FormWithSubmissions;
 
   if (!form) return notFound();
@@ -127,7 +128,7 @@ export default async function FormResponses({
           />
         </div>
       </div>
-      <ResponsesTable data={form.submissions} formId={params.id} />
+      <ResponsesTable data={form.submissions} formId={id} />
       <div className="w-full mb-8">
         <H2 className="font-semibold mb-5">Ringkasan</H2>
         <div className="flex flex-col gap-4">

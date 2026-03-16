@@ -10,13 +10,6 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverActions: {
-      allowedForwardedHosts: ["go.moklet.org"],
-      allowedOrigins: ["go.moklet.org"],
-      bodySizeLimit: "10mb",
-    },
-  },
 };
 
 export default nextConfig;

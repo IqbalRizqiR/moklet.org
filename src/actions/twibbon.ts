@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import {
   createTwibbon,
   deleteTwibbon,
@@ -12,7 +12,7 @@ import { uploadImageCloudinary } from ".";
 
 export const upsertTwibbon = async (id: string | null, data: FormData) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
 
     if (!session || !session.user)
       return { success: false, message: "Unauthorize" };
@@ -74,7 +74,7 @@ export const upsertTwibbon = async (id: string | null, data: FormData) => {
 
 export const deleteTwibbonById = async (id: string) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
     const del = await deleteTwibbon(
       id,
       session?.user?.role == "SuperAdmin" ? undefined : session?.user?.id,

@@ -13,14 +13,15 @@ import { getAspirasiStats } from "@/actions/statsAspirasi";
 export default async function StatisticsPage({
   searchParams,
 }: Readonly<{
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }>) {
-  const dateRange = searchParams.dateRange as string | undefined;
-  const fromDate = searchParams.fromDate as string | undefined;
-  const toDate = searchParams.toDate as string | undefined;
-  const category = searchParams.category as string | undefined;
-  const organization = searchParams.organization?.toString().toUpperCase();
-  const schoolUnit = searchParams.schoolUnit?.toString().toUpperCase();
+  const resolvedSearchParams = await searchParams;
+  const dateRange = resolvedSearchParams.dateRange as string | undefined;
+  const fromDate = resolvedSearchParams.fromDate as string | undefined;
+  const toDate = resolvedSearchParams.toDate as string | undefined;
+  const category = resolvedSearchParams.category as string | undefined;
+  const organization = resolvedSearchParams.organization?.toString().toUpperCase();
+  const schoolUnit = resolvedSearchParams.schoolUnit?.toString().toUpperCase();
 
   const stats = await getAspirasiStats({
     dateRange,

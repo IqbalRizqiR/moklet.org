@@ -3,8 +3,11 @@ import { findPost } from "@/utils/database/post.query";
 
 type params = { year: string; month: string; slug: string };
 
-export async function GET(req: Request, { params }: { params: params }) {
-  const { year, month, slug } = params;
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<params> },
+) {
+  const { year, month, slug } = await params;
 
   try {
     const post = await findPost({

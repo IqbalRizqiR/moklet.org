@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 export default async function Edit({
   params,
 }: {
-  params: { organisasi: string };
+  params: Promise<{ organisasi: string }>;
 }) {
+  const { organisasi } = await params;
   const latestPeriod = await findLatestPeriod();
   if (latestPeriod)
     return redirect(
-      `/admin/organisasi/${params.organisasi}/${latestPeriod.period}`,
+      `/admin/organisasi/${organisasi}/${latestPeriod.period}`,
     );
 
   return <></>;

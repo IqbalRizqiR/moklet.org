@@ -6,9 +6,10 @@ import { H3, P } from "@/app/_components/global/Text";
 export default async function AspirationDetail({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const data = await findAspiration({ id: params.id });
+  const { id } = await params;
+  const data = await findAspiration({ id });
 
   if (!data) return notFound();
 

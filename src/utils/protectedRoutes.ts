@@ -106,7 +106,7 @@ export const protectedRoutes: ProtectedRoutes[] = [
   {
     title: "Aspirasi",
     path: "/admin/aspirasi",
-    regex: /\/admin\/aspiration(\/|)[A-Za-z]?/i,
+    regex: /\/admin\/aspirasi(\/|)[A-Za-z]?/i,
     icon: `
     <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M22 6.75V11.85C22 13.12 21.58 14.19 20.83 14.93C20.09 15.68 19.02 16.1 17.75 16.1V17.91C17.75 18.59 16.99 19 16.43 18.62L15.46 17.98C15.55 17.67 15.59 17.33 15.59 16.97V12.9C15.59 10.86 14.23 9.5 12.19 9.5H5.39999C5.25999 9.5 5.13 9.51002 5 9.52002V6.75C5 4.2 6.7 2.5 9.25 2.5H17.75C20.3 2.5 22 4.2 22 6.75Z" stroke="#E04E4E" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" stroke-linejoin="round"/>
@@ -142,5 +142,17 @@ export const protectedRoutes: ProtectedRoutes[] = [
     </svg>
     `,
     roles: "All",
+  },
+  {
+    title: "Permissions",
+    path: "/admin/permissions",
+    regex: /\/admin\/permissions(\/|)[A-Za-z]?/i,
+    icon: `
+    <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+      <path d="M7.75 12.5L10.58 15.33L16.25 9.67" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+    </svg>
+    `,
+    roles: ["SuperAdmin"],
   },
 ];

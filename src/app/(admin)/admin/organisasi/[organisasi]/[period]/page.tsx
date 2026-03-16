@@ -8,17 +8,17 @@ import {
 import { notFound } from "next/navigation";
 import { H2, P } from "@/app/_components/global/Text";
 import Form from "../../_components/Form";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import Select from "../../_components/Select";
 
 export default async function Edit({
   params,
 }: {
-  params: { organisasi: Organisasi_Type; period: string };
+  params: Promise<{ organisasi: Organisasi_Type; period: string }>;
 }) {
-  const { organisasi, period } = params;
+  const { organisasi, period } = await params;
 
-  const session = await nextGetServerSession();
+  const session = await auth();
   const { user } = session!;
 
   if (!Object.values(Organisasi_Type).includes(organisasi)) return notFound();
@@ -65,6 +65,7 @@ export default async function Edit({
         organisasi_name: "",
         period_id: periode.id,
         structure: "",
+        wa_notify_phone: null,
         created_at: new Date(),
         updated_at: new Date(),
         vision: "",
@@ -102,6 +103,7 @@ export default async function Edit({
         organisasi={organization!}
         period={period}
         organisasiType={organisasi}
+        currentPeriod={period}
       />
     </>
   );

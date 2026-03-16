@@ -59,15 +59,17 @@ export default function EditForm({
         if (thumbnail?.name === "") data.delete("thumbnail");
 
         const thumbnailSizeInMb = thumbnail ? fileSizeToMb(thumbnail.size) : 0;
-        if (thumbnailSizeInMb >= 4.3)
-          return toast.error(
-            "Ukuran file terlalu besar! Ukuran maximum 4,3 MB",
-            { id: toastId },
-          );
+        if (thumbnailSizeInMb >= 4.3) {
+          toast.error("Ukuran file terlalu besar! Ukuran maximum 4,3 MB", {
+            id: toastId,
+          });
+          return;
+        }
 
         const result = await postUpdate(data, value, tag, post.id);
         if (result.error) {
-          return toast.error(result.message, { id: toastId });
+          toast.error(result.message, { id: toastId });
+          return;
         }
         toast.success(result.message, { id: toastId });
       }}

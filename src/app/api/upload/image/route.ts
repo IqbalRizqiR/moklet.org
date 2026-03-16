@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { uploadImageCloudinary, uploadImageImbb } from "@/actions/fileUploader";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import {
   badRequest,
   created,
@@ -10,7 +10,7 @@ import {
 } from "@/utils/apiResponse";
 
 export async function POST(req: NextRequest) {
-  const session = await nextGetServerSession();
+  const session = await auth();
   if (!session || !session.user?.email) return unauthorized();
 
   try {

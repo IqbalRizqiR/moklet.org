@@ -1,15 +1,15 @@
 import { notFound, redirect } from "next/navigation";
 
 import { H2 } from "@/app/_components/global/Text";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import { FormWithFields } from "@/types/entityRelations";
 import { findForm } from "@/utils/database/form.query";
 
 import FormEditContent from "../_components/FormEditContent";
 
-export default async function FormEdit({ params }: { params: { id: string } }) {
-  const { id } = params;
-  const session = await nextGetServerSession();
+export default async function FormEdit({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await auth();
   const { user } = session!;
 
   let form: FormWithFields | null;

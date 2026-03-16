@@ -6,10 +6,10 @@ import { findAllUsers } from "@/utils/database/user.query";
 
 import AddUser from "./_components/AddUser";
 import UserTable from "./_components/Table";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 
 export default async function UsersPage() {
-  const session = await nextGetServerSession();
+  const session = await auth();
   const { user } = session!;
 
   const users: UserWithLastlog[] = await findAllUsers({

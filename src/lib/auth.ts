@@ -1,35 +1,27 @@
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { Roles } from "@prisma/client";
-import { type DefaultSession, AuthOptions } from "next-auth";
-import { getServerSession } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 
 import { findUser, createUser, updateUser } from "@/utils/database/user.query";
 import { compareHash } from "@/utils/encryption";
 
 import prisma from "./prisma";
 
-import type { DefaultJWT } from "next-auth/jwt";
+import type { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
-  /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
   interface Session {
-    user?: {
+    user: {
       id: string;
       role: Roles;
       name: string;
       user_pic: string;
       email: string;
-      someExoticUserProperty?: string;
     } & DefaultSession["user"];
   }
-}
 
-declare module "next-auth/jwt" {
-  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
-  interface JWT extends DefaultJWT {
+  interface User {
     id: string;
     role: Roles;
     name: string;
@@ -38,7 +30,17 @@ declare module "next-auth/jwt" {
   }
 }
 
-export const authOptions: AuthOptions = {
+declare module "@auth/core/jwt" {
+  interface JWT {
+    id: string;
+    role: Roles;
+    name: string;
+    user_pic: string;
+    email: string;
+  }
+}
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
   theme: {
     colorScheme: "light",
     brandColor: "#E04E4E",
@@ -48,7 +50,7 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
   },
   providers: [
-    CredentialsProvider({
+    Credentials({
       name: "Credentials",
       credentials: {
         email: {
@@ -64,25 +66,25 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         try {
-          const findUser = await prisma.user.findUnique({
-            where: { email: credentials?.email },
+          const foundUser = await prisma.user.findUnique({
+            where: { email: credentials?.email as string },
             include: { userAuth: true },
           });
-          if (!findUser) return null;
+          if (!foundUser) return null;
 
           const comparePassword = compareHash(
             credentials?.password as string,
-            findUser.userAuth?.password as string,
+            foundUser.userAuth?.password as string,
           );
 
           if (!comparePassword) return null;
 
           const user = {
-            id: findUser.id,
-            role: findUser.role,
-            name: findUser.name,
-            email: findUser.email,
-            user_pic: findUser.user_pic,
+            id: foundUser.id,
+            role: foundUser.role,
+            name: foundUser.name,
+            email: foundUser.email,
+            user_pic: foundUser.user_pic,
           };
           return user;
         } catch (e) {
@@ -91,7 +93,7 @@ export const authOptions: AuthOptions = {
         }
       },
     }),
-    GoogleProvider({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: false,
@@ -141,16 +143,16 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (token.id && session.user) {
-        const userdb = await findUser({ id: token.id });
+        const userdb = await findUser({ id: token.id as string });
         session.user.role = userdb?.role || "Guest";
         session.user.user_pic = userdb?.user_pic as string;
         session.user.name = userdb?.name as string;
         session.user.email = userdb?.email as string;
         session.user.id = userdb?.id as string;
         await updateUser(
-          { id: token.id },
+          { id: token.id as string },
           {
-            user_pic: token.image ?? undefined,
+            user_pic: (token.image as string) ?? undefined,
             userAuth: { update: { last_login: new Date() } },
           },
         );
@@ -158,7 +160,5 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
-};
-
-export const nextGetServerSession = () => getServerSession(authOptions);
+  secret: process.env.AUTH_SECRET,
+});

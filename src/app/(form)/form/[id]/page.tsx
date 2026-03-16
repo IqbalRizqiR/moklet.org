@@ -5,7 +5,7 @@ import { redirect, RedirectType, notFound } from "next/navigation";
 import React from "react";
 
 import { H2, P } from "@/app/_components/global/Text";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import { findForm } from "@/utils/database/form.query";
 import { findSubmission } from "@/utils/database/submission.query";
 
@@ -13,11 +13,12 @@ import ForbiddenForm from "../_components/ForbiddenForm";
 import Form from "../_components/Form";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const form = await findForm({ id: params.id });
+  const { id } = await params;
+  const form = await findForm({ id });
 
   return {
     title: form?.title ?? "Not Found",
@@ -26,18 +27,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const page = async ({ params }: Props) => {
-  const session = await nextGetServerSession();
-  const headersList = headers();
+  const { id } = await params;
+  const session = await auth();
+  const headersList = await headers();
   const userAgent = headersList.get("User-Agent");
 
   if (userAgent?.toLocaleLowerCase()?.includes("whatsapp")) return <></>;
   if (!session)
     return redirect(
-      "/api/auth/signin?callbackUrl=/form/" + params.id,
+      "/api/auth/signin?callbackUrl=/form/" + id,
       RedirectType.replace,
     );
 
-  const form = await findForm({ id: params.id });
+  const form = await findForm({ id });
   console.log(form);
 
   if (!form) return notFound();
@@ -51,10 +53,10 @@ const page = async ({ params }: Props) => {
   if (form.submit_once) {
     const submission = await findSubmission({
       user_id: session.user?.id,
-      form_id: params.id,
+      form_id: id,
     });
     if (submission && form.allow_edit)
-      return redirect(params.id + "/" + submission?.id);
+      return redirect(id + "/" + submission?.id);
     else if (submission)
       return <ForbiddenForm message="Anda sudah menjawab formulir ini." />;
   }
@@ -67,7 +69,7 @@ const page = async ({ params }: Props) => {
         <P className="mt-4 font-medium">{session.user?.name}</P>{" "}
         <Link
           className="hover:cursor-pointer text-info-500 hover:text-info-700 transition-all"
-          href={"/api/auth/signout?callbackUrl=/form/" + params.id}
+          href={"/api/auth/signout?callbackUrl=/form/" + id}
         >
           Ganti akun
         </Link>
@@ -75,7 +77,7 @@ const page = async ({ params }: Props) => {
           * Menunjukkan pertanyaan yang wajib diisi
         </P>
       </div>
-      <Form form={form} a={session.user?.id as string} b={params.id} />
+      <Form form={form} a={session.user?.id as string} b={id} />
     </div>
   );
 };

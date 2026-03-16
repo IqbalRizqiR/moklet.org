@@ -82,7 +82,7 @@ const CustomImage = ({
     <Image
       alt={alt || "Illustrasi Artikel"}
       className={cn(!height || !width ? "w-full" : "")}
-      src={src!}
+      src={src as string}
       height={parsedHeight}
       width={parsedWidth}
       {...props}

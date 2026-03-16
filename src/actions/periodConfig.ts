@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import {
   createPeriod,
   deletePeriod,
@@ -12,10 +12,9 @@ import {
 
 export const upsertPeriod = async (id: string | null, data: FormData) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
     if (!session?.user?.role.includes("Admin"))
       return { error: true, message: "Unauthorized" };
-
     let period = data.get("period") as string;
     const is_active = data.get("is_active") == "true";
 
@@ -57,7 +56,7 @@ export const upsertPeriod = async (id: string | null, data: FormData) => {
 
 export const deletePeriodById = async (id: string) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
     if (!session?.user?.role.includes("Admin"))
       return { error: true, message: "Unauthorized" };
 

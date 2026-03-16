@@ -5,8 +5,9 @@ import { PostWithTagsAndUser } from "@/types/entityRelations";
 import { findPostByTag } from "@/utils/database/tag.query";
 import GoBack from "../../[slug]/_components/BackButton";
 
-export default async function Tag({ params }: { params: { tag: string } }) {
-  const decodedTag = decodeURIComponent(params.tag);
+export default async function Tag({ params }: { params: Promise<{ tag: string }> }) {
+  const { tag } = await params;
+  const decodedTag = decodeURIComponent(tag);
 
   const filteredPost = await findPostByTag(decodedTag, true);
 

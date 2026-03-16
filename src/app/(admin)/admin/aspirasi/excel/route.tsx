@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
     buffer: true,
   });
 
-  const response = new NextResponse(buffer);
+  const response = new NextResponse(new Uint8Array(buffer));
   response.headers.set(
     "Content-Type",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

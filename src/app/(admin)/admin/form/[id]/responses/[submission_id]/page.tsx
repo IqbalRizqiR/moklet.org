@@ -17,10 +17,11 @@ import { findSubmission } from "@/utils/database/submission.query";
 export default async function SubmissionDetail({
   params,
 }: {
-  params: { id: string; submission_id: string };
+  params: Promise<{ id: string; submission_id: string }>;
 }) {
-  const form = await findForm({ id: params.id });
-  const submission = await findSubmission({ id: params.submission_id });
+  const { id, submission_id } = await params;
+  const form = await findForm({ id });
+  const submission = await findSubmission({ id: submission_id });
 
   if (!form || !submission) return notFound();
 

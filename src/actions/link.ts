@@ -4,12 +4,12 @@ import { createHash } from "crypto";
 
 import { revalidatePath } from "next/cache";
 
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import generateRandomSlug from "@/utils/randomSlug";
 
 export async function addLink(data: FormData) {
-  const session = await nextGetServerSession();
+  const session = await auth();
   let hashedpass;
   let slug = data.get("slug") as string | null;
   try {
@@ -44,7 +44,7 @@ export async function addLink(data: FormData) {
 }
 
 export async function updateLink(data: FormData) {
-  const session = await nextGetServerSession();
+  const session = await auth();
 
   let hashedpass;
   let slug = data.get("slug") as string;
@@ -86,7 +86,7 @@ export async function updateLink(data: FormData) {
 }
 
 export async function deleteLink(slug: string) {
-  const session = await nextGetServerSession();
+  const session = await auth();
   try {
     const deleteAction = await prisma.link_Shortener.delete({
       where: {

@@ -15,15 +15,18 @@ import SubmitButton from "@/app/_components/global/SubmitButton";
 import { useRouter } from "next-nprogress-bar";
 import { fileSizeToMb } from "@/utils/atomics";
 import { P } from "@/app/_components/global/Text";
+import Link from "next/link";
 
 export default function Form({
   organisasi,
   period,
   organisasiType,
+  currentPeriod,
 }: {
   organisasi: Organisasi;
   period: string;
   organisasiType: Organisasi_Type;
+  currentPeriod: string;
 }) {
   const router = useRouter();
   const [structure, setStructure] = useState(organisasi.structure || "");
@@ -51,10 +54,10 @@ export default function Form({
         const imageSizeInMb = image ? fileSizeToMb(image.size) : 0;
 
         if (logoSizeInMb + imageSizeInMb > 4.3) {
-          return toast.error(
-            "Ukuran file terlalu besar! Ukuran maximum 4,3 MB",
-            { id: toastId },
-          );
+          toast.error("Ukuran file terlalu besar! Ukuran maximum 4,3 MB", {
+            id: toastId,
+          });
+          return;
         }
 
         const result = await organisasiUpsert({
@@ -66,7 +69,8 @@ export default function Form({
         });
 
         if (result.error) {
-          return toast.error(result.message, { id: toastId });
+          toast.error(result.message, { id: toastId });
+          return;
         }
 
         toast.success(result.message, { id: toastId });
@@ -189,16 +193,32 @@ export default function Form({
         placeholder={`Misi organisasi ${organisasi.organisasi}`}
         value={organisasi.mission!}
       />
-      <P className="text-black first-letter:capitalize after:text-red-500 after:content-['*']">
+      <P className="text-black first-letter:capitalize">
         Struktur Organisasi
       </P>
-      <Editor
-        value={structure}
-        onChange={(data) => {
-          setStructure(data!);
-        }}
-        label="Upload gambar/ketik"
-      />
+      <div className="rounded-2xl backdrop-blur-md bg-white/50 border border-white/30 p-5 shadow-sm">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500/20 to-rose-500/10 flex items-center justify-center">
+            <span className="text-lg">📊</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-700">Struktur di-generate otomatis</p>
+            <p className="text-xs text-gray-400">dari daftar anggota & role yang sudah diatur</p>
+          </div>
+        </div>
+        <Link
+          href={`/admin/organisasi/${organisasiType.toLowerCase()}/${currentPeriod}/members`}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500/90 to-rose-500/90 text-white rounded-xl hover:from-red-500 hover:to-rose-500 transition-all shadow-sm text-sm font-medium"
+        >
+          👥 Kelola Anggota & Struktur
+        </Link>
+        <p className="mt-2 text-[11px] text-gray-400">
+          Di halaman ini kamu bisa: membuat role, atur hierarchy level, tambah anggota, assign leader, dan preview struktur.
+        </p>
+      </div>
+
+      {/* Hidden field to keep the structure value for backward compat */}
+      <input type="hidden" name="structure" value={structure} onChange={() => {}} />
       <SubmitButton />
     </form>
   );

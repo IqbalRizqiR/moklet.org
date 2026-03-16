@@ -1,8 +1,8 @@
 import { H2, P } from "@/app/_components/global/Text";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 
 export default async function Admin() {
-  const session = await nextGetServerSession();
+  const session = await auth();
   const { user } = session!;
   const name = user?.name.replace(/ .*/, "");
 

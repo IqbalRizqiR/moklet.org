@@ -25,11 +25,12 @@ export default function AspirationForm({
     const result = await submitAspiration(data, aspiration, type, recipient);
 
     if (!result.success) {
-      return toast.error(result.message, { id: toastId });
+      toast.error(result.message, { id: toastId });
+      return;
     }
     ref.current?.reset();
     setAspiration("");
-    return toast.success(result.message, { id: toastId });
+    toast.success(result.message, { id: toastId });
   }
 
   return (

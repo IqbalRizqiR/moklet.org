@@ -6,9 +6,9 @@ import writeXlsxFile from "write-excel-file/node";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   const form = (await findFormWithSubmission({
     id,
@@ -99,7 +99,7 @@ export async function GET(
     buffer: true,
   });
 
-  const response = new NextResponse(buffer);
+  const response = new NextResponse(new Uint8Array(buffer));
   response.headers.set(
     "Content-Type",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

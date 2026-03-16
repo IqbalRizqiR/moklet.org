@@ -3,9 +3,9 @@ import { findPostByTag } from "@/utils/database/tag.query";
 
 export async function GET(
   req: Request,
-  { params }: { params: { tagName: string } },
+  { params }: { params: Promise<{ tagName: string }> },
 ) {
-  const { tagName } = params;
+  const { tagName } = await params;
 
   try {
     const posts = await findPostByTag(tagName, true);

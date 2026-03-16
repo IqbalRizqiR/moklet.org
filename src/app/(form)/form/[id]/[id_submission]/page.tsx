@@ -4,7 +4,7 @@ import { redirect, RedirectType, notFound } from "next/navigation";
 import React from "react";
 
 import { H2, P } from "@/app/_components/global/Text";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import {
   stringifyCompleteDate,
   transformToArrayCheckbox,
@@ -16,11 +16,12 @@ import ForbiddenForm from "../../_components/ForbiddenForm";
 import Form from "../../_components/Form";
 
 type Props = {
-  params: { id: string; id_submission: string };
+  params: Promise<{ id: string; id_submission: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const form = await findForm({ id: params.id });
+  const { id } = await params;
+  const form = await findForm({ id });
 
   return {
     title: form?.title ?? "Not Found",
@@ -29,17 +30,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const page = async ({ params }: Props) => {
-  const session = await nextGetServerSession();
+  const { id, id_submission } = await params;
+  const session = await auth();
   if (!session)
     return redirect(
-      `/api/auth/signin?callbackUrl=/form/${params.id}/${params.id_submission}`,
+      `/api/auth/signin?callbackUrl=/form/${id}/${id_submission}`,
       RedirectType.replace,
     );
 
   const submission = await findSubmissionWithForm({
     user_id: session.user?.id,
-    form_id: params.id,
-    id: params.id_submission,
+    form_id: id,
+    id: id_submission,
   });
 
   if (!submission) return notFound();
@@ -64,7 +66,7 @@ const page = async ({ params }: Props) => {
         <P className="mt-4 font-medium">{session.user?.name}</P>{" "}
         <Link
           className="hover:cursor-pointer text-info-500 hover:text-info-700 transition-all"
-          href={"/api/auth/signout?callbackUrl=/form/" + params.id}
+          href={"/api/auth/signout?callbackUrl=/form/" + id}
         >
           Ganti akun
         </Link>
@@ -85,9 +87,9 @@ const page = async ({ params }: Props) => {
       <Form
         form={form}
         a={session.user?.id as string}
-        b={params.id}
+        b={id}
         answers={transformToArrayCheckbox(submission.fields)}
-        submission_id={params.id_submission}
+        submission_id={id_submission}
       />
     </div>
   );

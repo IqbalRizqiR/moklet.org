@@ -21,9 +21,10 @@ export default function EventModal({
 
     if (result.success) {
       setIsOpenModal(false);
-      return toast.success(result.message, { id: toastId });
+      toast.success(result.message, { id: toastId });
+      return;
     }
-    return toast.error(result.message, { id: toastId });
+    toast.error(result.message, { id: toastId });
   }
 
   return (

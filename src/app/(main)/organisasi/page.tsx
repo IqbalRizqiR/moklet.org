@@ -11,8 +11,9 @@ export default async function OrganisasiPage() {
 
   if (!activePeriod && !lastPeriod) return <Maintenance />;
 
-  const organisasis = await findOrganisasis({ period_id: activePeriod.id });
+  const currentPeriod = activePeriod ?? lastPeriod!;
+  const organisasis = await findOrganisasis({ period_id: currentPeriod.id });
   return redirect(
-    `/organisasi/${organisasis.length ? activePeriod.period : lastPeriod.period}`,
+    `/organisasi/${currentPeriod.period}`,
   );
 }
