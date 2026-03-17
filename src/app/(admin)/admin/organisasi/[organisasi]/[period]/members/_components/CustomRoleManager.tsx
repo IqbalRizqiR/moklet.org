@@ -5,6 +5,7 @@ import { FaPlus, FaTrash, FaEdit, FaCheck, FaTimes, FaStar, FaArrowUp, FaArrowDo
 import { createLevel, updateLevel, deleteLevel, reorderLevels } from "@/actions/orgLevel";
 import { createRoleAction, updateRoleAction, deleteRoleAction } from "@/actions/orgCustomRole";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Level {
   id: string;
@@ -17,20 +18,24 @@ interface Role {
   name: string;
   is_leader: boolean;
   hierarchy_level: number;
-  level_id: string | null;
+  level_id?: string | null;
 }
 
 export default function CustomRoleManager({
   organisasiId,
-  initialLevels,
-  initialRoles,
+  levels,
+  setLevels,
+  roles,
+  setRoles,
 }: {
   organisasiId: string;
-  initialLevels: Level[];
-  initialRoles: Role[];
+  levels: Level[];
+  setLevels: React.Dispatch<React.SetStateAction<Level[]>>;
+  roles: Role[];
+  setRoles: React.Dispatch<React.SetStateAction<Role[]>>;
 }) {
-  const [levels, setLevels] = useState(initialLevels.sort((a, b) => a.order - b.order));
-  const [roles, setRoles] = useState(initialRoles);
+  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [newLevelName, setNewLevelName] = useState("");
@@ -58,6 +63,7 @@ export default function CustomRoleManager({
       toast.success(result.message);
       if (result.data) setLevels((prev) => [...prev, result.data!].sort((a, b) => a.order - b.order));
       setNewLevelName("");
+      router.refresh();
     }
   };
 
@@ -71,6 +77,7 @@ export default function CustomRoleManager({
       toast.success(result.message);
       setLevels((prev) => prev.map((l) => (l.id === id ? { ...l, name: editLevelName.trim() } : l)));
       setEditingLevel(null);
+      router.refresh();
     }
   };
 
@@ -83,6 +90,7 @@ export default function CustomRoleManager({
     else {
       toast.success(result.message);
       setLevels((prev) => prev.filter((l) => l.id !== id));
+      router.refresh();
     }
   };
 
@@ -137,6 +145,7 @@ export default function CustomRoleManager({
       setNewRoleName("");
       setNewRoleLevelId("");
       setNewRoleIsLeader(false);
+      router.refresh();
     }
   };
 
@@ -159,6 +168,8 @@ export default function CustomRoleManager({
         ),
       );
       setEditingRole(null);
+      // Wait for background refresh
+      router.refresh();
     }
   };
 
@@ -171,6 +182,7 @@ export default function CustomRoleManager({
     else {
       toast.success(result.message);
       setRoles((prev) => prev.filter((r) => r.id !== id));
+      router.refresh();
     }
   };
 

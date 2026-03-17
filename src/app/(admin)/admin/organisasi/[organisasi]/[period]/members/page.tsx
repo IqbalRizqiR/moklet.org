@@ -5,8 +5,7 @@ import { findAllTemplates } from "@/utils/database/permissionTemplate.query";
 import { findPeriod } from "@/utils/database/periodYear.query";
 import { findOrganisasi } from "@/utils/database/organisasi.query";
 import { notFound } from "next/navigation";
-import MembersTable from "./_components/MembersTable";
-import CustomRoleManager from "./_components/CustomRoleManager";
+import MembersClientContainer from "./_components/MembersClientContainer";
 
 export default async function MembersPage({
   params,
@@ -122,25 +121,14 @@ export default async function MembersPage({
         <span className="font-medium text-gray-700">Kelola Anggota</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <MembersTable
-            members={mappedMembers}
-            customRoles={mappedRoles}
-            organisasiId={org.id}
-            permissionTemplates={permissionTemplates}
-            guestUsers={guestUsers}
-            levels={mappedLevels}
-          />
-        </div>
-        <div>
-          <CustomRoleManager
-            initialRoles={mappedRoles}
-            initialLevels={mappedLevels}
-            organisasiId={org.id}
-          />
-        </div>
-      </div>
+      <MembersClientContainer
+        initialMembers={mappedMembers}
+        initialRoles={mappedRoles}
+        initialLevels={mappedLevels}
+        organisasiId={org.id}
+        permissionTemplates={permissionTemplates}
+        guestUsers={guestUsers}
+      />
     </div>
   );
 }

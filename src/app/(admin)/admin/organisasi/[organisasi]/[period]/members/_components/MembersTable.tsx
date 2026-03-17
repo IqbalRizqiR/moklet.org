@@ -58,23 +58,27 @@ interface GuestUser {
   user_pic: string;
 }
 
-export default function MembersTable({
-  members: initialMembers,
-  customRoles: initialRoles,
-  organisasiId,
-  permissionTemplates,
-  guestUsers,
-  levels = [],
-}: {
+interface MembersTableProps {
   members: Member[];
+  setMembers?: React.Dispatch<React.SetStateAction<Member[]>>;
   customRoles: OrgRole[];
+  setCustomRoles?: React.Dispatch<React.SetStateAction<OrgRole[]>>;
   organisasiId: string;
   permissionTemplates: PermTemplate[];
   guestUsers: GuestUser[];
   levels?: Level[];
-}) {
-  const [members, setMembers] = useState(initialMembers);
-  const [roles, setRoles] = useState(initialRoles);
+}
+
+export default function MembersTable({
+  members,
+  setMembers,
+  customRoles: roles,
+  setCustomRoles,
+  organisasiId,
+  permissionTemplates,
+  guestUsers,
+  levels = [],
+}: MembersTableProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPermModal, setShowPermModal] = useState<string | null>(null);
@@ -154,7 +158,7 @@ export default function MembersTable({
       toast.error(result.message);
     } else {
       toast.success(result.message);
-      if (result.data) {
+      if (result.data && setMembers) {
         setMembers((prev) => [...prev, result.data!]);
       }
       closeModal();
@@ -173,7 +177,7 @@ export default function MembersTable({
       toast.error(result.message);
     } else {
       toast.success(result.message);
-      if (result.data) {
+      if (result.data && setMembers) {
         setMembers((prev) => [...prev, result.data!]);
       }
       closeModal();
@@ -194,9 +198,9 @@ export default function MembersTable({
       toast.error(result.message);
     } else {
       toast.success(`Role "${newRoleName}" berhasil dibuat`);
-      if (result.data) {
+      if (result.data && setCustomRoles) {
         const created = { ...result.data, hierarchy_level: hierarchyLevel, level_id: newRoleLevelId || null };
-        setRoles((prev) => [...prev, created].sort((a, b) => a.hierarchy_level - b.hierarchy_level));
+        setCustomRoles((prev) => [...prev, created].sort((a, b) => a.hierarchy_level - b.hierarchy_level));
         if (addTab === "existing") setSelectedRoleId(created.id);
         else setRegRoleId(created.id);
       }
@@ -215,7 +219,7 @@ export default function MembersTable({
     if (result.error) toast.error(result.message);
     else {
       toast.success(result.message);
-      setMembers((prev) => prev.filter((m) => m.id !== userId));
+      if (setMembers) setMembers((prev) => prev.filter((m) => m.id !== userId));
     }
   };
 
@@ -226,11 +230,13 @@ export default function MembersTable({
     if (result.error) toast.error(result.message);
     else {
       toast.success(result.message);
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === userId ? { ...m, org_role: roles.find((r) => r.id === roleId) ?? null } : m,
-        ),
-      );
+      if (setMembers) {
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === userId ? { ...m, org_role: roles.find((r) => r.id === roleId) ?? null } : m,
+          ),
+        );
+      }
     }
   };
 
@@ -241,7 +247,7 @@ export default function MembersTable({
     if (result.error) toast.error(result.message);
     else {
       toast.success(result.message);
-      if (result.data) {
+      if (result.data && setMembers) {
         setMembers((prev) =>
           prev.map((m) =>
             m.id === userId ? { ...m, permissions: result.data!.permissions } : m,
@@ -260,15 +266,17 @@ export default function MembersTable({
     if (result.error) toast.error(result.message);
     else {
       toast.success(result.message);
-      setMembers((prev) =>
-        prev.map((m) => {
-          if (m.id !== userId) return m;
-          const perms = has
-            ? m.permissions.filter((p) => p.permission !== permission)
-            : [...m.permissions, { id: "new", permission }];
-          return { ...m, permissions: perms };
-        }),
-      );
+      if (setMembers) {
+        setMembers((prev) =>
+          prev.map((m) => {
+            if (m.id !== userId) return m;
+            const perms = has
+              ? m.permissions.filter((p) => p.permission !== permission)
+              : [...m.permissions, { id: "new", permission }];
+            return { ...m, permissions: perms };
+          }),
+        );
+      }
     }
   };
 
@@ -431,11 +439,15 @@ export default function MembersTable({
                       className="text-sm px-2 py-1 rounded-lg bg-white/50 border border-white/30 focus:border-red-300/50 focus:outline-none transition-all"
                     >
                       <option value="">-- Pilih Role --</option>
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name} {role.is_leader ? "⭐" : ""} (L{role.hierarchy_level})
-                        </option>
-                      ))}
+                      {roles.map((role) => {
+                        const assignedLevel = levels.find(l => l.id === role.level_id);
+                        const levelDisplay = assignedLevel ? assignedLevel.name : `L${role.hierarchy_level}`;
+                        return (
+                          <option key={role.id} value={role.id}>
+                            {role.name} {role.is_leader ? "⭐" : ""} ({levelDisplay})
+                          </option>
+                        );
+                      })}
                     </select>
                   </td>
                   <td className="px-4 py-3">
