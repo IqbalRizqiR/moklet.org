@@ -10,18 +10,18 @@ import {
 import cn from "@/lib/clsx";
 
 const buttonVariants = cva(
-  "inline-block rounded-full transition-all duration-500",
+  "inline-flex items-center justify-center rounded-full transition-all duration-300",
   {
     variants: {
       variant: {
         primary:
-          "bg-primary-400 px-6 py-3 hover:bg-primary-200 text-base text-white disabled:text-neutral-500 disabled:bg-neutral-300",
+          "bg-primary-400 px-6 py-3 text-base text-white shadow-glass hover:-translate-y-0.5 hover:bg-primary-300 disabled:cursor-not-allowed disabled:text-neutral-500 disabled:bg-neutral-300 disabled:shadow-none",
         secondary:
-          "border-primary-400 px-6 py-3 hover:bg-primary-50 text-base text-primary-400 disabled:bg-neutral-300 text-primary-400 disabled:text-neutral-500",
+          "border border-primary-300 bg-white/75 px-6 py-3 text-base text-primary-500 backdrop-blur-xs hover:border-primary-400 hover:bg-primary-50 disabled:cursor-not-allowed disabled:border-neutral-400 disabled:bg-neutral-300 disabled:text-neutral-500",
         tertiary:
-          "text-base text-black hover:text-primary-400 text-black disabled:text-neutral-500",
+          "text-base text-black hover:text-primary-400 disabled:cursor-not-allowed disabled:text-neutral-500",
         quartiary:
-          "text-base px-6 py-3 text-primary-400 bg-white hover:bg-primary-50 disabled:bg-neutral-400 disabled:text-white",
+          "border border-white/60 bg-glass-white px-6 py-3 text-base text-primary-500 shadow-glass-soft backdrop-blur-sm hover:bg-surface-100 disabled:cursor-not-allowed disabled:bg-neutral-400 disabled:text-white",
       },
     },
   },

@@ -57,7 +57,7 @@ const currentYear = new Date().getFullYear();
 export default function Footer() {
   return (
     <footer className="flex items-center justify-between w-full">
-      <div className="mb-[42px] mt-[82px] flex flex-col xl:flex-row w-full justify-between gap-[62px] lg:gap-[80px]">
+      <div className="mb-[42px] mt-[82px] flex w-full flex-col justify-between gap-[62px] px-6 py-8 xl:flex-row lg:gap-[80px]">
         <div className="w-full xl:w-1/3">
           <div className="flex flex-col gap-[59px]">
             <div className="">
@@ -110,7 +110,7 @@ export default function Footer() {
         </div>
         <div className="flex flex-col md:flex-row text-black w-full justify-start gap-[52px] xl:gap-0 xl:justify-between xl:w-[58%]">
           <div className="flex flex-col gap-[22px] w-full xl:w-[112px]">
-            <h3 className="font-normal text-neutral-500">Menu Utama</h3>
+            <h3 className="font-normal text-neutral-600">Menu Utama</h3>
             <div className="flex flex-col gap-[14px] ">
               {mainMenus.map((footOption) => (
                 <LinkButton
@@ -124,7 +124,7 @@ export default function Footer() {
             </div>
           </div>
           <div className="flex flex-col gap-[22px] w-full xl:w-[112px]">
-            <h3 className="font-normal text-neutral-500">Tautan</h3>
+            <h3 className="font-normal text-neutral-600">Tautan</h3>
             <div className="flex flex-col gap-[14px] ">
               {usefulLinks.map((footOption) => (
                 <LinkButton
@@ -139,7 +139,7 @@ export default function Footer() {
             </div>
           </div>
           <div className="flex flex-col gap-[22px] w-full xl:w-[112px]">
-            <h3 className="font-normal text-neutral-500">Media Sosial</h3>
+            <h3 className="font-normal text-neutral-600">Media Sosial</h3>
             <div className="flex flex-col gap-[14px] ">
               {socialMedias.map((footOption) => (
                 <LinkButton

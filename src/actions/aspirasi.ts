@@ -8,6 +8,7 @@ import {
   findAllAspirations,
 } from "@/utils/database/aspiration.query";
 import { auth } from "@/lib/auth";
+import { ratelimit } from "@/lib/ratelimit";
 
 export type aspirationType = "ORGANISASI" | "SEKOLAH" | "EVENT";
 
@@ -19,6 +20,15 @@ export async function submitAspiration(
 ) {
   const session = await auth();
   if (!session?.user) return { success: false, message: "Unauthorized" };
+
+  // Rate Limiting
+  const { success } = await ratelimit.limit(`aspirasi_${session.user.id}`);
+  if (!success) {
+    return {
+      success: false,
+      message: "Terlalu banyak permintaan! Tunggu 1 menit sebelum mengirim aspirasi lagi.",
+    };
+  }
 
   const judul_aspirasi = (data.get("judulAspirasi") as string) || "";
   try {

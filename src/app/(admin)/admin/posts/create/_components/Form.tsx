@@ -13,7 +13,7 @@ import { TextArea, TextField } from "@/app/_components/global/Input";
 import { TagWithPostCount } from "@/types/entityRelations";
 
 import Modal from "../../_components/ImageModal";
-import Editor from "@/app/(admin)/admin/components/MdEditor";
+import Editor from "@/app/(admin)/admin/components/LazyEditor";
 import FormButton from "../../_components/parts/SubmitButton";
 
 import Tags from "./Tags";

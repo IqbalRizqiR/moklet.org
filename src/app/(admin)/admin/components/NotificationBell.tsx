@@ -24,7 +24,6 @@ export default function NotificationBell() {
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch initial notifications
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications");
@@ -64,7 +63,6 @@ export default function NotificationBell() {
     }
   }, []);
 
-  // SSE connection for real-time updates
   useEffect(() => {
     fetchNotifications();
 
@@ -92,14 +90,11 @@ export default function NotificationBell() {
                 : undefined,
             });
           }
-        } catch {
-          // Ignore parse errors (heartbeat, etc.)
-        }
+        } catch {}
       };
 
       eventSource.onerror = () => {
         eventSource?.close();
-        // Reconnect after 5 seconds
         reconnectTimer = setTimeout(connect, 5000);
       };
     };
@@ -112,7 +107,6 @@ export default function NotificationBell() {
     };
   }, [fetchNotifications]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -170,7 +164,6 @@ export default function NotificationBell() {
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
             <h3 className="font-semibold text-gray-800">Notifikasi</h3>
             {unreadCount > 0 && (
@@ -184,7 +177,6 @@ export default function NotificationBell() {
             )}
           </div>
 
-          {/* Notification list */}
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-gray-400">

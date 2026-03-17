@@ -1,7 +1,7 @@
 "use client";
 
 import { aspirationType, submitAspiration } from "@/actions/aspirasi";
-import Editor from "@/app/(admin)/admin/components/MdEditor";
+import Editor from "@/app/(admin)/admin/components/LazyEditor";
 import { TextField } from "@/app/_components/global/Input";
 import SubmitButton from "@/app/_components/global/SubmitButton";
 import { H3 } from "@/app/_components/global/Text";

@@ -5,14 +5,16 @@ import Saying from "./Saying";
 export default function Opinions() {
   return (
     <SectionWrapper id="pendapat">
-      <div className="flex flex-col justify-center">
+      <div className="relative flex flex-col justify-center">
+        <div className="pointer-events-none absolute -left-14 top-4 h-40 w-40 rounded-full bg-primary-200/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-8 bottom-8 h-44 w-44 rounded-full bg-primary-400/20 blur-3xl" />
         <UnderlinedTitle underlineClassName="w-[154px] md:w-[232px] top-4 md:top-[24px]">
           Kata Mereka yang Berorganisasi di Moklet
         </UnderlinedTitle>
         <div className="mt-[54px] flex flex-col md:flex-row gap-[18px] w-full">
           <div className="flex flex-col gap-[24px] w-full md:w-[75%]">
             <div className="flex flex-col md:flex-row gap-[18px] w-full">
-              <div className="flex w-full md:w-1/2 items-start justify-center rounded-2xl border border-neutral-400 px-[28px] py-[32px]">
+              <div className="glass-card shadow-glass flex w-full md:w-1/2 items-start justify-center px-[28px] py-[32px]">
                 <Saying
                   personData={{
                     name: "Reyza Daffa W.",
@@ -23,7 +25,7 @@ export default function Opinions() {
                   saying="Pustel memberikan saya banyak pembelajaran dan pengalaman dalam mengurus Perpustakaan SMK Telkom Malang. Saya disana banyak belajar tentang dunia literasi, cara merawat buku, mendata masuk dan keluarnya buku peminjaman, dan juga cara bekerja sama dengan rekan rekan untuk merawat perpustakaan agar tetap terjaga dan nyaman."
                 />
               </div>
-              <div className="flex w-full md:w-1/2 items-start justify-center rounded-2xl border border-neutral-400 px-[28px] py-[32px]">
+              <div className="glass-card shadow-glass flex w-full md:w-1/2 items-start justify-center px-[28px] py-[32px]">
                 <Saying
                   personData={{
                     name: "Duan Tangguh M. P.",
@@ -35,7 +37,7 @@ export default function Opinions() {
                 />
               </div>
             </div>
-            <div className="flex w-full items-start justify-center rounded-2xl border border-neutral-400 px-[28px] py-[32px]">
+            <div className="glass-card shadow-glass flex w-full items-start justify-center px-[28px] py-[32px]">
               <Saying
                 personData={{
                   name: "Raisya Ramadhani Achmad",
@@ -47,7 +49,7 @@ export default function Opinions() {
               />
             </div>
           </div>
-          <div className="flex w-full md:w-[25%] justify-center rounded-2xl border border-neutral-400 px-[28px] py-[32px]">
+          <div className="glass-card shadow-glass flex w-full md:w-[25%] justify-center px-[28px] py-[32px]">
             <Saying
               personData={{
                 name: "Ijlal Windhi Saputra",

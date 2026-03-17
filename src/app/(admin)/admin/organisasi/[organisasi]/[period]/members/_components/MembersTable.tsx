@@ -154,8 +154,10 @@ export default function MembersTable({
       toast.error(result.message);
     } else {
       toast.success(result.message);
+      if (result.data) {
+        setMembers((prev) => [...prev, result.data!]);
+      }
       closeModal();
-      window.location.reload();
     }
   };
 
@@ -171,8 +173,10 @@ export default function MembersTable({
       toast.error(result.message);
     } else {
       toast.success(result.message);
+      if (result.data) {
+        setMembers((prev) => [...prev, result.data!]);
+      }
       closeModal();
-      window.location.reload();
     }
   };
 
@@ -237,7 +241,13 @@ export default function MembersTable({
     if (result.error) toast.error(result.message);
     else {
       toast.success(result.message);
-      window.location.reload();
+      if (result.data) {
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === userId ? { ...m, permissions: result.data!.permissions } : m,
+          ),
+        );
+      }
     }
   };
 

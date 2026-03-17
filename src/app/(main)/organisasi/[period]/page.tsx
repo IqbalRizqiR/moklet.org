@@ -17,3 +17,5 @@ export default async function OrganisasiByPeriod({
 
   return <Organizations period={periodData.period} data={organisasis} />;
 }
+
+export const revalidate = 60;

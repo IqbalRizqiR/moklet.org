@@ -2,6 +2,7 @@
 
 import { Organisasi_Type, UnitSekolah } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { withCache } from "@/lib/redis";
 
 type FilterParams = {
   dateRange?: string;
@@ -13,6 +14,19 @@ type FilterParams = {
 };
 
 export async function getAspirasiStats(filters: FilterParams = {}) {
+  // Create a deterministic cache key based on the applied filters
+  const cacheKey = `aspirasistats:${JSON.stringify(filters)}`;
+
+  // Wrap the heavy database query in Redis Cache
+  // This caches the complex aggregation for 5 minutes (300 seconds)
+  return await withCache(
+    cacheKey,
+    () => _getAspirasiStatsFromDB(filters),
+    300
+  );
+}
+
+async function _getAspirasiStatsFromDB(filters: FilterParams) {
   const {
     dateRange = "last6Months",
     fromDate,

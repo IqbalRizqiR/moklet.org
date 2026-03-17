@@ -1,6 +1,7 @@
 import { H4, P } from "@/app/_components/global/Text";
 import { SectionWrapper } from "@/app/_components/global/Wrapper";
 import OpenedBook from "@/app/_components/icons/OpenedBook";
+import MdViewer from "@/app/(main)/berita/[slug]/_components/MdViewer";
 
 export default function VisiMisi({
   visi,
@@ -21,7 +22,10 @@ export default function VisiMisi({
         </div>
         <div className="flex flex-col gap-2 w-[291px] sm:w-[85%] xl:w-[425px]">
           <H4 className="text-white">Visi</H4>
-          <P className="text-white text-wrap w-[100%] break-words">{visi}</P>
+          <MdViewer
+            markdown={visi}
+            className="max-w-none prose-sm sm:prose-base [&_p]:text-white [&_li]:text-white [&_strong]:text-white [&_em]:text-white"
+          />
         </div>
       </div>
       <div className="flex gap-7 w-full md:w-[48%]">
@@ -30,9 +34,10 @@ export default function VisiMisi({
         </div>
         <div className="flex flex-col gap-2 w-[291px] sm:w-[85%] xl:w-[425px]">
           <H4 className="text-white">Misi</H4>
-          <pre className="text-white text-wrap w-[100%] break-words leading-[160%] text-sm sm:text-base">
-            {misi}
-          </pre>
+          <MdViewer
+            markdown={misi}
+            className="max-w-none prose-sm sm:prose-base [&_p]:text-white [&_li]:text-white [&_strong]:text-white [&_em]:text-white"
+          />
         </div>
       </div>
     </SectionWrapper>

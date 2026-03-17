@@ -69,7 +69,6 @@ export async function dispatchNotification({
   organisasiId?: string;
 }) {
   try {
-    // 1. Create in-app notification
     await createNotification({
       type,
       title,
@@ -79,7 +78,6 @@ export async function dispatchNotification({
       recipientIds,
     });
 
-    // 2. Send WhatsApp if org has a configured phone
     if (organisasiId) {
       const org = await prisma.organisasi.findUnique({
         where: { id: organisasiId },
@@ -87,7 +85,6 @@ export async function dispatchNotification({
 
       if (org?.wa_notify_phone) {
         const waMessage = `📣 *${title}*\n\n${message}`;
-        // Fire and forget — don't await
         sendWhatsAppMessage(org.wa_notify_phone, waMessage).catch((e) =>
           console.error("[WhatsApp] dispatch error:", e),
         );

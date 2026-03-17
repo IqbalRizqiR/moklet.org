@@ -34,7 +34,6 @@ interface Template {
   items: { id: string; permission: string }[];
 }
 
-// Draggable permission chip
 function DraggablePermission({
   permission,
   label,
@@ -110,7 +109,6 @@ export default function PermissionBuilder({
   const [isLoading, setIsLoading] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
-  // Edit state
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editPerms, setEditPerms] = useState<string[]>([]);
@@ -125,7 +123,6 @@ export default function PermissionBuilder({
   const getPermDesc = (key: string) =>
     AVAILABLE_PERMISSIONS.find((p) => p.key === key)?.description ?? "";
 
-  // Create new template
   const handleCreate = async () => {
     if (!newTemplateName.trim()) {
       toast.error("Nama template wajib diisi");
@@ -157,7 +154,6 @@ export default function PermissionBuilder({
     }
   };
 
-  // Update template
   const handleUpdate = async (id: string) => {
     if (!editName.trim()) {
       toast.error("Nama template wajib diisi");
@@ -180,7 +176,6 @@ export default function PermissionBuilder({
     }
   };
 
-  // Delete template
   const handleDelete = async (id: string) => {
     if (!confirm("Yakin ingin menghapus template ini?")) return;
     setIsLoading(true);
@@ -202,13 +197,11 @@ export default function PermissionBuilder({
     setEditPerms(template.items.map((i) => i.permission));
   };
 
-  // Get available permissions not yet in current list
   const getAvailablePerms = (currentPerms: string[]) =>
     AVAILABLE_PERMISSIONS.filter((p) => !currentPerms.includes(p.key));
 
   return (
     <div className="space-y-6">
-      {/* Header + Create button */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Permission Builder</h1>
@@ -227,7 +220,6 @@ export default function PermissionBuilder({
         )}
       </div>
 
-      {/* Create form */}
       {isCreating && (
         <div className="bg-white rounded-xl border-2 border-red-200 p-6 shadow-lg">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Template Baru</h2>
@@ -249,7 +241,6 @@ export default function PermissionBuilder({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Available permissions */}
             <div>
               <p className="text-sm font-medium text-gray-600 mb-2">
                 Permissions Tersedia
@@ -274,7 +265,6 @@ export default function PermissionBuilder({
               </div>
             </div>
 
-            {/* Selected permissions */}
             <div>
               <p className="text-sm font-medium text-gray-600 mb-2">
                 Permissions di Template ({newTemplatePerms.length})
@@ -336,7 +326,6 @@ export default function PermissionBuilder({
         </div>
       )}
 
-      {/* Existing templates */}
       <DndContext sensors={sensors} collisionDetection={closestCenter}>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {templates.map((template) => (
@@ -345,7 +334,6 @@ export default function PermissionBuilder({
               className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
             >
               {editingTemplate === template.id ? (
-                // Edit mode
                 <div className="p-4 space-y-3">
                   <input
                     type="text"
@@ -402,7 +390,6 @@ export default function PermissionBuilder({
                   </div>
                 </div>
               ) : (
-                // View mode
                 <>
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
@@ -462,7 +449,6 @@ export default function PermissionBuilder({
         </div>
       </DndContext>
 
-      {/* Preview modal */}
       {previewTemplate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">

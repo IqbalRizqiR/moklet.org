@@ -11,6 +11,7 @@ import cn from "@/lib/clsx";
 
 interface MdViewerProps {
   markdown: string;
+  className?: string;
 }
 
 const CustomUl = ({
@@ -90,7 +91,7 @@ const CustomImage = ({
   );
 };
 
-export function MdViewer({ markdown }: Readonly<MdViewerProps>) {
+export function MdViewer({ markdown, className }: Readonly<MdViewerProps>) {
   return (
     <Markdown
       components={{
@@ -100,7 +101,7 @@ export function MdViewer({ markdown }: Readonly<MdViewerProps>) {
         code: CustomCode,
         img: CustomImage,
       }}
-      className="prose"
+      className={cn("prose", className)}
       rehypePlugins={[rehypeRaw, rehypeHighlight]}
       remarkPlugins={[remarkRehype, remarkGfm]}
     >

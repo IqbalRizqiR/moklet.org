@@ -69,7 +69,6 @@ export async function deleteLevel(levelId: string) {
   }
 }
 
-// Reorder: receives array of { id, order } and batch-updates
 export async function reorderLevels(organisasiId: string, items: { id: string; order: number }[]) {
   const session = await auth();
   if (!session?.user?.id) return { error: true, message: "Unauthorized" };

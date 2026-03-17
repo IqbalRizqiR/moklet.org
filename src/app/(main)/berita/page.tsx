@@ -18,3 +18,5 @@ export default async function Berita({
     </>
   );
 }
+
+export const revalidate = 60;

@@ -46,6 +46,10 @@ export async function registerAndAssign(
         organisasi_id: organisasiId,
         org_role_id: orgRoleId,
       },
+      include: {
+        org_role: { include: { level: true } },
+        permissions: { where: { organisasi_id: organisasiId } },
+      },
     });
 
     // Notify org leaders
@@ -71,7 +75,29 @@ export async function registerAndAssign(
     }
 
     revalidatePath("/admin/organisasi");
-    return { error: false, message: `Berhasil mendaftarkan ${name}`, data: { id: newUser.id } };
+    return {
+      error: false,
+      message: `Berhasil mendaftarkan ${name}`,
+      data: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        user_pic: newUser.user_pic,
+        org_role: newUser.org_role
+          ? {
+              id: newUser.org_role.id,
+              name: newUser.org_role.name,
+              is_leader: newUser.org_role.is_leader,
+              hierarchy_level: newUser.org_role.hierarchy_level,
+              level_id: newUser.org_role.level_id,
+              level: newUser.org_role.level
+                ? { id: newUser.org_role.level.id, name: newUser.org_role.level.name, order: newUser.org_role.level.order }
+                : null,
+            }
+          : null,
+        permissions: newUser.permissions.map((p) => ({ id: p.id, permission: p.permission })),
+      },
+    };
   } catch (e) {
     console.error(e);
     return { error: true, message: "Gagal mendaftarkan anggota" };
@@ -91,20 +117,19 @@ export async function assignToOrg(
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
   try {
-    const [updatedUser, role] = await Promise.all([
-      prisma.user.update({
-        where: { id: userId },
-        data: {
-          organisasi_id: organisasiId,
-          org_role_id: orgRoleId,
-        },
-        select: { name: true },
-      }),
-      prisma.org_Custom_Role.findUnique({
-        where: { id: orgRoleId },
-        select: { name: true },
-      }),
-    ]);
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        organisasi_id: organisasiId,
+        org_role_id: orgRoleId,
+      },
+      include: {
+        org_role: { include: { level: true } },
+        permissions: { where: { organisasi_id: organisasiId } },
+      },
+    });
+
+    const role = updatedUser.org_role;
 
     // Notify org leaders + the new member
     const leaders = await prisma.user.findMany({
@@ -134,7 +159,29 @@ export async function assignToOrg(
     }
 
     revalidatePath("/admin/organisasi");
-    return { error: false, message: "Berhasil menambah anggota" };
+    return {
+      error: false,
+      message: "Berhasil menambah anggota",
+      data: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        user_pic: updatedUser.user_pic,
+        org_role: updatedUser.org_role
+          ? {
+              id: updatedUser.org_role.id,
+              name: updatedUser.org_role.name,
+              is_leader: updatedUser.org_role.is_leader,
+              hierarchy_level: updatedUser.org_role.hierarchy_level,
+              level_id: updatedUser.org_role.level_id,
+              level: updatedUser.org_role.level
+                ? { id: updatedUser.org_role.level.id, name: updatedUser.org_role.level.name, order: updatedUser.org_role.level.order }
+                : null,
+            }
+          : null,
+        permissions: updatedUser.permissions.map((p) => ({ id: p.id, permission: p.permission })),
+      },
+    };
   } catch (e) {
     console.error(e);
     return { error: true, message: "Gagal menambah anggota" };
@@ -270,8 +317,18 @@ export async function assignTemplateAction(
 
   try {
     await bulkGrantFromTemplate(userId, organisasiId, templateId, session.user.id);
+
+    const updatedPerms = await prisma.org_Permission.findMany({
+      where: { user_id: userId, organisasi_id: organisasiId },
+      select: { id: true, permission: true },
+    });
+
     revalidatePath("/admin/organisasi");
-    return { error: false, message: "Berhasil memberikan permission" };
+    return {
+      error: false,
+      message: "Berhasil memberikan permission",
+      data: { permissions: updatedPerms },
+    };
   } catch (e) {
     console.error(e);
     return { error: true, message: "Gagal memberikan permission" };

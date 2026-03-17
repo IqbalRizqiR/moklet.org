@@ -10,7 +10,7 @@ import Image from "@/app/_components/global/Image";
 import { TextArea, TextField } from "@/app/_components/global/Input";
 import { PostWithTagsAndUser, TagWithPostCount } from "@/types/entityRelations";
 
-import Editor from "@/app/(admin)/admin/components/MdEditor";
+import Editor from "@/app/(admin)/admin/components/LazyEditor";
 import FormButton from "../../_components/parts/SubmitButton";
 
 import { fileSizeToMb } from "@/utils/atomics";

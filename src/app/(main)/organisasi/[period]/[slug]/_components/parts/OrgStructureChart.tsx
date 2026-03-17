@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 import { SectionWrapper } from "@/app/_components/global/Wrapper";
 import { H2 } from "@/app/_components/global/Text";
 
-// Hierarchy level display config
 const LEVEL_CONFIG: Record<number, { label: string; bgClass: string; dotClass: string }> = {
   0: { label: "Pembina", bgClass: "from-amber-500/20 to-yellow-500/10", dotClass: "bg-amber-400" },
   1: { label: "Ketua", bgClass: "from-rose-500/20 to-red-500/10", dotClass: "bg-rose-500" },
@@ -39,7 +38,6 @@ export default async function OrgStructureChart({
     return null;
   }
 
-  // Group by hierarchy level
   const grouped: Record<number, typeof members> = {};
   for (const m of members) {
     const level = m.org_role?.hierarchy_level ?? 5;
@@ -63,12 +61,10 @@ export default async function OrgStructureChart({
 
             return (
               <div key={level} className="w-full flex flex-col items-center">
-                {/* Thin connector from previous */}
                 {levelIdx > 0 && (
                   <div className="w-px h-6 bg-gradient-to-b from-gray-300/60 to-gray-200/30" />
                 )}
 
-                {/* Level badge — pill with glass effect */}
                 <div className="mb-3">
                   <span
                     className={`inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase px-3.5 py-1 rounded-full backdrop-blur-md bg-gradient-to-r ${config.bgClass} border border-white/20 text-gray-700 shadow-sm`}
@@ -78,14 +74,12 @@ export default async function OrgStructureChart({
                   </span>
                 </div>
 
-                {/* Member cards */}
                 <div className="flex flex-wrap justify-center gap-3 max-w-5xl px-2">
                   {membersAtLevel.map((member) => (
                     <div
                       key={member.id}
                       className="group relative flex flex-col items-center gap-2.5 px-4 py-4 rounded-2xl backdrop-blur-lg bg-white/60 border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 w-[130px]"
                     >
-                      {/* Subtle gradient glow behind avatar */}
                       <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-gradient-to-br from-red-200/40 to-rose-300/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                       {/* eslint-disable-next-line @next/next/no-img-element */}

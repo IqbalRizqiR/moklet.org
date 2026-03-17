@@ -33,12 +33,10 @@ export default function CustomRoleManager({
   const [roles, setRoles] = useState(initialRoles);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Level states
   const [newLevelName, setNewLevelName] = useState("");
   const [editingLevel, setEditingLevel] = useState<string | null>(null);
   const [editLevelName, setEditLevelName] = useState("");
 
-  // Role states
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleLevelId, setNewRoleLevelId] = useState("");
   const [newRoleIsLeader, setNewRoleIsLeader] = useState(false);
@@ -47,10 +45,8 @@ export default function CustomRoleManager({
   const [editRoleLevelId, setEditRoleLevelId] = useState("");
   const [editRoleIsLeader, setEditRoleIsLeader] = useState(false);
 
-  // Drag state
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
-  // ── Level CRUD ────────────────────────────────────────────────────────
   const handleCreateLevel = async () => {
     if (!newLevelName.trim()) return;
     setIsLoading(true);
@@ -119,7 +115,6 @@ export default function CustomRoleManager({
     if (result.error) toast.error(result.message);
   };
 
-  // ── Role CRUD ─────────────────────────────────────────────────────────
   const handleCreateRole = async () => {
     if (!newRoleName.trim()) return;
     setIsLoading(true);
@@ -186,10 +181,8 @@ export default function CustomRoleManager({
     setEditRoleIsLeader(role.is_leader);
   };
 
-  // ── Render ────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
-      {/* ═══ Levels Panel ═══ */}
       <div className="rounded-2xl bg-white/60 backdrop-blur-lg border border-white/40 overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-red-500 to-rose-500 px-5 py-3">
           <h3 className="text-white font-bold text-sm">📊 Level Tiers</h3>
@@ -256,7 +249,6 @@ export default function CustomRoleManager({
             </div>
           )}
 
-          {/* Add level */}
           <div className="flex gap-2 pt-2">
             <input
               type="text"
@@ -277,7 +269,6 @@ export default function CustomRoleManager({
         </div>
       </div>
 
-      {/* ═══ Roles Panel ═══ */}
       <div className="rounded-2xl bg-white/60 backdrop-blur-lg border border-white/40 overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-red-500 to-rose-500 px-5 py-3">
           <h3 className="text-white font-bold text-sm">🏷️ Roles</h3>
@@ -285,7 +276,6 @@ export default function CustomRoleManager({
         </div>
 
         <div className="p-4 space-y-3">
-          {/* Roles grouped by level */}
           {levels.map((level) => {
             const levelRoles = roles.filter((r) => r.level_id === level.id);
             if (levelRoles.length === 0) return null;
@@ -299,7 +289,6 @@ export default function CustomRoleManager({
             );
           })}
 
-          {/* Unassigned roles */}
           {(() => {
             const unassigned = roles.filter((r) => !r.level_id);
             if (unassigned.length === 0) return null;
@@ -320,7 +309,6 @@ export default function CustomRoleManager({
             </div>
           )}
 
-          {/* Add role form */}
           <div className="pt-3 border-t border-gray-100/60 space-y-2">
             <input
               type="text"
@@ -340,10 +328,6 @@ export default function CustomRoleManager({
                   <option key={l.id} value={l.id}>{l.name}</option>
                 ))}
               </select>
-              <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer whitespace-nowrap select-none">
-                <input type="checkbox" checked={newRoleIsLeader} onChange={(e) => setNewRoleIsLeader(e.target.checked)} className="w-3 h-3 rounded accent-red-500" />
-                <FaStar className="text-amber-400" size={8} /> Leader
-              </label>
               <button
                 onClick={handleCreateRole}
                 disabled={isLoading || !newRoleName.trim()}
@@ -358,7 +342,6 @@ export default function CustomRoleManager({
     </div>
   );
 
-  // ── Role item renderer ───────────────────────────────────────────────
   function renderRoleItem(role: Role) {
     if (editingRole === role.id) {
       return (
@@ -387,7 +370,7 @@ export default function CustomRoleManager({
             <button
               onClick={() => handleUpdateRole(role.id)}
               disabled={isLoading || !editRoleName.trim()}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 disabled:opacity-40 transition-all"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-primary-400 text-white rounded-lg text-xs font-medium hover:bg-blue-600 disabled:opacity-40 transition-all"
             >
               <FaSave size={10} /> {isLoading ? "Menyimpan..." : "Simpan"}
             </button>

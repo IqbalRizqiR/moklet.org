@@ -14,7 +14,7 @@ export default function Saying({ personData, saying }: Readonly<SayingProps>) {
         role={personData.role}
         image={personData.image}
       />
-      <P>{saying}</P>
+      <P className="text-neutral-600">{saying}</P>
     </div>
   );
 }

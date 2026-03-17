@@ -6,7 +6,6 @@ import prisma from "@/lib/prisma";
 import { canManageMembers } from "@/utils/permissions";
 import { dispatchNotification } from "@/lib/whatsapp";
 
-// Create a custom role for an org (leader defines)
 export async function createRoleAction(
   organisasiId: string,
   name: string,
@@ -20,7 +19,6 @@ export async function createRoleAction(
   const hasAccess = await canManageMembers(session.user.id, organisasiId);
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
-  // Enforce max 1 leader per org
   if (isLeader) {
     const existingLeader = await prisma.org_Custom_Role.findFirst({
       where: { organisasi_id: organisasiId, is_leader: true },
@@ -42,7 +40,6 @@ export async function createRoleAction(
       include: { level: true },
     });
 
-    // Notify org leaders about new role
     const leaders = await prisma.user.findMany({
       where: {
         organisasi_id: organisasiId,
@@ -72,7 +69,6 @@ export async function createRoleAction(
   }
 }
 
-// Update a custom role
 export async function updateRoleAction(
   roleId: string,
   name: string,
@@ -91,7 +87,6 @@ export async function updateRoleAction(
   const hasAccess = await canManageMembers(session.user.id, role.organisasi_id);
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
-  // Enforce max 1 leader per org
   if (isLeader && !role.is_leader) {
     const existingLeader = await prisma.org_Custom_Role.findFirst({
       where: { organisasi_id: role.organisasi_id, is_leader: true, NOT: { id: roleId } },
@@ -120,7 +115,6 @@ export async function updateRoleAction(
   }
 }
 
-// Delete a custom role
 export async function deleteRoleAction(roleId: string) {
   const session = await auth();
   if (!session?.user?.id) return { error: true, message: "Unauthorized" };

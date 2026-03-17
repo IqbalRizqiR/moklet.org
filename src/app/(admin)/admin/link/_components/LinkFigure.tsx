@@ -19,7 +19,8 @@ import {
   UserIcon,
 } from "./Icons";
 import Modal from "./Modal";
-import QRModal from "./QRModal";
+import dynamic from "next/dynamic";
+const QRModal = dynamic(() => import("./QRModal"), { ssr: false });
 
 export default function LinkFigure({
   link,

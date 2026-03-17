@@ -8,6 +8,11 @@ import {
 } from "@/utils/database/organisasi.query";
 import { uploadImageCloudinary } from "./fileUploader";
 
+function normalizeMarkdownInput(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return "";
+  return value.replace(/\r\n/g, "\n").trim();
+}
+
 export async function organisasiUpsert({
   data,
   structure,
@@ -22,10 +27,10 @@ export async function organisasiUpsert({
   organisasiType: Organisasi_Type;
 }) {
   try {
-    const description = data.get("description") as string;
+    const description = normalizeMarkdownInput(data.get("description"));
     const organisasi_name = data.get("organisasi_name") as string;
-    const vision = data.get("vision") as string;
-    const mission = data.get("mission") as string;
+    const vision = normalizeMarkdownInput(data.get("vision"));
+    const mission = normalizeMarkdownInput(data.get("mission"));
     const companion = data.get("companion") as string;
     const contact = data.get("contact") as string;
     const image_description = data.get("image_description") as string;

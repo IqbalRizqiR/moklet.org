@@ -1,6 +1,7 @@
 import { H2, P } from "@/app/_components/global/Text";
 import { SectionWrapper } from "@/app/_components/global/Wrapper";
 import Image from "next/image";
+import MdViewer from "@/app/(main)/berita/[slug]/_components/MdViewer";
 
 export default function Overview({
   organisasi_name,
@@ -26,13 +27,16 @@ export default function Overview({
                 height={106}
                 className="rounded-full w-[100px] h-[100px] md:w-[120px] md:h-[120px] object-cover border-2"
               />
-              <P className="px-4 py-3 border-neutral-500 border rounded-full w-[50%] md:w-[20%] text-center h-fit">
+              <P className="px-4 py-3 border border-glass-border bg-glass-white backdrop-blur-sm shadow-glass-soft rounded-full w-[50%] md:w-[20%] text-center h-fit">
                 Periode {period.replace(/-/, " / ")}
               </P>
             </div>
             <H2 className="font-bold">{organisasi_name}</H2>
           </div>
-          <P>{description}</P>
+          <MdViewer
+            markdown={description}
+            className="max-w-none prose-sm sm:prose-base [&_p]:text-neutral-500"
+          />
         </div>
       </div>
     </SectionWrapper>

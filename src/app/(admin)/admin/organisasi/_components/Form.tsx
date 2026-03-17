@@ -2,17 +2,15 @@
 
 import {
   SelectField,
-  TextArea,
   TextField,
 } from "@/app/_components/global/Input";
 import { Organisasi, Organisasi_Type } from "@prisma/client";
 import { useState } from "react";
-import Editor from "@/app/(admin)/admin/components/MdEditor";
+import Editor from "@/app/(admin)/admin/components/LazyEditor";
 import Image from "@/app/_components/global/Image";
 import { organisasiUpsert } from "@/actions/organisasi";
 import { toast } from "sonner";
 import SubmitButton from "@/app/_components/global/SubmitButton";
-import { useRouter } from "next-nprogress-bar";
 import { fileSizeToMb } from "@/utils/atomics";
 import { P } from "@/app/_components/global/Text";
 import Link from "next/link";
@@ -28,8 +26,11 @@ export default function Form({
   organisasiType: Organisasi_Type;
   currentPeriod: string;
 }) {
-  const router = useRouter();
+
   const [structure, setStructure] = useState(organisasi.structure || "");
+  const [description, setDescription] = useState(organisasi.description || "");
+  const [vision, setVision] = useState(organisasi.vision || "");
+  const [mission, setMission] = useState(organisasi.mission || "");
   const [logo, setLogo] = useState(
     organisasi.logo ||
       "https://res.cloudinary.com/mokletorg/image/upload/v1720188074/assets/image_placeholder.png",
@@ -74,7 +75,6 @@ export default function Form({
         }
 
         toast.success(result.message, { id: toastId });
-        router.refresh();
       }}
     >
       <SelectField
@@ -122,13 +122,12 @@ export default function Form({
           className="border border-neutral-500 border-dotted rounded-xl py-5 px-3"
         />
       </div>
-      <TextArea
-        label="Description"
-        name="description"
-        required={true}
-        placeholder={`Deskripsi organisasi ${organisasi.organisasi}`}
-        value={organisasi.description}
-      ></TextArea>
+      <Editor
+        label={`Description organisasi ${organisasi.organisasi}`}
+        value={description}
+        onChange={(value) => setDescription(value || "")}
+      />
+      <input type="hidden" name="description" value={description} readOnly />
       <div className="flex flex-col">
         <label
           htmlFor="image"
@@ -179,20 +178,18 @@ export default function Form({
         placeholder={`Link sosial media ${organisasi.organisasi}`}
         value={organisasi.contact}
       />
-      <TextArea
-        label="Visi"
-        name="vision"
-        required={false}
-        placeholder={`Visi organisasi ${organisasi.organisasi}`}
-        value={organisasi.vision!}
+      <Editor
+        label={`Visi organisasi ${organisasi.organisasi}`}
+        value={vision}
+        onChange={(value) => setVision(value || "")}
       />
-      <TextArea
-        label="Misi"
-        name="mission"
-        required={false}
-        placeholder={`Misi organisasi ${organisasi.organisasi}`}
-        value={organisasi.mission!}
+      <input type="hidden" name="vision" value={vision} readOnly />
+      <Editor
+        label={`Misi organisasi ${organisasi.organisasi}`}
+        value={mission}
+        onChange={(value) => setMission(value || "")}
       />
+      <input type="hidden" name="mission" value={mission} readOnly />
       <P className="text-black first-letter:capitalize">
         Struktur Organisasi
       </P>
@@ -217,7 +214,6 @@ export default function Form({
         </p>
       </div>
 
-      {/* Hidden field to keep the structure value for backward compat */}
       <input type="hidden" name="structure" value={structure} onChange={() => {}} />
       <SubmitButton />
     </form>

@@ -97,3 +97,5 @@ export default async function Organ({ params }: Readonly<Props>) {
     </div>
   );
 }
+
+export const revalidate = 60;

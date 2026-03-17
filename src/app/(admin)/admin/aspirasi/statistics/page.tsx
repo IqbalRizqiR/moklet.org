@@ -6,9 +6,18 @@ import FilterSection from "./_components/FilterSection";
 import EventStatsSection from "./_components/EventStatsSection";
 import OrganizationStatsSection from "./_components/OrganizationStatsSection";
 import SchoolUnitStatsSection from "./_components/SchoolUnitStatsSection";
-import MonthlyTrendChart from "./_components/MonthlyTrendChart";
-import StatisticsDistributionChart from "./_components/StatisticsDistributionChart";
 import { getAspirasiStats } from "@/actions/statsAspirasi";
+import dynamic from "next/dynamic";
+
+const MonthlyTrendChart = dynamic(() => import("./_components/MonthlyTrendChart"), {
+  ssr: false,
+  loading: () => <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />,
+});
+
+const StatisticsDistributionChart = dynamic(() => import("./_components/StatisticsDistributionChart"), {
+  ssr: false,
+  loading: () => <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />,
+});
 
 export default async function StatisticsPage({
   searchParams,
@@ -140,3 +149,5 @@ export default async function StatisticsPage({
     </div>
   );
 }
+
+export const revalidate = 60;
