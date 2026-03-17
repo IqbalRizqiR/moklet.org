@@ -653,7 +653,7 @@ export default function MembersTable({
               {pendingMember && (
                 <div className="border-t border-gray-200/30 pt-3">
                   <p className="text-xs font-medium text-gray-500 mb-2">📊 Preview posisi di struktur:</p>
-                  <OrgStructurePreview members={previewMembers} pendingMember={pendingMember} />
+                  <OrgStructurePreview members={previewMembers} pendingMember={pendingMember} levels={levels} />
                 </div>
               )}
             </div>

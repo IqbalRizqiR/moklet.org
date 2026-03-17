@@ -88,6 +88,7 @@ export async function registerAndAssign(
     }
 
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return {
       error: false,
       message: `Berhasil mendaftarkan ${name}`,
@@ -194,6 +195,7 @@ export async function assignToOrg(
     }
 
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return {
       error: false,
       message: "Berhasil menambah anggota",
@@ -271,6 +273,7 @@ export async function removeFromOrg(userId: string) {
     }
 
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return { error: false, message: "Berhasil menghapus anggota" };
   } catch (e) {
     console.error(e);
@@ -350,6 +353,7 @@ export async function updateOrgRole(userId: string, orgRoleId: string) {
     }
 
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return { error: false, message: "Berhasil mengubah role" };
   } catch (e) {
     console.error(e);
@@ -378,6 +382,7 @@ export async function assignTemplateAction(
     });
 
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return {
       error: false,
       message: "Berhasil memberikan permission",
@@ -404,6 +409,7 @@ export async function grantPermissionAction(
   try {
     await grantPermission(userId, organisasiId, permission, session.user.id);
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return { error: false, message: "Permission diberikan" };
   } catch (e) {
     console.error(e);
@@ -426,6 +432,7 @@ export async function revokePermissionAction(
   try {
     await revokePermission(userId, organisasiId, permission);
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return { error: false, message: "Permission dicabut" };
   } catch (e) {
     console.error(e);

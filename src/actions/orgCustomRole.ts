@@ -62,6 +62,7 @@ export async function createRoleAction(
     }
 
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return { error: false, message: "Role berhasil dibuat", data: role };
   } catch (e) {
     console.error(e);
@@ -108,6 +109,7 @@ export async function updateRoleAction(
     });
 
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return { error: false, message: "Role berhasil diupdate" };
   } catch (e) {
     console.error(e);
@@ -135,6 +137,7 @@ export async function deleteRoleAction(roleId: string) {
   try {
     await prisma.org_Custom_Role.delete({ where: { id: roleId } });
     revalidatePath("/admin/organisasi");
+    revalidatePath("/");
     return { error: false, message: "Role berhasil dihapus" };
   } catch (e) {
     console.error(e);
