@@ -4,6 +4,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import Toaster from "./_components/main/CustomToaster";
 import { NextAuthProvider } from "./_components/main/NextAuthProvider";
 import ProgressBarProvider from "./_components/main/ProgressBarProvider";
+import RealtimeHandler from "./_components/global/RealtimeHandler";
 
 import type { Metadata, Viewport } from "next";
 
@@ -51,6 +52,7 @@ export default function RootLayout({
       )}
       <body className={montserrat.className + " overflow-x-hidden"}>
         <NextAuthProvider>
+          <RealtimeHandler />
           <Toaster />
           <ProgressBarProvider>{children}</ProgressBarProvider>
         </NextAuthProvider>

@@ -78,6 +78,21 @@ export async function postCreate(
     const ABuffer = await image.arrayBuffer();
     const upload = await uploadImageCloudinary(Buffer.from(ABuffer));
 
+    // Privilege check for creation
+    const userdb = await prisma.user.findUnique({ where: { id: session.user.id } });
+    if (!userdb) return { error: true, message: "User tidak ditemukan!" };
+
+    const isAdmin = userdb.role === "SuperAdmin" || userdb.role === "Admin";
+    let hasPermission = isAdmin;
+
+    if (!hasPermission && userdb.organisasi_id) {
+      hasPermission = await canPublishPost(userdb.id, userdb.organisasi_id);
+    }
+
+    if (!hasPermission) {
+      return { error: true, message: "Hanya Admin atau pengurus organisasi yang dapat membuat berita." };
+    }
+
     const newPost = await createPost({
       slug: slug,
       content: MD,
@@ -265,16 +280,37 @@ export async function updatePostStatus(current_state: boolean, id: string) {
 }
 
 export async function postDelete(id: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: true, message: "Unauthorized" };
+
   try {
-    const post = await deletePost(id);
+    const post = await prisma.post.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!post) return { error: true, message: "Post tidak ditemukan!" };
+
+    // Privilege check
+    const isAuthor = post.user_id === session.user.id;
+    const isAdmin = session.user.role === "SuperAdmin" || session.user.role === "Admin";
+    let hasPermission = isAuthor || isAdmin;
+
+    if (!hasPermission && post.user.organisasi_id) {
+      hasPermission = await canPublishPost(session.user.id, post.user.organisasi_id);
+    }
+
+    if (!hasPermission) return { error: true, message: "Tidak punya akses untuk menghapus berita ini." };
+
+    const deleted = await deletePost(id);
 
     revalidatePath("/");
     revalidatePath("/berita");
-    revalidatePath(`/berita/${post.slug}`);
-    revalidatePath(`/api/post/${post.slug}/og-image.png`);
+    revalidatePath(`/berita/${deleted.slug}`);
+    revalidatePath(`/api/post/${deleted.slug}/og-image.png`);
     revalidatePath("/admin/posts");
     revalidatePath("/organisasi/[period]/[slug]", "page");
-    revalidatePath(`/admin/posts/${post.slug}`);
+    revalidatePath(`/admin/posts/${deleted.slug}`);
     return { message: "Berhasil menghapus post!" };
   } catch (e) {
     console.log(e);

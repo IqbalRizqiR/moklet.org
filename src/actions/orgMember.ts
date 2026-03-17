@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { canManageMembers } from "@/utils/permissions";
 import { bulkGrantFromTemplate, grantPermission, revokePermission } from "@/utils/database/orgPermission.query";
 import { dispatchNotification } from "@/lib/whatsapp";
+import { pingPermissionUpdate } from "@/utils/realtime";
 
 // Register a new user and assign them to an organisation in one step
 // Used when the member isn't yet in the system
@@ -86,6 +87,9 @@ export async function registerAndAssign(
         organisasiId,
       }).catch(() => {});
     }
+
+    // Ping user for real-time permission update
+    await pingPermissionUpdate(newUser.id);
 
     revalidatePath("/admin/organisasi");
     revalidatePath("/");
@@ -194,6 +198,9 @@ export async function assignToOrg(
       }).catch(() => {});
     }
 
+    // Ping user for real-time permission update
+    await pingPermissionUpdate(userId);
+
     revalidatePath("/admin/organisasi");
     revalidatePath("/");
     return {
@@ -271,6 +278,9 @@ export async function removeFromOrg(userId: string) {
         organisasiId,
       }).catch(() => {});
     }
+
+    // Ping user for real-time permission update
+    await pingPermissionUpdate(userId);
 
     revalidatePath("/admin/organisasi");
     revalidatePath("/");
@@ -352,6 +362,9 @@ export async function updateOrgRole(userId: string, orgRoleId: string) {
       }).catch(() => {});
     }
 
+    // Ping user for real-time permission update
+    await pingPermissionUpdate(userId);
+
     revalidatePath("/admin/organisasi");
     revalidatePath("/");
     return { error: false, message: "Berhasil mengubah role" };
@@ -375,6 +388,7 @@ export async function assignTemplateAction(
 
   try {
     await bulkGrantFromTemplate(userId, organisasiId, templateId, session.user.id);
+    await pingPermissionUpdate(userId);
 
     const updatedPerms = await prisma.org_Permission.findMany({
       where: { user_id: userId, organisasi_id: organisasiId },
@@ -408,6 +422,7 @@ export async function grantPermissionAction(
 
   try {
     await grantPermission(userId, organisasiId, permission, session.user.id);
+    await pingPermissionUpdate(userId);
     revalidatePath("/admin/organisasi");
     revalidatePath("/");
     return { error: false, message: "Permission diberikan" };
@@ -431,6 +446,7 @@ export async function revokePermissionAction(
 
   try {
     await revokePermission(userId, organisasiId, permission);
+    await pingPermissionUpdate(userId);
     revalidatePath("/admin/organisasi");
     revalidatePath("/");
     return { error: false, message: "Permission dicabut" };

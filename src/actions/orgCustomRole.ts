@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { canManageMembers } from "@/utils/permissions";
 import { dispatchNotification } from "@/lib/whatsapp";
+import { pingBulkPermissionUpdate } from "@/utils/realtime";
 
 export async function createRoleAction(
   organisasiId: string,
@@ -107,6 +108,15 @@ export async function updateRoleAction(
         level_id: levelId !== undefined ? (levelId || null) : undefined,
       },
     });
+
+    // Notify all users in this role about permission changes
+    const roleUsers = await prisma.user.findMany({
+      where: { org_role_id: roleId },
+      select: { id: true },
+    });
+    if (roleUsers.length > 0) {
+      await pingBulkPermissionUpdate(roleUsers.map((u: any) => u.id));
+    }
 
     revalidatePath("/admin/organisasi");
     revalidatePath("/");
