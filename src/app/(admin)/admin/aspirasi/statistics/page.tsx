@@ -7,17 +7,7 @@ import EventStatsSection from "./_components/EventStatsSection";
 import OrganizationStatsSection from "./_components/OrganizationStatsSection";
 import SchoolUnitStatsSection from "./_components/SchoolUnitStatsSection";
 import { getAspirasiStats } from "@/actions/statsAspirasi";
-import dynamic from "next/dynamic";
-
-const MonthlyTrendChart = dynamic(() => import("./_components/MonthlyTrendChart"), {
-  ssr: false,
-  loading: () => <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />,
-});
-
-const StatisticsDistributionChart = dynamic(() => import("./_components/StatisticsDistributionChart"), {
-  ssr: false,
-  loading: () => <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />,
-});
+import { MonthlyTrendChart, StatisticsDistributionChart } from "./_components/DynamicCharts";
 
 export default async function StatisticsPage({
   searchParams,
