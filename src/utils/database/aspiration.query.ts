@@ -46,3 +46,30 @@ export const findAspiration = async (
 export const createAspiration = async (data: Prisma.AspirasiCreateInput) => {
   return await prisma.aspirasi.create({ data });
 };
+
+export const findAspirationsByUserId = async (
+  userId: string,
+) => {
+  return await prisma.aspirasi.findMany({
+    where: { user_id: userId },
+    orderBy: { created_at: "desc" },
+    include: { event: { select: { event_name: true } } },
+  });
+};
+
+export const updateAspiration = async (
+  id: string,
+  userId: string,
+  data: Prisma.AspirasiUpdateInput,
+) => {
+  // Check if it belongs to user first to prevent updating others' aspirations securely
+  const existing = await prisma.aspirasi.findUnique({ where: { id } });
+  if (!existing || existing.user_id !== userId) {
+    throw new Error("Unauthorized or not found");
+  }
+
+  return await prisma.aspirasi.update({
+    where: { id },
+    data,
+  });
+};

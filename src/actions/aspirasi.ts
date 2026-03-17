@@ -6,6 +6,8 @@ import {
   countAllAspirations,
   createAspiration,
   findAllAspirations,
+  findAspirationsByUserId,
+  updateAspiration as updateAspirationDb
 } from "@/utils/database/aspiration.query";
 import { auth } from "@/lib/auth";
 import { ratelimit } from "@/lib/ratelimit";
@@ -230,3 +232,65 @@ export const getAspirations = async ({
     throw new Error(`An error happened: ${error}`);
   }
 };
+
+export const getUserAspirations = async () => {
+  const session = await auth();
+  if (!session?.user) return { success: false, data: [] };
+
+  try {
+    const aspirations = await findAspirationsByUserId(session.user.id);
+    return { success: true, data: aspirations };
+  } catch (error) {
+    console.error("[getUserAspirations] Error:", error);
+    return { success: false, data: [] };
+  }
+};
+
+export async function editAspiration(
+  id: string,
+  data: FormData,
+  pesan_aspirasi: string,
+) {
+  const session = await auth();
+  if (!session?.user) return { success: false, message: "Unauthorized" };
+
+  const judul_aspirasi = (data.get("judulAspirasi") as string) || "";
+  const imageFile = data.get("image") as File | null;
+
+  try {
+    let imageUrl: string | undefined;
+
+    // Only upload if a new file is provided
+    if (imageFile && imageFile.name !== "" && imageFile.size > 0) {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const upload = await uploadImageCloudinary(buffer);
+      if (upload.data?.url) {
+        imageUrl = upload.data.url;
+      }
+    }
+
+    const updateData: any = {
+      judul_aspirasi,
+      pesan_aspirasi,
+    };
+    if (imageUrl) {
+      updateData.gambar_aspirasi = imageUrl;
+    }
+
+    await updateAspirationDb(id, session.user.id, updateData);
+
+    revalidatePath("/aspirasi/riwayat");
+    revalidatePath("/admin/aspirasi");
+
+    return {
+      success: true,
+      message: "Berhasil menyimpan perubahan aspirasi!",
+    };
+  } catch (e: any) {
+    console.error("[editAspiration] Error:", e);
+    return {
+      success: false,
+      message: e.message || "Gagal menyimpan perubahan aspirasi!",
+    };
+  }
+}
