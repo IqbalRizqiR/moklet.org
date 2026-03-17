@@ -1,71 +1,350 @@
-<p align="center"><img src="https://socialify.git.ci/mokletdev/moklet.org/image?description=1&amp;font=Raleway&amp;forks=1&amp;issues=1&amp;language=1&amp;name=1&amp;owner=1&amp;pattern=Solid&amp;stargazers=1&amp;theme=Dark" alt="project-image"></p>
+# 📄 Dokumen Fitur & Alur Pengguna Aplikasi moklet.org
 
-<h2>🚀 Demo</h2>
+Dokumen ini merangkum seluruh fitur utama, modul sistem, serta alur pengguna (*user journey*) yang tersedia dalam aplikasi **moklet.org**. Cakupan dokumen meliputi fitur yang digunakan oleh pengguna publik (Guest/Siswa) maupun pengguna administratif (Admin/Organisasi).
 
-[moklet.org](https://www.moklet.org)
+Fitur eksperimental atau rute internal untuk pengujian sistem (misalnya rute migrasi database atau endpoint debugging) tidak disertakan dalam dokumen ini.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/7e3e2c2a-10bc-499c-9d74-baaf228d4e17/deploy-status)](https://app.netlify.com/sites/moklet-organization/deploys)
+---
 
-<h2>🧐 Features</h2>
+# 🏗️ Arsitektur Sistem & Performa
 
-Here are some of the project's pages:
+Aplikasi **moklet.org** dibangun menggunakan pendekatan *Serverless Free Tier Stack* untuk memastikan performa tinggi, skalabilitas yang baik, serta meminimalkan kebutuhan pemeliharaan server.
 
-- Landing Page
-- News Page
-- Organization Page
-- About Page
-- Developer Page
-- Admin Page
+## Komponen Arsitektur
 
-<h2>🏃‍♂️ How to run</h2>
+### Hosting & Runtime
+Aplikasi di-deploy menggunakan **Vercel**, memanfaatkan *Edge Network* dan *Serverless Functions* untuk distribusi global dengan latensi rendah.
 
-Clone this repository:
+### Database
+Sistem menggunakan **Supabase PostgreSQL** sebagai basis data utama.
 
-```bash
-git clone https://github.com/mokletdev/moklet.org.git
-```
+Koneksi database menggunakan **Supavisor IPv4 Pooling** untuk menjaga stabilitas koneksi saat terjadi lonjakan akses tanpa melebihi batas koneksi database.
 
-Install dependencies and setup husky
+### Caching & Rate Limiting
+**Upstash Redis** digunakan untuk:
 
-```bash
-npm install
-npm run prepare
-```
+- Menyimpan cache dari query berat (misalnya statistik dashboard)
+- Mengimplementasikan rate limiting pada form publik untuk mencegah spam  
+  *(contoh: maksimal 3 pengiriman per menit per IP)*
 
-To run the development server:
+### Rendering Strategy
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Halaman publik seperti:
 
-<h2>💻 Built with</h2>
+- Homepage
+- Berita
+- Organisasi
 
-Technologies used in the project:
+menggunakan **Incremental Static Regeneration (ISR)** dengan interval revalidasi **60 detik**.
 
-- Next.JS
-- NextAuth.JS
-- Prisma
+Komponen berat seperti:
 
-<h2>🤝 Contributing</h2>
+- Markdown Editor
+- Chart (Recharts / ECharts)
+- QR Code Generator
 
-We welcome contributions to this project! Please take a moment to review our [📄 CONTRIBUTING.md](https://github.com/mokletdev/moklet.org/blob/development/CONTRIBUTING.md) guide for details on our code of conduct, contribution process, and how to get started.
+dimuat menggunakan **lazy loading (`next/dynamic`)** untuk menghemat bandwidth dan mempercepat waktu muat halaman.
 
-Your support and ideas make this project even better. Thank you for being part of our community! 🌟
+---
 
-<h2>🛡️ License:</h2>
+# 🎯 Modul 1: Sistem Aspirasi (Pengaduan & Saran)
 
-This project is licensed under the GNU [General Public License v3.0](https://github.com/mokletdev/moklet.org/blob/development/LICENSE.md)
+Modul Aspirasi menyediakan sarana digital bagi siswa untuk menyampaikan pertanyaan, kritik, keluhan, maupun ide kepada unit sekolah atau organisasi siswa secara terstruktur.
 
-<h2>🌐 Supported by:</h2>
+## Fitur Utama
 
-<p align="center">
-  <a href="https://www.netlify.com/" target="_blank">
-    <img src="https://res.cloudinary.com/projectsben/image/upload/v1736730123/storage/m6rrhk5ijqrsub55ptue.svg" alt="Netlify Logo" width="100">
-  </a>
-</p>
+### Target Aspirasi Dinamis
+
+Aspirasi dapat ditujukan kepada dua kategori utama.
+
+#### Unit Sekolah
+
+- Hubin
+- Kurikulum
+- Kesiswaan
+- Sarana & Prasarana
+- ISO
+- Tata Usaha
+- Guru
+- Satpam / Cleaning Service
+
+#### Organisasi Siswa
+
+- MPK
+- OSIS
+- TSBC
+- PMR
+- dan organisasi lainnya
+
+---
+
+### Mode Identitas Pengirim
+
+Pengirim aspirasi dapat memilih:
+
+- **Anonim** (identitas disembunyikan)
+- **Terbuka** (menggunakan identitas akun)
+
+---
+
+### Dashboard Statistik Publik
+
+Sistem menampilkan statistik aspirasi secara visual dalam bentuk:
+
+- **Bar Chart** → tren aspirasi bulanan
+- **Pie Chart** → distribusi aspirasi berdasarkan target
+
+---
+
+### Status Pelacakan Aspirasi
+
+Setiap aspirasi memiliki status:
+
+- Belum Dibaca
+- Diproses
+- Selesai
+- Ditolak
+
+---
+
+### Tutorial Interaktif
+
+Halaman aspirasi dilengkapi **komponen tutorial animatif** berbasis *glassmorphism UI* untuk membantu siswa memahami langkah pengisian form secara visual.
+
+---
+
+## Alur Pengguna
+
+### Publik (Siswa)
+
+1. Siswa membuka halaman beranda.
+2. Sistem menampilkan komponen **AspirationTutorial**.
+3. Siswa mengisi:
+   - data diri (jika belum login)
+   - target aspirasi
+   - isi aspirasi
+4. Siswa menekan tombol **Kirim**.
+5. Sistem memvalidasi melalui **Upstash Redis Rate Limiter** untuk mencegah spam.
+
+---
+
+### Sistem Notifikasi
+
+Setelah aspirasi berhasil dikirim:
+
+- Sistem mengirim **notifikasi WhatsApp** menggunakan **Fonnte API** ( iki nggawe wa ku, ojok ngelamak timbang ke ban wa ku )
+- Pesan dikirim ke **PIC / Leader** dari unit terkait.
+
+---
+
+### Admin / Leader
+
+1. Admin login ke **Dashboard Admin → Aspirasi**
+2. Admin melihat daftar aspirasi yang masuk
+3. Admin membaca detail aspirasi
+4. Admin memberikan tanggapan
+5. Admin memperbarui status menjadi:
+   - Diproses
+   - Selesai
+   - Ditolak
+
+---
+
+# 👔 Modul 2: Manajemen Struktur Organisasi
+
+Modul ini merupakan inti dari sistem manajemen organisasi siswa yang memungkinkan pengaturan struktur kepengurusan, pembagian jabatan, serta delegasi akses.
+
+---
+
+## Fitur Utama
+
+### Periode Kepengurusan
+
+Setiap organisasi dikelola berdasarkan periode jabatan, misalnya:
+
+- 2024/2025
+- 2025/2026
+
+Pendekatan ini memungkinkan riwayat kepengurusan tetap tersimpan tanpa mengganggu periode baru.
+
+---
+
+### Hierarki Level
+
+SuperAdmin dapat membuat dan mengatur **tingkatan hierarki organisasi** menggunakan mekanisme **drag-and-drop** tanpa perlu memuat ulang halaman.
+
+Contoh:
+
+1. Badan Pengurus Harian
+2. Divisi Kominfo
+3. Staff
+
+---
+
+### Jabatan Kustom
+
+Admin dapat membuat **jabatan khusus secara dinamis**, misalnya:
+
+- Ketua Umum
+- Koordinator Acara
+- PIC Acoustic
+- Ketua Pelaksana
+
+Sistem memastikan bahwa dalam satu organisasi **tidak boleh terdapat lebih dari satu Leader aktif**.
+
+---
+
+### Penugasan Anggota Real-Time
+
+Admin dapat menambahkan anggota dengan memasukkan **email siswa**.
+
+Backend akan otomatis:
+
+- membuat entitas **User**
+- membuat **User_Auth**
+- menetapkan **System Role**
+- menghubungkan dengan organisasi dan jabatan terkait
+
+UI akan diperbarui secara **reaktif tanpa refresh halaman**.
+
+---
+
+### Template Izin (Permission Template)
+
+SuperAdmin dapat memberikan **sekumpulan hak akses sekaligus** kepada satu kelompok anggota.
+
+Contoh:
+
+Template **Editor Berita** diberikan kepada seluruh anggota **Divisi Jurnalistik**.
+
+---
+
+### Organogram Visual
+
+Sistem menyediakan **preview bagan organisasi** dalam bentuk **visual organogram** berbasis kartu hierarki (*glass card*).
+
+---
+
+## Alur Manajemen Keanggotaan
+
+1. SuperAdmin login.
+2. Membuka menu **Kelola Organisasi**.
+3. Memilih periode kepengurusan.
+4. Membuat atau mengatur **hierarki level**.
+5. Membuat **jabatan baru**.
+6. Menambahkan anggota organisasi.
+7. Sistem memperbarui **preview organogram secara real-time**.
+
+---
+
+# 📰 Modul 3: Content Management System (Berita)
+
+Modul CMS menggantikan fungsi **mading sekolah tradisional** dengan sistem publikasi berita digital.
+
+---
+
+## Fitur Utama
+
+### Rich Markdown Editor
+
+Editor mendukung berbagai fitur:
+
+- teks tebal
+- teks miring
+- heading
+- daftar
+- blok kode
+- gambar
+
+Editor dimuat menggunakan **lazy loading** untuk menghemat ukuran bundle.
+
+---
+
+### Integrasi Cloudinary
+
+Thumbnail artikel diunggah melalui **Cloudinary Upload Preset** sehingga proses unggah gambar cepat dan stabil.
+
+---
+
+### Tagging & Metadata
+
+Artikel dapat memiliki beberapa tag, misalnya:
+
+- `#lomba`
+- `#pengumuman`
+- `#kegiatan`
+
+Sistem juga otomatis membuat **Open Graph Metadata** untuk preview saat artikel dibagikan ke media sosial.
+
+---
+
+### Sistem Draft & Publikasi
+
+Artikel dapat disimpan sebagai:
+
+- **Draft (Published: false)**
+- **Published**
+
+---
+
+## Alur Publikasi Berita
+
+1. Anggota jurnalistik login
+2. Membuka **Dashboard → Posts → Buat Berita**
+3. Mengunggah thumbnail
+4. Menulis isi berita
+5. Menambahkan tag
+6. Menyimpan artikel
+
+Sistem melakukan **revalidasi ISR setiap 60 detik** sehingga berita baru segera muncul di halaman publik.
+
+---
+
+# 🔗 Modul 4: Formulir Dinamis
+
+Modul ini berfungsi sebagai alternatif internal dari **Google Forms** yang terintegrasi dengan ekosistem moklet.org.
+
+---
+
+## Fitur Utama
+
+### Form Builder
+
+Admin dapat membuat pertanyaan dengan berbagai tipe:
+
+- Text Input
+- Radio Button
+- Checkbox
+- Dropdown
+
+---
+
+### Public Submission
+
+Siswa dapat mengisi formulir melalui tautan publik dengan perlindungan:
+
+- rate limiting
+- batas submit
+
+---
+
+### Analitik & Ekspor Data
+
+Jawaban responden dapat ditampilkan sebagai:
+
+- grafik **ECharts**
+- tabel data
+
+Data juga dapat diekspor menjadi **Microsoft Excel**.
+
+---
+
+# 🚀 Modul 5: Tools Produktivitas
+
+Selain modul utama, moklet.org juga menyediakan alat tambahan untuk kebutuhan organisasi siswa.
+
+---
+
+## Shortlink System
+
+Sistem pemendek URL:

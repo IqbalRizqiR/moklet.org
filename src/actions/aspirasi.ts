@@ -9,6 +9,8 @@ import {
 } from "@/utils/database/aspiration.query";
 import { auth } from "@/lib/auth";
 import { ratelimit } from "@/lib/ratelimit";
+import { dispatchNotification } from "@/lib/whatsapp";
+import prisma from "@/lib/prisma";
 
 export type aspirationType = "ORGANISASI" | "SEKOLAH" | "EVENT";
 
@@ -53,6 +55,67 @@ export async function submitAspiration(
         },
       },
     });
+
+    if (type === "ORGANISASI") {
+      const orgType = recipent?.toUpperCase() as Organisasi_Type;
+      const org = await prisma.organisasi.findFirst({
+        where: {
+          organisasi: orgType,
+          period: { is_active: true }
+        }
+      });
+      if (org) {
+        const leaders = await prisma.user.findMany({
+          where: {
+            organisasi_id: org.id,
+            org_role: { is_leader: true }
+          },
+          select: { id: true }
+        });
+        if (leaders.length > 0) {
+          dispatchNotification({
+            type: "new_aspiration_org",
+            title: "Aspirasi Organisasi Baru",
+            message: `Ada aspirasi baru berjudul "${judul_aspirasi}" untuk ${org.organisasi_name}.`,
+            targetUrl: `/admin/aspirasi`,
+            actorId: session.user.id,
+            recipientIds: leaders.map((l) => l.id),
+            organisasiId: org.id,
+          });
+        }
+      }
+    } else if (type === "EVENT") {
+      const event = await prisma.event.findUnique({
+        where: { id: recipent }
+      });
+      if (event) {
+        dispatchNotification({
+          type: "new_aspiration_event",
+          title: "Aspirasi Event Baru",
+          message: `Ada aspirasi baru berjudul "${judul_aspirasi}" untuk event ${event.event_name}.`,
+          targetUrl: `/admin/aspirasi`,
+          actorId: session.user.id,
+          recipientIds: [event.user_id],
+        });
+      }
+    } else if (type === "SEKOLAH") {
+      const admins = await prisma.user.findMany({
+        where: {
+          role: { in: ["SuperAdmin", "Admin"] }
+        },
+        select: { id: true }
+      });
+      if (admins.length > 0) {
+        dispatchNotification({
+          type: "new_aspiration_sekolah",
+          title: "Aspirasi Unit Sekolah Baru",
+          message: `Ada aspirasi baru berjudul "${judul_aspirasi}" untuk unit ${recipent}.`,
+          targetUrl: `/admin/aspirasi`,
+          actorId: session.user.id,
+          recipientIds: admins.map((a) => a.id),
+        });
+      }
+    }
 
     revalidatePath("/admin/aspirasi");
     return {
