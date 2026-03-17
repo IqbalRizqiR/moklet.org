@@ -12,6 +12,7 @@ import {
   deletePost,
 } from "@/utils/database/post.query";
 import { auth } from "@/lib/auth";
+import { canPublishPost } from "@/utils/permissions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function uploadInsert(data: Record<string, any>) {
@@ -131,13 +132,26 @@ export async function postUpdate(
       upload = await uploadImageCloudinary(Buffer.from(ABuffer));
     }
 
+    const post = await prisma.post.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!post) return { error: true, message: "Post tidak ditemukan!" };
+
+    // Privilege check
+    const isAuthor = post.user_id === session.user.id;
+    const isAdmin = session.user.role === "SuperAdmin" || session.user.role === "Admin";
+    let hasPermission = isAuthor || isAdmin;
+
+    if (!hasPermission && post.user.organisasi_id) {
+      hasPermission = await canPublishPost(session.user.id, post.user.organisasi_id);
+    }
+
+    if (!hasPermission) return { error: true, message: "Tidak punya akses untuk mengedit berita ini." };
+
     const update = await updatePost(
-      {
-        id: id,
-        user_id: !session?.user.role.includes("Admin")
-          ? session?.user.id
-          : undefined,
-      },
+      { id: id },
       {
         slug: slug ?? undefined,
         content: MD ?? undefined,
@@ -165,7 +179,28 @@ export async function postUpdate(
 }
 
 export async function updatePostStatus(current_state: boolean, id: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: true, message: "Unauthorized" };
+
   try {
+    const post = await prisma.post.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!post) return { error: true, message: "Post tidak ditemukan!" };
+
+    // Privilege check
+    const isAuthor = post.user_id === session.user.id;
+    const isAdmin = session.user.role === "SuperAdmin" || session.user.role === "Admin";
+    let hasPermission = isAuthor || isAdmin;
+
+    if (!hasPermission && post.user.organisasi_id) {
+      hasPermission = await canPublishPost(session.user.id, post.user.organisasi_id);
+    }
+
+    if (!hasPermission) return { error: true, message: "Tidak punya akses untuk mengubah status berita ini." };
+
     const update = await updatePost(
       { id: id },
       {

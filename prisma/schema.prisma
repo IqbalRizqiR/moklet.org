@@ -282,10 +282,20 @@ model Aspirasi {
   event_id       String?          @db.Char(36)
   judul_aspirasi String
   pesan_aspirasi String           @db.Text
+  gambar_aspirasi String?          @db.Text
   organisasi     Organisasi_Type?
   unit_sekolah   UnitSekolah?
   is_anonymous   Boolean          @default(false)
   created_at     DateTime         @default(now())
+}
+
+// Global config for unit school notifications
+model SchoolUnitConfig {
+  unit            UnitSekolah @id
+  wa_notify_phone String?
+  updated_at      DateTime    @updatedAt
+
+  @@map("Unit_Sekolah_Config")
 }
 
 // Dynamic org roles — leaders define per org (e.g. "PIC Acoustic", "Head of Design")

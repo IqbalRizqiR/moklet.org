@@ -11,7 +11,7 @@ export async function uploadImageCloudinary(file: Buffer | any) {
       (resolve, reject) => {
         cloudinary.uploader
           .upload_stream(
-            { upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET || "blog_content" },
+            { folder: "aspirasi" },
             (error, uploadResult) => {
               if (error) reject(error);
               return resolve(uploadResult);

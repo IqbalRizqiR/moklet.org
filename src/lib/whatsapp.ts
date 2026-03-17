@@ -10,6 +10,7 @@ const FONNTE_API_URL = "https://api.fonnte.com/send";
 export async function sendWhatsAppMessage(
   phone: string,
   message: string,
+  url?: string,
 ): Promise<boolean> {
   const apiKey = process.env.FONNTE_API_KEY;
   if (!apiKey) {
@@ -18,17 +19,24 @@ export async function sendWhatsAppMessage(
   }
 
   try {
+    const payload: any = {
+      target: phone,
+      message,
+      countryCode: "62", // Indonesia
+    };
+
+    // Fonnte uses the 'file' parameter for media attachments (like images or documents)
+    if (url) {
+      payload.file = url;
+    }
+
     const response = await fetch(FONNTE_API_URL, {
       method: "POST",
       headers: {
         Authorization: apiKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        target: phone,
-        message,
-        countryCode: "62", // Indonesia
-      }),
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json();
@@ -59,6 +67,8 @@ export async function dispatchNotification({
   actorId,
   recipientIds,
   organisasiId,
+  imageUrl,
+  customPhone,
 }: {
   type: string;
   title: string;
@@ -67,6 +77,8 @@ export async function dispatchNotification({
   actorId: string;
   recipientIds: string[];
   organisasiId?: string;
+  imageUrl?: string;
+  customPhone?: string;
 }) {
   try {
     await createNotification({
@@ -78,15 +90,28 @@ export async function dispatchNotification({
       recipientIds,
     });
 
-    if (organisasiId) {
+    let waMessage = `📣 *${title}*\n\n${message}`;
+
+    if (imageUrl) {
+      console.log(imageUrl)
+      waMessage += `\n\n📌 *Terdapat lampiran gambar:*\n${imageUrl}`;
+    }
+
+    // Priority 1: Custom phone number provided (e.g. for unit school config)
+    if (customPhone) {
+      sendWhatsAppMessage(customPhone, waMessage).catch((e) =>
+        console.error("[WhatsApp] dispatch error (custom):", e),
+      );
+    } 
+    // Priority 2: Organization configured phone number
+    else if (organisasiId) {
       const org = await prisma.organisasi.findUnique({
         where: { id: organisasiId },
       });
 
       if (org?.wa_notify_phone) {
-        const waMessage = `📣 *${title}*\n\n${message}`;
         sendWhatsAppMessage(org.wa_notify_phone, waMessage).catch((e) =>
-          console.error("[WhatsApp] dispatch error:", e),
+          console.error("[WhatsApp] dispatch error (org):", e),
         );
       }
     }

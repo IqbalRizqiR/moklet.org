@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { ratelimit } from "@/lib/ratelimit";
 import { dispatchNotification } from "@/lib/whatsapp";
 import prisma from "@/lib/prisma";
+import { uploadImageCloudinary } from "@/actions/fileUploader";
 
 export type aspirationType = "ORGANISASI" | "SEKOLAH" | "EVENT";
 
@@ -34,9 +35,20 @@ export async function submitAspiration(
 
   const judul_aspirasi = (data.get("judulAspirasi") as string) || "";
   const is_anonymous = data.get("isAnonymous") === "on";
+  const imageFile = data.get("image") as File | null;
 
   try {
-    await createAspiration({
+    let imageUrl: string | undefined;
+
+    if (imageFile && imageFile.name !== "" && imageFile.size > 0) {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const upload = await uploadImageCloudinary(buffer);
+      if (upload.data?.url) {
+        imageUrl = upload.data.url;
+      }
+    }
+
+    const aspiration = await createAspiration({
       judul_aspirasi,
       is_anonymous,
       organisasi:
@@ -49,6 +61,7 @@ export async function submitAspiration(
           ? (recipent?.toUpperCase() as UnitSekolah)
           : undefined,
       pesan_aspirasi,
+      gambar_aspirasi: imageUrl,
       user: {
         connect: {
           id: session.user.id,
@@ -79,32 +92,60 @@ export async function submitAspiration(
             message: `Ada aspirasi baru berjudul "${judul_aspirasi}" untuk ${org.organisasi_name}.`,
             targetUrl: `/admin/aspirasi`,
             actorId: session.user.id,
-            recipientIds: leaders.map((l) => l.id),
+            recipientIds: leaders.map((l: { id: string }) => l.id),
             organisasiId: org.id,
+            imageUrl: imageUrl,
           });
         }
       }
     } else if (type === "EVENT") {
       const event = await prisma.event.findUnique({
-        where: { id: recipent }
+        where: { id: recipent },
+        include: { user: { include: { organisasi: true } } }
       });
       if (event) {
+        // Collect recipients: event creator + org leaders (if event is linked to an org)
+        const recipientIds = [event.user_id];
+        let organisasiId: string | undefined;
+
+        if (event.user.organisasi_id) {
+          organisasiId = event.user.organisasi_id;
+          const leaders = await prisma.user.findMany({
+            where: {
+              organisasi_id: organisasiId,
+              org_role: { is_leader: true }
+            },
+            select: { id: true }
+          });
+          leaders.forEach((l: { id: string }) => {
+            if (!recipientIds.includes(l.id)) recipientIds.push(l.id);
+          });
+        }
+
         dispatchNotification({
           type: "new_aspiration_event",
           title: "Aspirasi Event Baru",
           message: `Ada aspirasi baru berjudul "${judul_aspirasi}" untuk event ${event.event_name}.`,
           targetUrl: `/admin/aspirasi`,
           actorId: session.user.id,
-          recipientIds: [event.user_id],
+          recipientIds,
+          organisasiId: organisasiId,
+          imageUrl: imageUrl,
         });
       }
     } else if (type === "SEKOLAH") {
+      const unit = recipent?.toUpperCase() as UnitSekolah;
+      const unitConfig = await prisma.schoolUnitConfig.findUnique({
+        where: { unit }
+      });
+
       const admins = await prisma.user.findMany({
         where: {
           role: { in: ["SuperAdmin", "Admin"] }
         },
         select: { id: true }
       });
+      
       if (admins.length > 0) {
         dispatchNotification({
           type: "new_aspiration_sekolah",
@@ -112,7 +153,9 @@ export async function submitAspiration(
           message: `Ada aspirasi baru berjudul "${judul_aspirasi}" untuk unit ${recipent}.`,
           targetUrl: `/admin/aspirasi`,
           actorId: session.user.id,
-          recipientIds: admins.map((a) => a.id),
+          recipientIds: admins.map((a: { id: string }) => a.id),
+          customPhone: unitConfig?.wa_notify_phone || undefined,
+          imageUrl: imageUrl,
         });
       }
     }

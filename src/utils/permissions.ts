@@ -1,6 +1,12 @@
 import prisma from "@/lib/prisma";
 import { checkPermission } from "@/utils/database/orgPermission.query";
 
+// Helper to safely compare IDs (handles database padding/casing)
+const compareIds = (id1: string | null | undefined, id2: string | null | undefined): boolean => {
+  if (!id1 || !id2) return false;
+  return id1.trim().toLowerCase() === id2.trim().toLowerCase();
+};
+
 // Check if a user is an org leader (has a custom role marked as leader)
 export const isOrgLeader = async (
   userId: string,
@@ -11,8 +17,13 @@ export const isOrgLeader = async (
     include: { org_role: true },
   });
 
-  if (!user || user.organisasi_id !== organisasiId) return false;
-  return user.org_role?.is_leader ?? false;
+  if (!user) return false;
+  
+  // Resilient check: check user's direct organisasi_id OR the role's organisasi_id
+  const userBelongsToOrg = compareIds(user.organisasi_id, organisasiId);
+  const roleBelongsToOrg = compareIds(user.org_role?.organisasi_id, organisasiId);
+  
+  return (userBelongsToOrg || roleBelongsToOrg) && (user.org_role?.is_leader ?? false);
 };
 
 // Check if user can edit org info
@@ -20,15 +31,12 @@ export const canEditOrgInfo = async (
   userId: string,
   organisasiId: string,
 ): Promise<boolean> => {
-  // SuperAdmin/Admin can always edit
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return false;
   if (user.role === "SuperAdmin" || user.role === "Admin") return true;
 
-  // Check if user is leader of this org
   if (await isOrgLeader(userId, organisasiId)) return true;
 
-  // Check explicit permission
   return await checkPermission(userId, organisasiId, "edit_org_info");
 };
 

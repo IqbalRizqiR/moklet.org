@@ -12,12 +12,12 @@ export default function AspirationFigure({
 }: Readonly<{ data: AspirationWithUser }>) {
   return (
     <figure className="lg:flex justify-between w-full bg-white rounded-xl px-6 py-4">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 flex-1">
         <div className="flex gap-4 items-start">
           <span className="p-2  lg:inline-block hidden rounded-full border">
             <FaWpforms className="text-3xl text-gray-400" />
           </span>
-          <div className="text-wrap">
+          <div className="text-wrap flex-1">
             <H3 className="lg:text-[28px] text-[20px]">
               <Link
                 href={"/admin/aspirasi/" + data.id}
@@ -44,6 +44,11 @@ export default function AspirationFigure({
           </div>
         </div>
       </div>
+      {data.gambar_aspirasi && (
+        <div className="lg:w-32 lg:h-32 w-full mt-4 lg:mt-0 rounded-xl overflow-hidden shadow-sm border border-gray-100 shrink-0">
+          <img src={data.gambar_aspirasi} alt="Lampiran" className="w-full h-full object-cover" />
+        </div>
+      )}
     </figure>
   );
 }

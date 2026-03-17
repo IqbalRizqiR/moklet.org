@@ -43,38 +43,44 @@ export default function AspirationForm({
           </H3>
           <form action={submitForm} ref={ref} className="mt-4">
             <div className="flex flex-col gap-5 mb-5">
-              <TextField
-                type="text"
-                name="judulAspirasi"
-                required
+                <TextField
+                  type="text"
+                  name="judulAspirasi"
+                  required
                 label="Judul Aspirasi"
                 placeholder="Judul Aspirasi Anda"
-              />
-              <Editor
-                onChange={(value) => {
-                  setAspiration(value ?? "");
-                }}
-                value={aspiration}
-                label="Isi Aspirasi"
-                hostType="IMGBB"
-              />
-              <div className="flex items-center gap-2 px-1">
-                <input
-                  type="checkbox"
-                  id="isAnonymous"
-                  name="isAnonymous"
-                  className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
                 />
-                <label htmlFor="isAnonymous" className="text-sm font-medium text-gray-700">
-                  Ajukan secara anonim (Sembunyikan nama & identitas saya)
-                </label>
+                    <Editor
+                      onChange={(value) => {
+                        setAspiration(value ?? "");
+                      }}
+                      value={aspiration}
+                label="Isi Aspirasi"
+                      hostType="IMGBB"
+                    />
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">Lampiran Gambar (Opsional)</label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  className="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-xl file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-red-50 file:text-red-700
+                    hover:file:bg-red-100
+                    border border-gray-100 rounded-xl bg-white/50
+                    transition-all"
+                />
+                <p className="text-[10px] text-gray-400">Pilih gambar jika ingin melampirkan bukti atau visualisasi aspirasi.</p>
               </div>
-            </div>
+                  </div>
             <div className="w-full flex justify-end">
               <SubmitButton />
-            </div>
-          </form>
-        </>
+              </div>
+            </form>
+          </>
       )}
     </div>
   );
