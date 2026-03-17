@@ -15,14 +15,14 @@ export default async function Related({
   const relatedPosts =
     tags.length > 0
       ? (await findPostByTag(tags[0].tagName, true, 3))?.filter(
-          (post) => post.id !== currentPostId,
+          (post: any) => post.id !== currentPostId,
         )
       : [];
 
   return (
     <div className="flex flex-col gap-[62px] w-full">
       {relatedPosts?.length !== 0 ? (
-        relatedPosts?.map((post) => (
+        relatedPosts?.map((post: any) => (
           <RelatedNewsFigure post={post} key={post.id} />
         ))
       ) : (

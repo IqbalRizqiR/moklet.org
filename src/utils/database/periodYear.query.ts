@@ -5,13 +5,13 @@ import prisma from "@/lib/prisma";
 export const findLatestPeriod = async (isActive?: boolean) => {
   let latestPeriodYear = await prisma.period_Year.findMany({});
 
-  latestPeriodYear.sort((a, b) => {
+  latestPeriodYear.sort((a: any, b: any) => {
     return parseInt(b.period.split("/")[0]) - parseInt(a.period.split("/")[0]);
   });
 
   if (isActive != undefined) {
     latestPeriodYear = latestPeriodYear.filter(
-      (period) => period.is_active == isActive,
+      (period: any) => period.is_active == isActive,
     );
   }
 

@@ -54,13 +54,13 @@ export default async function OrgStructureChart({
 
   if (hasCustomLevels) {
     // Initialize groups for all defined levels to maintain order even if empty
-    levels.forEach((lvl, idx) => {
+    levels.forEach((lvl: any, idx: any) => {
       grouped.push({ label: lvl.name, order: lvl.order, members: [] });
       groupMap.set(lvl.id, idx);
     });
 
     // Add members to their level groups
-    members.forEach((m) => {
+    members.forEach((m: any) => {
       const levelId = m.org_role?.level?.id;
       if (levelId && groupMap.has(levelId)) {
         grouped[groupMap.get(levelId)!].members.push(m);
@@ -116,7 +116,7 @@ export default async function OrgStructureChart({
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-3 max-w-5xl px-2">
-                  {group.members.map((member) => (
+                  {group.members.map((member: any) => (
                     <div
                       key={member.id}
                       className="group relative flex flex-col items-center gap-2.5 px-4 py-4 rounded-2xl backdrop-blur-lg bg-white/60 border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 w-[130px]"

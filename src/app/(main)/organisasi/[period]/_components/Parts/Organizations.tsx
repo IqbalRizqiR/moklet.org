@@ -30,20 +30,20 @@ export default async function Organizations({
   data: OrganizationWithPeriod[];
 }) {
   const Periods = await findPeriodsThatHaveOrganisasi();
-  const periods = Periods.map((periods) => ({
+  const periods = Periods.map((periods: any) => ({
     label: periods.period.replace(/-/, "/"),
     value: periods.period,
   }));
 
-  periods.sort((a, b) => {
+  periods.sort((a: any, b: any) => {
     return parseInt(b.value.split("-")[0]) - parseInt(a.value.split("-")[0]);
   });
 
-  const organ = data.filter((a) => {
+  const organ = data.filter((a: any) => {
     return !a.is_suborgan;
   });
 
-  const subOrgan = data.filter((a) => {
+  const subOrgan = data.filter((a: any) => {
     return a.is_suborgan;
   });
 

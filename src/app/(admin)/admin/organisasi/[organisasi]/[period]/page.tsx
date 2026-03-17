@@ -27,12 +27,12 @@ export default async function Edit({
   if (!periode) return notFound();
 
   const allPeriod = await findAllPeriodsWithOrganisasi();
-  allPeriod.sort((a, b) => {
+  allPeriod.sort((a: any, b: any) => {
     return parseInt(b.period.split("-")[0]) - parseInt(a.period.split("-")[0]);
   });
   const notFoundPeriod = allPeriod.filter(
-    (item) =>
-      item.organisasis.findIndex((org) => org.organisasi == organisasi) == -1,
+    (item: any) =>
+      item.organisasis.findIndex((org: any) => org.organisasi == organisasi) == -1,
   );
 
   let organization = await findOrganisasi({
@@ -43,8 +43,8 @@ export default async function Edit({
   });
 
   if (!organization) {
-    const findNewest = allPeriod.find((item) =>
-      item.organisasis.find((org) => org.organisasi == organisasi),
+    const findNewest = allPeriod.find((item: any) =>
+      item.organisasis.find((org: any) => org.organisasi == organisasi),
     );
     if (findNewest?.organisasis[0]) {
       organization = await findOrganisasi({ id: findNewest.organisasis[0].id });
@@ -87,7 +87,7 @@ export default async function Edit({
           <span className="block sm:inline">
             Anda belum memperbarui informasi {organisasi} pada Masa Bakti{" "}
             {notFoundPeriod
-              .map((item) => item.period.replace(/-/, "/"))
+              .map((item: any) => item.period.replace(/-/, "/"))
               .join(", ")}
             .
           </span>

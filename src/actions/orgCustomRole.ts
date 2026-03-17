@@ -56,7 +56,7 @@ export async function createRoleAction(
         message: `Role "${name}" telah dibuat oleh ${session.user.name ?? "Admin"}.`,
         targetUrl: `/admin/organisasi`,
         actorId: session.user.id,
-        recipientIds: leaders.map((l) => l.id),
+        recipientIds: leaders.map((l: any) => l.id),
         organisasiId,
       }).catch(() => {});
     }

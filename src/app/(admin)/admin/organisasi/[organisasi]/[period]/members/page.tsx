@@ -76,7 +76,7 @@ export default async function MembersPage({
   ]);
 
   // Map members
-  const mappedMembers = members.map((m) => ({
+  const mappedMembers = members.map((m: any) => ({
     id: m.id,
     name: m.name,
     email: m.email,
@@ -91,13 +91,13 @@ export default async function MembersPage({
           level: m.org_role.level ? { id: m.org_role.level.id, name: m.org_role.level.name, order: m.org_role.level.order } : null,
         }
       : null,
-    permissions: m.permissions.map((p) => ({
+    permissions: m.permissions.map((p: any) => ({
       id: p.id,
       permission: p.permission,
     })),
   }));
 
-  const mappedRoles = customRoles.map((r) => ({
+  const mappedRoles = customRoles.map((r: any) => ({
     id: r.id,
     name: r.name,
     is_leader: r.is_leader,
@@ -105,7 +105,7 @@ export default async function MembersPage({
     level_id: (r as { level_id: string | null }).level_id ?? null,
   }));
 
-  const mappedLevels = levels.map((l) => ({
+  const mappedLevels = levels.map((l: any) => ({
     id: l.id,
     name: l.name,
     order: l.order,

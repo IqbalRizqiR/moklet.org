@@ -82,7 +82,7 @@ export async function registerAndAssign(
         message: `${name} telah didaftarkan sebagai ${role?.name ?? "anggota"} oleh ${session.user.name ?? "Admin"}.`,
         targetUrl: `/admin/organisasi`,
         actorId: session.user.id,
-        recipientIds: leaders.map((l) => l.id),
+        recipientIds: leaders.map((l: any) => l.id),
         organisasiId,
       }).catch(() => {});
     }
@@ -109,7 +109,7 @@ export async function registerAndAssign(
                 : null,
             }
           : null,
-        permissions: newUser.permissions.map((p) => ({ id: p.id, permission: p.permission })),
+        permissions: newUser.permissions.map((p: any) => ({ id: p.id, permission: p.permission })),
       },
     };
   } catch (e) {
@@ -178,7 +178,7 @@ export async function assignToOrg(
     });
 
     const recipientIds = [...new Set([
-      ...leaders.map((l) => l.id),
+      ...leaders.map((l: any) => l.id),
       userId,
     ].filter((id) => id !== session.user.id))];
 
@@ -216,7 +216,7 @@ export async function assignToOrg(
                 : null,
             }
           : null,
-        permissions: updatedUser.permissions.map((p) => ({ id: p.id, permission: p.permission })),
+        permissions: updatedUser.permissions.map((p: any) => ({ id: p.id, permission: p.permission })),
       },
     };
   } catch (e) {
@@ -267,7 +267,7 @@ export async function removeFromOrg(userId: string) {
         message: `${targetUser.name} telah dihapus dari organisasi oleh ${session.user.name ?? "Admin"}.`,
         targetUrl: `/admin/organisasi`,
         actorId: session.user.id,
-        recipientIds: leaders.map((l) => l.id),
+        recipientIds: leaders.map((l: any) => l.id),
         organisasiId,
       }).catch(() => {});
     }
@@ -336,7 +336,7 @@ export async function updateOrgRole(userId: string, orgRoleId: string) {
     });
 
     const recipientIds = [...new Set([
-      ...leaders.map((l) => l.id),
+      ...leaders.map((l: any) => l.id),
       userId,
     ].filter((id) => id !== session.user.id))];
 

@@ -37,7 +37,7 @@ export default async function SubmissionDetail({
       </div>
       <div className="block mx-auto p-6">
         {form.fields &&
-          form.fields.map((field) => {
+          form.fields.map((field: any) => {
             const submissionFields = transformToArrayCheckbox(
               submission.fields,
             ) as Submission_Field[];
@@ -79,7 +79,7 @@ export default async function SubmissionDetail({
                   <RadioField
                     label={field.label}
                     name={field.id.toString()}
-                    options={field.options.map((item) => ({
+                    options={field.options.map((item: any) => ({
                       id: item.field_id + "_" + item.id,
                       value: item.value,
                     }))}
@@ -97,7 +97,7 @@ export default async function SubmissionDetail({
                   <CheckboxField
                     label={field.label}
                     name={field.id.toString()}
-                    options={field.options.map((item) => ({
+                    options={field.options.map((item: any) => ({
                       id: item.field_id + "_" + item.id,
                       value: item.value,
                     }))}

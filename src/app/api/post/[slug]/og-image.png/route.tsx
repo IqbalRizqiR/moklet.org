@@ -163,7 +163,7 @@ export async function GET(
         <img src={`${post.thumbnail}`} alt="Event" style={styles.headerImage} />
         <div style={styles.contentContainer}>
           <div style={styles.tagsContainer}>
-            {post.tags.slice(0, 3).map((tag) => (
+            {post.tags.slice(0, 3).map((tag: any) => (
               <div key={`tag-${tag.tagName}`} style={styles.tag}>
                 {tag.tagName}
               </div>

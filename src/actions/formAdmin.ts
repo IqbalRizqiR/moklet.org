@@ -61,12 +61,12 @@ export const saveForm = async (
 
       if (isFieldsEdited) {
         const fieldsToDelete = form?.fields.filter(
-          (item) => data.fields.findIndex((field) => item.id == field.id) == -1,
+          (item: any) => data.fields.findIndex((field: any) => item.id == field.id) == -1,
         );
 
         // Delete unused fields
         await prisma.field.deleteMany({
-          where: { OR: fieldsToDelete.map((item) => ({ id: item.id })) },
+          where: { OR: fieldsToDelete.map((item: any) => ({ id: item.id })) },
         });
 
         await Promise.all(
@@ -187,7 +187,7 @@ export const cloneForm = async (id: string) => {
       created_at: new Date(),
       fields: {
         createMany: {
-          data: form.fields.map((field) => {
+          data: form.fields.map((field: any) => {
             return {
               ...field,
               form_id: undefined,
@@ -205,15 +205,15 @@ export const cloneForm = async (id: string) => {
     const clonedForm = await findForm({ id: createForm.id });
 
     const options = form.fields
-      .map((item, index) => {
-        const newOptions = item.options.map((option) => ({
+      .map((item: any, index: any) => {
+        const newOptions = item.options.map((option: any) => ({
           ...option,
           field_id: clonedForm?.fields[index].id || 0,
           id: undefined,
         }));
         return newOptions;
       })
-      .filter((item) => item.length > 0);
+      .filter((item: any) => item.length > 0);
 
     await prisma.field_Option.createMany({ data: options.flat(1) });
 

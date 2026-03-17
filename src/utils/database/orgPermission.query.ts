@@ -84,7 +84,7 @@ export const bulkGrantFromTemplate = async (
 
   if (!template) throw new Error("Template not found");
 
-  const operations = template.items.map((item) =>
+  const operations = template.items.map((item: any) =>
     prisma.org_Permission.upsert({
       where: {
         user_id_organisasi_id_permission: {

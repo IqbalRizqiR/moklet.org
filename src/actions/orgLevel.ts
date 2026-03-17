@@ -55,7 +55,7 @@ export async function deleteLevel(levelId: string) {
   const hasAccess = await canManageMembers(session.user.id, level.organisasi_id);
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
-  const usedRoles = level.roles.filter((r) => r.users.length > 0);
+  const usedRoles = level.roles.filter((r: any) => r.users.length > 0);
   if (usedRoles.length > 0) {
     return { error: true, message: "Hapus dulu role yang masih digunakan di level ini" };
   }

@@ -65,7 +65,7 @@ export const submitForm = async (
     answers = answers.filter((answer) => answer.value && answer.value !== "");
 
     const invalidAnswer = answers.find(
-      (item) => !form.fields.find((i) => item.name == i.id.toString()),
+      (item) => !form.fields.find((i: any) => item.name == i.id.toString()),
     );
 
     if (invalidAnswer) return { success: false, message: "Invalid request" };
@@ -81,7 +81,7 @@ export const submitForm = async (
         (field.type === "radio" || field.type === "checkbox")
       ) {
         const invalidAnswer = !field.options.find(
-          (i) => qAnswer.value == i.value,
+          (i: any) => qAnswer.value == i.value,
         );
 
         if (invalidAnswer)

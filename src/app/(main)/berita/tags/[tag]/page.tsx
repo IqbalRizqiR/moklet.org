@@ -17,8 +17,8 @@ export default async function Tag({ params }: { params: Promise<{ tag: string }>
 
       <div className="mt-8">
         <H2 className="mb-[54px]">Post dengan tag &quot;{decodedTag}&quot;</H2>
-        <div className="flex flex-wrap gap-x-[36px] gap-y-[62px]">
-          {filteredPost?.map((post) => (
+        <div className="flex flex-wrap gap-y-[62px] gap-x-[36px]">
+          {filteredPost?.map((post: any) => (
             <NewsFigure post={post as PostWithTagsAndUser} key={post.id} />
           ))}
         </div>

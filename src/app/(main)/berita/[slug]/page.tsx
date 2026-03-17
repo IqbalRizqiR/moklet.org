@@ -56,7 +56,7 @@ export async function generateMetadata({
     robots: "max-image-preview:large",
     keywords:
       "smk telkom malang, moklet, " +
-      post.tags.map((tag) => tag.tagName).join(", "),
+      post.tags.map((tag: any) => tag.tagName).join(", "),
   };
 }
 
@@ -127,7 +127,7 @@ export default async function Post({
             <div className="w-full">
               <div className="mb-[42px] flex flex-col lg:flex-row justify-between items-start gap-[32px] lg:items-center">
                 <div className="flex flex-wrap gap-[10px]">
-                  {post?.tags.map((tag) => (
+                  {post?.tags.map((tag: any) => (
                     <Tags tag={tag} key={tag.tagName} />
                   ))}
                 </div>

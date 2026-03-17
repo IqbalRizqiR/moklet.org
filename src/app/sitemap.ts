@@ -23,26 +23,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly",
   }));
 
-  const postsRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
+  const postsRoutes: MetadataRoute.Sitemap = posts.map((post: any) => ({
     url: `${process.env.URL ?? "https://www.moklet.org"}/berita/${post.slug}`,
     lastModified: post.updated_at.toISOString(),
     changeFrequency: "yearly",
   }));
 
-  const tagsRoutes: MetadataRoute.Sitemap = tags.map((tag) => ({
+  const tagsRoutes: MetadataRoute.Sitemap = tags.map((tag: any) => ({
     url: `${process.env.URL ?? "https://www.moklet.org"}/berita/tags/${tag.tagName}`,
     changeFrequency: "monthly",
   }));
 
   const organisasisRoutes: MetadataRoute.Sitemap = organisasis.map(
-    (organisasi) => ({
+    (organisasi: any) => ({
       url: `${process.env.URL ?? "https://www.moklet.org"}/organisasi/${organisasi.period.period}/${organisasi.organisasi}`,
       lastModified: organisasi.updated_at.toISOString(),
       changeFrequency: "yearly",
     }),
   );
 
-  const periodsRoutes: MetadataRoute.Sitemap = periods.map((period) => ({
+  const periodsRoutes: MetadataRoute.Sitemap = periods.map((period: any) => ({
     url: `${process.env.URL ?? "https://www.moklet.org"}/organisasi/${period.period}`,
     changeFrequency: "monthly",
   }));

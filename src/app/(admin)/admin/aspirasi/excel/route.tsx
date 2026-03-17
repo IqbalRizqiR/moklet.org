@@ -72,8 +72,8 @@ export async function GET(req: NextRequest) {
     },
   ];
 
-  const dataRow = aspirations.map((item) => {
-    return headerRow.map((header) => {
+  const dataRow = aspirations.map((item: any) => {
+    return headerRow.map((header: any) => {
       let value: string | Date;
 
       if (header.value == "Timestamp") {

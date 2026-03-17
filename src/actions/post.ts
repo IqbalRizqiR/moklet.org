@@ -249,7 +249,7 @@ export async function updatePostStatus(current_state: boolean, id: string) {
               message: `${post.user.name} mempublikasikan post baru.`,
               targetUrl: `/berita/${post.slug}`,
               actorId: post.user_id,
-              recipientIds: orgLeaders.map((l) => l.id),
+              recipientIds: orgLeaders.map((l: any) => l.id),
               organisasiId: orgId,
             }).catch(console.error);
           }

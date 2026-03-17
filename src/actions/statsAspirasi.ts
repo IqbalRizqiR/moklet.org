@@ -160,7 +160,7 @@ async function _getAspirasiStatsFromDB(filters: FilterParams) {
     orderBy: [{ date: "desc" }],
   });
 
-  const eventStats = events.map((event) => ({
+  const eventStats = events.map((event: any) => ({
     id: event.id,
     name: event.event_name,
     date: event.date,
@@ -168,7 +168,7 @@ async function _getAspirasiStatsFromDB(filters: FilterParams) {
   }));
 
   const orgStats = await Promise.all(
-    Object.values(Organisasi_Type).map(async (org) => {
+    Object.values(Organisasi_Type).map(async (org: any) => {
       const count = await prisma.aspirasi.count({
         where: {
           ...baseWhereClause,
