@@ -38,7 +38,7 @@ export default function AspirationFigure({
               </span>
               <span className="flex gap-1 items-center">
                 <UserIcon />
-                <P>{data.user.name}</P>
+                <P>{data.is_anonymous ? "Anonim" : data.user.name}</P>
               </span>
             </div>
           </div>

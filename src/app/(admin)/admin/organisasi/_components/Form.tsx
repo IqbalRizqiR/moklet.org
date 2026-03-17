@@ -178,6 +178,14 @@ export default function Form({
         placeholder={`Link sosial media ${organisasi.organisasi}`}
         value={organisasi.contact}
       />
+      <TextField
+        type="text"
+        label="No. WhatsApp Notifikasi"
+        name="wa_notify_phone"
+        required={false}
+        placeholder="6281234567890 (Gunakan kode negara, misal 62)"
+        value={organisasi.wa_notify_phone || ""}
+      />
       <Editor
         label={`Visi organisasi ${organisasi.organisasi}`}
         value={vision}

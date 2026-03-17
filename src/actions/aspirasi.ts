@@ -31,9 +31,12 @@ export async function submitAspiration(
   }
 
   const judul_aspirasi = (data.get("judulAspirasi") as string) || "";
+  const is_anonymous = data.get("isAnonymous") === "on";
+
   try {
     await createAspiration({
       judul_aspirasi,
+      is_anonymous,
       organisasi:
         type === "ORGANISASI"
           ? (recipent?.toUpperCase() as Organisasi_Type)

@@ -19,7 +19,7 @@ export default async function AspirationDetail({
         <H3>{data.judul_aspirasi}</H3>
         <P>
           untuk {data.unit_sekolah || data.organisasi || data.event?.event_name}{" "}
-          dari {data.user.name}
+          dari {data.is_anonymous ? "Anonim" : data.user.name}
         </P>
       </div>
       <MdViewer markdown={data.pesan_aspirasi} />

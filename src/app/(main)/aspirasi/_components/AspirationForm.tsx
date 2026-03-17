@@ -58,6 +58,17 @@ export default function AspirationForm({
                 label="Isi Aspirasi"
                 hostType="IMGBB"
               />
+              <div className="flex items-center gap-2 px-1">
+                <input
+                  type="checkbox"
+                  id="isAnonymous"
+                  name="isAnonymous"
+                  className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
+                />
+                <label htmlFor="isAnonymous" className="text-sm font-medium text-gray-700">
+                  Ajukan secara anonim (Sembunyikan nama & identitas saya)
+                </label>
+              </div>
             </div>
             <div className="w-full flex justify-end">
               <SubmitButton />
