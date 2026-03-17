@@ -13,6 +13,7 @@ interface OrgRole {
   name: string;
   is_leader: boolean;
   hierarchy_level: number;
+  level_id?: string | null;
   level?: OrgLevel | null;
 }
 
