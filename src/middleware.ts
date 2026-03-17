@@ -1,26 +1,33 @@
 import { NextResponse } from "next/server";
-import { withAuth } from "next-auth/middleware";
+import { auth } from "@/lib/auth.edge";
+import { Roles } from "@prisma/client";
 
 import { protectedRoutes } from "./utils/protectedRoutes";
 
-export default withAuth(function middleware(req) {
-  const { token } = req.nextauth;
+export default auth((req) => {
+  const session = req.auth;
   const { pathname } = req.nextUrl;
 
-  if (!token) return NextResponse.redirect("/api/auth/signin");
-  if (token.role === "Guest") {
+  if (!session) {
+    return NextResponse.redirect(new URL("/api/auth/signin", req.url));
+  }
+
+  const userRole = session.user?.role as Roles | undefined;
+  // console.log(userRole);
+
+  if (userRole === "Guest") {
     return NextResponse.rewrite(new URL("/unauthorized", req.url), {
       status: 403,
     });
   }
 
   const route = protectedRoutes.find((route) => route.regex.test(pathname));
-  const isSubOrgan = !token.role.includes("Admin");
+  const isSubOrgan = userRole && !userRole.includes("Admin");
 
   const hasAccess =
     route &&
     (route.roles == "All" ||
-      route.roles.includes(token.role) ||
+      (userRole && route.roles.includes(userRole)) ||
       (isSubOrgan && route.roles.includes("SubOrgan")));
 
   if (route && !hasAccess) {

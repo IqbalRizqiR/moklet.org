@@ -3,7 +3,7 @@
 import { Roles } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import {
   createUser,
   deleteUser,
@@ -14,7 +14,7 @@ import { encrypt } from "@/utils/encryption";
 
 export const updateUserWithId = async (id: string | null, data: FormData) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
     const userRole = session?.user?.role;
 
     const email = data.get("email") as string;
@@ -76,7 +76,7 @@ export const updateUserWithId = async (id: string | null, data: FormData) => {
 
 export const deleteUserById = async (id: string) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
     if (session?.user?.role != "SuperAdmin")
       return { error: true, message: "Only SuperAdmin!" };
 

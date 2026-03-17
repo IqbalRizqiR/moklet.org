@@ -4,7 +4,7 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { FormWithFields } from "@/types/entityRelations";
 import { findForm, findFormWithSubmission } from "@/utils/database/form.query";
@@ -31,7 +31,7 @@ export const saveForm = async (
   isFieldsEdited = false,
 ) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
     const { user } = session!;
     console.log(isFieldsEdited);
     if (!is_new) {
@@ -166,7 +166,7 @@ export const saveForm = async (
 
 export const cloneForm = async (id: string) => {
   try {
-    const session = await nextGetServerSession();
+    const session = await auth();
     const { user } = session!;
 
     const form = await findForm({

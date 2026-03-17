@@ -73,7 +73,7 @@ export function TextField({
         <label
           htmlFor={name}
           className={cn(
-            `first-letter:capitalize ${required ? "after:text-red-500 after:content-['*']" : ""}`,
+            `first-letter:capitalize ${required ? "after:text-primary-500 after:content-['*']" : ""}`,
           )}
         >
           {label}
@@ -97,7 +97,7 @@ export function TextField({
           onChange={handleChange}
           id={name}
           className={cn(
-            "w-full rounded-full border border-neutral-400 px-[18px] active:border-black hover:border-black py-[14px] text-black placeholder-neutral-500 focus:outline-none transition-all duration-500",
+            "w-full rounded-full border border-neutral-300 bg-white/80 px-[18px] py-[14px] text-black placeholder-neutral-500 backdrop-blur-xs transition-all duration-300 hover:border-primary-300 focus:border-primary-400 focus:outline-none",
             disabled ? "cursor-not-allowed" : "",
           )}
           required={required}
@@ -124,7 +124,7 @@ export function TextArea({
         <label
           htmlFor={name}
           className={cn(
-            `first-letter:capitalize ${required ? "after:text-red-500 after:content-['*']" : ""}`,
+            `first-letter:capitalize ${required ? "after:text-primary-500 after:content-['*']" : ""}`,
           )}
         >
           {label}
@@ -137,7 +137,7 @@ export function TextArea({
         defaultValue={value}
         id={name}
         className={cn(
-          "h-[144px] rounded-2xl border border-neutral-400 px-[18px] focus:border-black hover:border-black py-[14px] text-black placeholder-neutral-400 focus:outline-none transition-all duration-500",
+          "h-[144px] rounded-2xl border border-neutral-300 bg-white/80 px-[18px] py-[14px] text-black placeholder-neutral-400 backdrop-blur-xs transition-all duration-300 hover:border-primary-300 focus:border-primary-400 focus:outline-none",
           disabled ? "cursor-not-allowed" : "",
         )}
         disabled={disabled}
@@ -162,7 +162,7 @@ export function SelectField({
         <label
           htmlFor={name}
           className={cn(
-            `first-letter:capitalize ${required ? "after:text-red-500 after:content-['*']" : ""}`,
+            `first-letter:capitalize ${required ? "after:text-primary-500 after:content-['*']" : ""}`,
           )}
         >
           {label}
@@ -172,7 +172,7 @@ export function SelectField({
         name={name}
         defaultValue={value || ""}
         className={cn(
-          "rounded-xl border border-neutral-400 px-[18px] active:border-black hover:border-black py-[14px] text-black placeholder-neutral-400 focus:outline-none transition-all duration-500",
+          "rounded-xl border border-neutral-300 bg-white/80 px-[18px] py-[14px] text-black placeholder-neutral-400 backdrop-blur-xs transition-all duration-300 hover:border-primary-300 focus:border-primary-400 focus:outline-none",
           disabled ? "cursor-not-allowed" : "",
         )}
         id={name}
@@ -208,7 +208,7 @@ export function RadioField({
         <label
           htmlFor={name}
           className={cn(
-            `first-letter:capitalize ${required ? "after:text-red-500 after:content-['*']" : ""}`,
+            `first-letter:capitalize ${required ? "after:text-primary-500 after:content-['*']" : ""}`,
           )}
         >
           {label}
@@ -238,7 +238,7 @@ export function RadioField({
         <button
           onClick={() => uncheckRadio(name)}
           type="button"
-          className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-red-500 rounded-lg text-sm p-1 mr-auto items-center transition-all"
+          className="mr-auto items-center rounded-lg bg-transparent p-1 text-sm text-neutral-500 transition-all hover:bg-surface-200 hover:text-primary-500"
         >
           <FaTrash />
         </button>
@@ -272,7 +272,7 @@ export function CheckboxField({
         <label
           htmlFor={label}
           className={cn(
-            `first-letter:capitalize ${required ? "after:text-red-500 after:content-['*']" : ""}`,
+            `first-letter:capitalize ${required ? "after:text-primary-500 after:content-['*']" : ""}`,
           )}
         >
           {label}

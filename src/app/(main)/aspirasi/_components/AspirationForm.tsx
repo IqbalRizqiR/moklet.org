@@ -1,7 +1,7 @@
 "use client";
 
 import { aspirationType, submitAspiration } from "@/actions/aspirasi";
-import Editor from "@/app/(admin)/admin/components/MdEditor";
+import Editor from "@/app/(admin)/admin/components/LazyEditor";
 import { TextField } from "@/app/_components/global/Input";
 import SubmitButton from "@/app/_components/global/SubmitButton";
 import { H3 } from "@/app/_components/global/Text";
@@ -25,11 +25,12 @@ export default function AspirationForm({
     const result = await submitAspiration(data, aspiration, type, recipient);
 
     if (!result.success) {
-      return toast.error(result.message, { id: toastId });
+      toast.error(result.message, { id: toastId });
+      return;
     }
     ref.current?.reset();
     setAspiration("");
-    return toast.success(result.message, { id: toastId });
+    toast.success(result.message, { id: toastId });
   }
 
   return (

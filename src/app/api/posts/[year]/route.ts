@@ -8,9 +8,9 @@ import { PaginatedResult } from "@/utils/paginator";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { year: string } },
+  { params }: { params: Promise<{ year: string }> },
 ) {
-  const { year } = params;
+  const { year } = await params;
   const page = req.nextUrl.searchParams.get("page");
 
   try {

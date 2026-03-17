@@ -11,6 +11,7 @@ import { P } from "@/app/_components/global/Text";
 import { protectedRoutes } from "@/utils/protectedRoutes";
 
 import { DashboardIcon, HamburgerIcon } from "./Icons";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar({ session }: { session: Session | null }) {
   const pathname = usePathname();
@@ -38,12 +39,15 @@ export default function Navbar({ session }: { session: Session | null }) {
             className="pointer-events-none h-[50px] w-[130px]"
           />
         </Link>
-        <button
-          className="block xl:hidden"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <HamburgerIcon />
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button
+            className="block xl:hidden"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <HamburgerIcon />
+          </button>
+        </div>
       </div>
       <div
         className={`block xl:hidden py-3 w-full z-[800] bg-white transition-all duration-500 overflow-y-auto ${isExpanded ? "mt-0" : " -mt-[1000px]"}`}

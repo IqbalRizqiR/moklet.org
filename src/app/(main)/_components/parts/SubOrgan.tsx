@@ -29,7 +29,7 @@ export default function SubOrgan() {
               serta minat bersama komunitas yang kolaboratif serta inovatif.
             </P>
           </div>
-          <div className="mb-11 flex flex-col sm:flex-row w-full md:items-center gap-[62px]">
+          <div className="mb-11 flex flex-col sm:flex-row w-full md:items-center gap-[62px] glass-card-soft px-6 py-5">
             <SubOrganCount count={3} title="Bidang Olahraga" />
             <SubOrganCount count={2} title="Bidang Seni & Bahasa" />
             <SubOrganCount count={5} title="Bidang Lainnya" />

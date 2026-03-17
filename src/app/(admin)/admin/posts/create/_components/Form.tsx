@@ -13,7 +13,7 @@ import { TextArea, TextField } from "@/app/_components/global/Input";
 import { TagWithPostCount } from "@/types/entityRelations";
 
 import Modal from "../../_components/ImageModal";
-import Editor from "@/app/(admin)/admin/components/MdEditor";
+import Editor from "@/app/(admin)/admin/components/LazyEditor";
 import FormButton from "../../_components/parts/SubmitButton";
 
 import Tags from "./Tags";
@@ -59,16 +59,18 @@ export default function PostForm({ tags }: { tags: TagWithPostCount[] }) {
             ? fileSizeToMb(thumbnail.size)
             : 0;
 
-          if (thumbnailSizeInMb >= 4.3)
-            return toast.error(
-              "Ukuran file terlalu besar! Ukuran maximum 4,3 MB",
-              { id: toastId },
-            );
-
-          if (result.error || !result.result?.id) {
-            return toast.error(result.message || "Failed to create post", {
+          if (thumbnailSizeInMb >= 4.3) {
+            toast.error("Ukuran file terlalu besar! Ukuran maximum 4,3 MB", {
               id: toastId,
             });
+            return;
+          }
+
+          if (result.error || !result.result?.id) {
+            toast.error(result.message || "Failed to create post", {
+              id: toastId,
+            });
+            return;
           }
           toast.success(result.message);
           redirect(`/admin/posts/${result.result?.id}`);

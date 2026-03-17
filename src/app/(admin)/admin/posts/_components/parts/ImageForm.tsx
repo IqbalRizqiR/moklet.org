@@ -17,7 +17,8 @@ export default function Form({
         const toastId = toast.loading("Loading...");
         const result = await upload(formdata);
         if (result.error) {
-          return toast.error(result.message, { id: toastId });
+          toast.error(result.message, { id: toastId });
+          return;
         }
         toast.success(result.message, { id: toastId });
         navigator.clipboard.writeText(`![](${result.url!})`);

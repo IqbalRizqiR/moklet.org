@@ -1,12 +1,12 @@
 import LinkButton from "@/app/_components/global/Button";
 import { H2, P } from "@/app/_components/global/Text";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import { findFormsWithUser } from "@/utils/database/form.query";
 
 import Table from "./_components/Table";
 
 export default async function Forms() {
-  const session = await nextGetServerSession();
+  const session = await auth();
   const { user } = session!;
 
   const forms = await findFormsWithUser({

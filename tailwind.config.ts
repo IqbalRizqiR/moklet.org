@@ -18,6 +18,19 @@ const config: Config = {
         black: "#121212",
         white: "#fff",
 
+        surface: {
+          50: "#FFF9F9",
+          100: "#FFF4F4",
+          200: "#FFEDED",
+          300: "#FFDCDC",
+        },
+
+        glass: {
+          white: "rgba(255,255,255,0.72)",
+          red: "rgba(224,78,78,0.18)",
+          border: "rgba(255,255,255,0.5)",
+        },
+
         "neutral-50": "#FAFAFA",
         "neutral-100": "#F5F5F5",
         "neutral-200": "#EEEEEE",
@@ -62,6 +75,17 @@ const config: Config = {
         "info-500": "#4BA1FF",
         "info-600": "#3B82F6",
         "info-700": "#3A70E2",
+      },
+      boxShadow: {
+        glass: "0 10px 30px rgba(142, 34, 34, 0.12)",
+        "glass-soft": "0 8px 20px rgba(18, 18, 18, 0.06)",
+      },
+      backdropBlur: {
+        xs: "2px",
+      },
+      backgroundImage: {
+        "red-mesh":
+          "radial-gradient(circle at 10% 20%, rgba(255,148,148,0.28), transparent 34%), radial-gradient(circle at 85% 15%, rgba(224,78,78,0.18), transparent 30%), radial-gradient(circle at 55% 85%, rgba(255,194,194,0.34), transparent 38%)",
       },
     },
   },

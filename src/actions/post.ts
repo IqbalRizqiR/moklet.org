@@ -11,7 +11,7 @@ import {
   createPost,
   deletePost,
 } from "@/utils/database/post.query";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function uploadInsert(data: Record<string, any>) {
@@ -59,7 +59,7 @@ export async function postCreate(
   MD: string,
   tags: MultiValue<{ value: string; label: string }>,
 ) {
-  const session = await nextGetServerSession();
+  const session = await auth();
 
   if (!session?.user?.id) return { error: true, message: "Unauthorized" };
 
@@ -111,7 +111,7 @@ export async function postUpdate(
   tags: MultiValue<{ value: string; label: string }>,
   id: string,
 ) {
-  const session = await nextGetServerSession();
+  const session = await auth();
 
   if (!session?.user?.id) return { error: true, message: "Unauthorized" };
   try {
@@ -182,6 +182,46 @@ export async function updatePostStatus(current_state: boolean, id: string) {
     revalidatePath("/admin/posts");
     revalidatePath("/organisasi/[period]/[slug]", "page");
     revalidatePath(`/admin/posts/${update.slug}`);
+
+    // Dispatch notification when publishing
+    if (!current_state) {
+      const { dispatchNotification } = await import("@/lib/whatsapp");
+      const post = await prisma.post.findUnique({
+        where: { id },
+        include: {
+          user: {
+            include: { organisasi: true },
+          },
+        },
+      });
+
+      if (post) {
+        // Notify all org leaders if author is in an org
+        const orgId = post.user.organisasi_id;
+        if (orgId) {
+          const orgLeaders = await prisma.user.findMany({
+            where: {
+              organisasi_id: orgId,
+              org_role: { is_leader: true },
+              id: { not: post.user_id },
+            },
+          });
+
+          if (orgLeaders.length > 0) {
+            dispatchNotification({
+              type: "post_published",
+              title: `Post "${post.title}" dipublikasikan`,
+              message: `${post.user.name} mempublikasikan post baru.`,
+              targetUrl: `/berita/${post.slug}`,
+              actorId: post.user_id,
+              recipientIds: orgLeaders.map((l) => l.id),
+              organisasiId: orgId,
+            }).catch(console.error);
+          }
+        }
+      }
+    }
+
     return { message: "Berhasil megupdate post!" };
   } catch (e) {
     console.log(e);

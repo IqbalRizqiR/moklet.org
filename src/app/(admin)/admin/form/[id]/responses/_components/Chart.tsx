@@ -1,5 +1,7 @@
-import ReactECharts from "echarts-for-react";
+import dynamic from "next/dynamic";
 import React from "react";
+
+const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 const getRandomColor = () => {
   const letters = "0123456789ABCDEF";

@@ -8,8 +8,11 @@ import { PaginatedResult } from "@/utils/paginator";
 
 type params = { year: string; month: string };
 
-export async function GET(req: NextRequest, { params }: { params: params }) {
-  const { year, month } = params;
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<params> },
+) {
+  const { year, month } = await params;
   const page = req.nextUrl.searchParams.get("page");
 
   try {

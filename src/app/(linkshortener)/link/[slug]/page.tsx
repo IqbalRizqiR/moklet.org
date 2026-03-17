@@ -9,12 +9,13 @@ import PasswordPrompt from "./_components/PasswordPrompt";
 export default async function RedirectToTarget({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
   const findShortLink = await prisma.link_Shortener.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
   });
-  const headersList = headers();
+  const headersList = await headers();
   const host = headersList.get("host");
   const proto = headersList.get("x-forwarded-proto");
 
@@ -22,16 +23,16 @@ export default async function RedirectToTarget({
   if (findShortLink.password) {
     return (
       <SectionWrapper id="pass">
-        <PasswordPrompt slug={params.slug} />
+        <PasswordPrompt slug={slug} />
       </SectionWrapper>
     );
   }
 
   // Increments the click count of the short link
   await prisma.link_Shortener_Count.upsert({
-    where: { id: params.slug },
+    where: { id: slug },
     update: { click_count: { increment: 1 } },
-    create: { click_count: 1, id: params.slug },
+    create: { click_count: 1, id: slug },
   });
 
   return redirect(

@@ -1,12 +1,12 @@
 import { H2, P } from "@/app/_components/global/Text";
 
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import { findAllTwibbon } from "@/utils/database/twibbon.query";
 import AddTwibbon from "./_components/AddPeriod";
 import TwibbonTable from "./_components/Table";
 
 export default async function PeriodPage() {
-  const session = await nextGetServerSession();
+  const session = await auth();
   const { user } = session!;
 
   const twibbons = await findAllTwibbon({

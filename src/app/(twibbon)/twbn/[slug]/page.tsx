@@ -4,9 +4,9 @@ import { findTwibbon } from "@/utils/database/twibbon.query";
 export default async function TwibbonRedirectPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
   const twibbon = await findTwibbon({ slug });
 
   if (!twibbon) {

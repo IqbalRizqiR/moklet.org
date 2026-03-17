@@ -1,5 +1,5 @@
 import { H2, P } from "@/app/_components/global/Text";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import {
   findAllPeriods,
   findLatestPeriod,
@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import Select from "./_components/Select";
 
 export default async function SuborAdmin() {
-  const session = await nextGetServerSession();
+  const session = await auth();
   const latestPeriod = await findLatestPeriod();
   const allPeriod = await findAllPeriods();
 

@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Roles" AS ENUM ('SuperAdmin', 'Admin', 'OSIS', 'MPK', 'BDI', 'PALWAGA', 'PASKATEMA', 'TSBC', 'TSFC', 'TSVC', 'TSCC', 'PMR', 'MEMO', 'MAC', 'METIC', 'COMET', 'DA', 'Guest');
+CREATE TYPE "Roles" AS ENUM ('SuperAdmin', 'Admin', 'OSIS', 'MPK', 'BDI', 'PALWAGA', 'PASKATEMA', 'TSBC', 'TSFC', 'TSVC', 'TSCC', 'PMR', 'MEMO', 'MAC', 'METIC', 'COMET', 'DA', 'PUSTEL', 'Guest');
 
 -- CreateEnum
 CREATE TYPE "UnitSekolah" AS ENUM ('HUBIN', 'KURIKULUM', 'KESISWAAN', 'SARPRA', 'ISO', 'TU', 'GURU', 'SATPAMCS');
@@ -219,7 +219,9 @@ CREATE TABLE "Aspirasi" (
 -- CreateTable
 CREATE TABLE "_PostToTag" (
     "A" CHAR(36) NOT NULL,
-    "B" TEXT NOT NULL
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_PostToTag_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -245,9 +247,6 @@ CREATE UNIQUE INDEX "Organisasi_organisasi_period_id_key" ON "Organisasi"("organ
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Twibbon_slug_key" ON "Twibbon"("slug");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_PostToTag_AB_unique" ON "_PostToTag"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_PostToTag_B_index" ON "_PostToTag"("B");

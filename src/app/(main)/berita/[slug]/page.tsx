@@ -27,9 +27,10 @@ function getOgImageUrl(slug: string, updatedAt: Date | string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const post = await findPost({ slug: params.slug, published: true });
+  const { slug } = await params;
+  const post = await findPost({ slug, published: true });
 
   if (!post)
     return {
@@ -61,9 +62,10 @@ export async function generateMetadata({
 
 export default async function Post({
   params,
-}: Readonly<{ params: { slug: string } }>) {
+}: Readonly<{ params: Promise<{ slug: string }> }>) {
+  const { slug } = await params;
   const baseUrl = process.env.URL || "https://www.moklet.org";
-  const post = await findPost({ slug: params.slug, published: true });
+  const post = await findPost({ slug, published: true });
 
   if (!post) notFound();
   else await updatePost({ id: post.id }, { view_count: { increment: 1 } });
@@ -82,7 +84,7 @@ export default async function Post({
   };
 
   return (
-    <SmallSectionWrapper id={"Post-" + params.slug}>
+    <SmallSectionWrapper id={"Post-" + slug}>
       <div className="w-full flex gap-[92px] xl:gap-0 xl:justify-between xl:flex-row flex-col">
         <div className="w-full xl:w-[60%] flex flex-col gap-[52px]">
           <div className="w-full block">

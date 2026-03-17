@@ -6,21 +6,31 @@ import FilterSection from "./_components/FilterSection";
 import EventStatsSection from "./_components/EventStatsSection";
 import OrganizationStatsSection from "./_components/OrganizationStatsSection";
 import SchoolUnitStatsSection from "./_components/SchoolUnitStatsSection";
-import MonthlyTrendChart from "./_components/MonthlyTrendChart";
-import StatisticsDistributionChart from "./_components/StatisticsDistributionChart";
 import { getAspirasiStats } from "@/actions/statsAspirasi";
+import dynamic from "next/dynamic";
+
+const MonthlyTrendChart = dynamic(() => import("./_components/MonthlyTrendChart"), {
+  ssr: false,
+  loading: () => <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />,
+});
+
+const StatisticsDistributionChart = dynamic(() => import("./_components/StatisticsDistributionChart"), {
+  ssr: false,
+  loading: () => <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />,
+});
 
 export default async function StatisticsPage({
   searchParams,
 }: Readonly<{
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }>) {
-  const dateRange = searchParams.dateRange as string | undefined;
-  const fromDate = searchParams.fromDate as string | undefined;
-  const toDate = searchParams.toDate as string | undefined;
-  const category = searchParams.category as string | undefined;
-  const organization = searchParams.organization?.toString().toUpperCase();
-  const schoolUnit = searchParams.schoolUnit?.toString().toUpperCase();
+  const resolvedSearchParams = await searchParams;
+  const dateRange = resolvedSearchParams.dateRange as string | undefined;
+  const fromDate = resolvedSearchParams.fromDate as string | undefined;
+  const toDate = resolvedSearchParams.toDate as string | undefined;
+  const category = resolvedSearchParams.category as string | undefined;
+  const organization = resolvedSearchParams.organization?.toString().toUpperCase();
+  const schoolUnit = resolvedSearchParams.schoolUnit?.toString().toUpperCase();
 
   const stats = await getAspirasiStats({
     dateRange,
@@ -139,3 +149,5 @@ export default async function StatisticsPage({
     </div>
   );
 }
+
+export const revalidate = 60;

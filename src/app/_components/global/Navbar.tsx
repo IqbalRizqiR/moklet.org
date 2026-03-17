@@ -38,7 +38,7 @@ export default function Navbar() {
 
   return (
     <nav className="xl:relative fixed z-[999] mx-auto w-full flex flex-col">
-      <div className="w-full flex xl:max-w-[1192px] mx-auto z-[999] py-4 xl:py-0 px-5 bg-white xl:bg-transparent justify-between items-center">
+      <div className="w-full flex xl:max-w-[1192px] mx-auto z-[999] py-4 xl:py-0 px-5 bg-white/90 backdrop-blur-sm xl:bg-transparent justify-between items-center">
         <Link href={"/"} className="xl:mt-12">
           <span className="block w-[130px] h-[32px] bg-contain bg-[url(/horizontal.svg)] text-transparent bg-no-repeat pointer-events-none select-none">
             Moklet Organization: SMK Telkom Malang
@@ -46,7 +46,7 @@ export default function Navbar() {
         </Link>
         <div
           className={cn(
-            `fixed hidden left-1/2 top-[24.5px] xl:flex xl:items-center justify-between w-full transition-all duration-300 ${scrolled ? "max-w-[826px]" : "max-w-[602px]"} -translate-x-1/2 rounded-full border border-neutral-300 bg-white px-[50px] py-3 shadow-md`,
+            `fixed hidden left-1/2 top-[24.5px] xl:flex xl:items-center justify-between w-full transition-all duration-300 ${scrolled ? "max-w-[826px]" : "max-w-[602px]"} -translate-x-1/2 rounded-full border border-glass-border bg-glass-white px-[50px] py-3 shadow-glass backdrop-blur-md`,
           )}
         >
           {scrolled && (
@@ -66,9 +66,8 @@ export default function Navbar() {
             <Link
               key={navOption.title}
               href={navOption.href}
-              // Splitted "/a/b" will form an array: ["", "a", "b"], that's why we use the second index as comparation
               className={cn(
-                `rounded-full py-2 text-center transition-all duration-300 hover:text-primary-400 ${pathname.split("/")[1] === navOption.href.split("/")[1] ? "text-red-400" : ""}`,
+                `rounded-full py-2 text-center transition-all duration-300 hover:text-primary-400 ${pathname.split("/")[1] === navOption.href.split("/")[1] ? "text-primary-400" : ""}`,
               )}
             >
               {navOption.title}
@@ -84,7 +83,7 @@ export default function Navbar() {
       </div>
       <div
         className={cn(
-          `block xl:hidden h-[300px] w-full z-[800] bg-white transition-all duration-500 ${isExpanded ? "mt-0" : " -mt-96"}`,
+          `block xl:hidden h-[300px] w-full z-[800] border-t border-white/50 bg-glass-white backdrop-blur-md transition-all duration-500 ${isExpanded ? "mt-0" : " -mt-96"}`,
         )}
       >
         <div className="flex flex-col gap-8 text-start justify-start items-start my-[21px] ms-[20px] lg:ms-[52px]">
@@ -92,9 +91,8 @@ export default function Navbar() {
             <Link
               key={navOption.title}
               href={navOption.href}
-              // Splitted "/a/b" will form an array: ["", "a", "b"], that's why we use the second index as comparation
               className={cn(
-                `rounded-full text-center text-[16px] transition-all duration-300 hover:text-primary-400 ${pathname.split("/")[1] === navOption.href.split("/")[1] ? "text-red-400" : ""}`,
+                `rounded-full text-center text-[16px] transition-all duration-300 hover:text-primary-400 ${pathname.split("/")[1] === navOption.href.split("/")[1] ? "text-primary-400" : ""}`,
               )}
               onClick={() => setIsExpanded(false)}
             >

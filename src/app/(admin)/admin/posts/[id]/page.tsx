@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { H1 } from "@/app/_components/global/Text";
-import { nextGetServerSession } from "@/lib/next-auth";
+import { auth } from "@/lib/auth";
 import { TagWithPostCount } from "@/types/entityRelations";
 import { findPost } from "@/utils/database/post.query";
 import { findAllTags } from "@/utils/database/tag.query";
@@ -12,9 +12,10 @@ import DownloadIGStoryButton from "./_components/parts/DownloadIGStoryButton";
 
 export const revalidate = 0;
 
-export default async function Edit({ params }: { params: { id: string } }) {
-  const session = await nextGetServerSession();
-  const data = await findPost({ id: params.id ?? "" });
+export default async function Edit({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await auth();
+  const data = await findPost({ id: id ?? "" });
   if (
     !(session?.user?.role === "Admin" || session?.user?.role === "SuperAdmin")
   ) {
