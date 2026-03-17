@@ -20,34 +20,76 @@ export default async function OrgStructureChart({
 }: {
   organisasiId: string;
 }) {
-  const members = await prisma.user.findMany({
-    where: { organisasi_id: organisasiId },
-    include: {
-      org_role: {
-        select: {
-          name: true,
-          hierarchy_level: true,
-          is_leader: true,
+  const [levels, members] = await Promise.all([
+    prisma.org_Level.findMany({
+      where: { organisasi_id: organisasiId },
+      orderBy: { order: "asc" },
+    }),
+    prisma.user.findMany({
+      where: { organisasi_id: organisasiId },
+      include: {
+        org_role: {
+          select: {
+            name: true,
+            hierarchy_level: true,
+            is_leader: true,
+            level: true,
+          },
         },
       },
-    },
-    orderBy: { name: "asc" },
-  });
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   if (members.length === 0) {
     return null;
   }
 
-  const grouped: Record<number, typeof members> = {};
-  for (const m of members) {
-    const level = m.org_role?.hierarchy_level ?? 5;
-    if (!grouped[level]) grouped[level] = [];
-    grouped[level].push(m);
-  }
+  // Group members by level
+  // If we have custom levels defined, use them. Otherwise fallback to hierarchy_level.
+  const hasCustomLevels = levels.length > 0;
+  
+  const grouped: { label: string; order: number; members: typeof members }[] = [];
+  const groupMap = new Map<string, number>();
 
-  const sortedLevels = Object.keys(grouped)
-    .map(Number)
-    .sort((a, b) => a - b);
+  if (hasCustomLevels) {
+    // Initialize groups for all defined levels to maintain order even if empty
+    levels.forEach((lvl, idx) => {
+      grouped.push({ label: lvl.name, order: lvl.order, members: [] });
+      groupMap.set(lvl.id, idx);
+    });
+
+    // Add members to their level groups
+    members.forEach((m) => {
+      const levelId = m.org_role?.level?.id;
+      if (levelId && groupMap.has(levelId)) {
+        grouped[groupMap.get(levelId)!].members.push(m);
+      } else {
+        // Fallback for members whose role doesn't have a level_id but org has levels
+        // We might want to put them in the lowest level or a special group
+        // For now, let's skip them or add a "Lainnya" group if needed
+      }
+    });
+  } else {
+    // Fallback to old hierarchy_level logic
+    const fallbackGrouped: Record<number, typeof members> = {};
+    for (const m of members) {
+      const level = m.org_role?.hierarchy_level ?? 5;
+      if (!fallbackGrouped[level]) fallbackGrouped[level] = [];
+      fallbackGrouped[level].push(m);
+    }
+
+    Object.keys(fallbackGrouped).forEach((level) => {
+      const lvlNum = parseInt(level);
+      const config = LEVEL_CONFIG[Math.min(lvlNum, 5)] ?? LEVEL_CONFIG[5];
+      grouped.push({
+        label: config.label,
+        order: lvlNum,
+        members: fallbackGrouped[lvlNum],
+      });
+    });
+    grouped.sort((a, b) => a.order - b.order);
+  }
 
   return (
     <SectionWrapper id="struktur">
@@ -55,12 +97,11 @@ export default async function OrgStructureChart({
         <H2 className="font-bold text-center">Struktur Organisasi</H2>
 
         <div className="relative flex flex-col items-center gap-0">
-          {sortedLevels.map((level, levelIdx) => {
-            const config = getConfig(level);
-            const membersAtLevel = grouped[level];
+          {grouped.filter(g => g.members.length > 0).map((group, levelIdx) => {
+            const config = getConfig(group.order);
 
             return (
-              <div key={level} className="w-full flex flex-col items-center">
+              <div key={group.label} className="w-full flex flex-col items-center">
                 {levelIdx > 0 && (
                   <div className="w-px h-6 bg-gradient-to-b from-gray-300/60 to-gray-200/30" />
                 )}
@@ -70,12 +111,12 @@ export default async function OrgStructureChart({
                     className={`inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase px-3.5 py-1 rounded-full backdrop-blur-md bg-gradient-to-r ${config.bgClass} border border-white/20 text-gray-700 shadow-sm`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass}`} />
-                    {config.label}
+                    {group.label}
                   </span>
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-3 max-w-5xl px-2">
-                  {membersAtLevel.map((member) => (
+                  {group.members.map((member) => (
                     <div
                       key={member.id}
                       className="group relative flex flex-col items-center gap-2.5 px-4 py-4 rounded-2xl backdrop-blur-lg bg-white/60 border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 w-[130px]"
@@ -107,3 +148,4 @@ export default async function OrgStructureChart({
     </SectionWrapper>
   );
 }
+

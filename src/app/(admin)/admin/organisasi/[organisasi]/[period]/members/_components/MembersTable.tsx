@@ -497,6 +497,7 @@ export default function MembersTable({
       <OrgStructurePreview
         members={previewMembers}
         pendingMember={showAddModal ? pendingMember : null}
+        levels={levels}
       />
 
       {/* ═══ Add member modal ═══ */}

@@ -37,9 +37,11 @@ const DOTS = [
 export default function OrgStructurePreview({
   members,
   pendingMember,
+  levels = [],
 }: {
   members: PreviewMember[];
   pendingMember?: PreviewMember | null;
+  levels?: OrgLevel[];
 }) {
   const allMembers = pendingMember
     ? [...members, { ...pendingMember, id: "__pending__" }]
@@ -56,13 +58,24 @@ export default function OrgStructurePreview({
     );
   }
 
-  // Group members by level tier name (from role.level.name), fallback to hierarchy_level
+  // Group members by level
   const grouped: { key: string; label: string; order: number; members: PreviewMember[] }[] = [];
   const groupMap = new Map<string, number>();
 
   for (const m of allMembers) {
-    const levelName = m.org_role?.level?.name;
-    const levelOrder = m.org_role?.level?.order ?? m.org_role?.hierarchy_level ?? 99;
+    let levelName = m.org_role?.level?.name;
+    let levelOrder = m.org_role?.level?.order ?? m.org_role?.hierarchy_level ?? 99;
+    
+    // If level info is missing (common for pending members or partial roles), 
+    // try to find it in the levels array using level_id
+    if (!levelName && m.org_role?.level_id) {
+      const matchedLevel = levels.find(l => l.id === m.org_role?.level_id);
+      if (matchedLevel) {
+        levelName = matchedLevel.name;
+        levelOrder = matchedLevel.order;
+      }
+    }
+
     const key = levelName ?? `__level_${m.org_role?.hierarchy_level ?? 99}`;
     const label = levelName ?? (m.org_role ? `Level ${m.org_role.hierarchy_level}` : "Tanpa Level");
 
@@ -149,3 +162,4 @@ export default function OrgStructurePreview({
     </div>
   );
 }
+
