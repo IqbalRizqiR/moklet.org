@@ -169,6 +169,7 @@ export function SelectField({
         </label>
       )}
       <select
+        key={name + (value ?? "empty")}
         name={name}
         defaultValue={value || ""}
         className={cn(
@@ -180,7 +181,7 @@ export function SelectField({
         onChange={handleChange}
         disabled={disabled}
       >
-        <option value="" disabled selected={!value}>
+        <option value="" disabled>
           Pilih
         </option>
         {options?.map((option, index) => (

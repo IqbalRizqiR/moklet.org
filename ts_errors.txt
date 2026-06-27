@@ -1,0 +1,9 @@
+src/app/(admin)/admin/aspirasi/components/EventModal.tsx(6,10): error TS2305: Module '"@/actions/event"' has no exported member 'upsertEvent'.
+src/app/(admin)/admin/events/[id]/committee/_components/CustomRoleManager.tsx(6,10): error TS2724: '"@/actions/eventCommittee"' has no exported member named 'createRoleAction'. Did you mean 'createEventRoleAction'?
+src/app/(admin)/admin/events/[id]/committee/_components/CustomRoleManager.tsx(6,28): error TS2305: Module '"@/actions/eventCommittee"' has no exported member 'updateRoleAction'.
+src/app/(admin)/admin/events/[id]/committee/_components/CustomRoleManager.tsx(6,46): error TS2724: '"@/actions/eventCommittee"' has no exported member named 'deleteRoleAction'. Did you mean 'deleteEventRoleAction'?
+src/app/(admin)/admin/events/[id]/committee/_components/MembersTable.tsx(14,10): error TS2724: '"@/actions/eventCommittee"' has no exported member named 'createRoleAction'. Did you mean 'createEventRoleAction'?
+src/app/(admin)/admin/events/[id]/committee/_components/MembersTable.tsx(17,35): error TS2307: Cannot find module './EventStructurePreview' or its corresponding type declarations.
+src/app/(admin)/admin/events/create/_components/Form.tsx(39,10): error TS2741: Property 'type' is missing in type '{ label: string; name: string; placeholder: string; required: true; }' but required in type 'Readonly<TextFieldProps>'.
+src/app/(admin)/admin/events/create/page.tsx(10,51): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/app/(admin)/admin/events/page.tsx(33,35): error TS7006: Parameter 'o' implicitly has an 'any' type.

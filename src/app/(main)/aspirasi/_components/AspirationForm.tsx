@@ -56,7 +56,7 @@ export default function AspirationForm({
                       }}
                       value={aspiration}
                 label="Isi Aspirasi"
-                      hostType="IMGBB"
+                      hostType="CLOUDINARY"
                     />
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700">Lampiran Gambar (Opsional)</label>

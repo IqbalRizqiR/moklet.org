@@ -167,37 +167,41 @@ async function _getAspirasiStatsFromDB(filters: FilterParams) {
     count: event._count.aspirasi,
   }));
 
-  const orgStats = await Promise.all(
-    Object.values(Organisasi_Type).map(async (org: any) => {
-      const count = await prisma.aspirasi.count({
-        where: {
-          ...baseWhereClause,
-          organisasi: org,
-        },
-      });
-
-      return {
-        name: org,
-        count,
-      };
-    }),
+  const orgGroup = await prisma.aspirasi.groupBy({
+    by: ['organisasi'],
+    where: {
+      ...baseWhereClause,
+      organisasi: { not: null },
+    },
+    _count: { id: true },
+  });
+  
+  const orgStatsMap = Object.fromEntries(
+    orgGroup.filter((g: any) => g.organisasi).map((g: any) => [g.organisasi, g._count.id])
   );
 
-  const unitStats = await Promise.all(
-    Object.values(UnitSekolah).map(async (unit) => {
-      const count = await prisma.aspirasi.count({
-        where: {
-          ...baseWhereClause,
-          unit_sekolah: unit,
-        },
-      });
+  const orgStats = Object.values(Organisasi_Type).map((org: any) => ({
+    name: org,
+    count: orgStatsMap[org] || 0,
+  }));
 
-      return {
-        name: unit,
-        count,
-      };
-    }),
+  const unitGroup = await prisma.aspirasi.groupBy({
+    by: ['unit_sekolah'],
+    where: {
+      ...baseWhereClause,
+      unit_sekolah: { not: null },
+    },
+    _count: { id: true },
+  });
+  
+  const unitStatsMap = Object.fromEntries(
+    unitGroup.filter((g: any) => g.unit_sekolah).map((g: any) => [g.unit_sekolah, g._count.id])
   );
+
+  const unitStats = Object.values(UnitSekolah).map((unit) => ({
+    name: unit,
+    count: unitStatsMap[unit] || 0,
+  }));
 
   const monthlyTrends = await getMonthlyTrends(startDate, endDate, whereClause);
 

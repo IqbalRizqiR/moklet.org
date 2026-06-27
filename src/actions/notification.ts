@@ -1,5 +1,6 @@
 "use server";
 
+import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { markAsRead, markAllAsRead } from "@/utils/database/notification.query";
 
@@ -8,6 +9,13 @@ export async function markNotificationRead(recipientId: string) {
   if (!session?.user?.id) return { error: true, message: "Unauthorized" };
 
   try {
+    const notif = await prisma.notification_Recipient.findUnique({
+      where: { id: recipientId }
+    });
+    if (!notif || notif.user_id !== session.user.id) {
+      return { error: true, message: "Unauthorized" };
+    }
+    
     await markAsRead(recipientId);
     return { error: false };
   } catch (e) {

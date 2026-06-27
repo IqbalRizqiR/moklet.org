@@ -69,7 +69,7 @@ export default function EditAspirationModal({ aspiration }: { aspiration: any })
                     <Editor
                       onChange={(value) => setContent(value ?? "")}
                       value={content}
-                      hostType="IMGBB"
+                      hostType="CLOUDINARY"
                     />
                   </div>
                 </div>

@@ -26,16 +26,23 @@ export default async function OrgStructureChart({
       orderBy: { order: "asc" },
     }),
     prisma.user.findMany({
-      where: { organisasi_id: organisasiId },
-      include: {
-        org_role: {
-          select: {
-            name: true,
-            hierarchy_level: true,
-            is_leader: true,
-            level: true,
-          },
-        },
+      where: {
+        memberships: {
+          some: { organisasi_id: organisasiId }
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        user_pic: true,
+        memberships: {
+          where: { organisasi_id: organisasiId },
+          include: {
+            role: {
+              include: { level: true }
+            }
+          }
+        }
       },
       orderBy: { name: "asc" },
     }),
@@ -61,7 +68,8 @@ export default async function OrgStructureChart({
 
     // Add members to their level groups
     members.forEach((m: any) => {
-      const levelId = m.org_role?.level?.id;
+      const orgRole = m.memberships[0]?.role;
+      const levelId = orgRole?.level?.id;
       if (levelId && groupMap.has(levelId)) {
         grouped[groupMap.get(levelId)!].members.push(m);
       } else {
@@ -74,7 +82,8 @@ export default async function OrgStructureChart({
     // Fallback to old hierarchy_level logic
     const fallbackGrouped: Record<number, typeof members> = {};
     for (const m of members) {
-      const level = m.org_role?.hierarchy_level ?? 5;
+      const orgRole = (m as any).memberships[0]?.role;
+      const level = orgRole?.hierarchy_level ?? 5;
       if (!fallbackGrouped[level]) fallbackGrouped[level] = [];
       fallbackGrouped[level].push(m);
     }
@@ -134,7 +143,7 @@ export default async function OrgStructureChart({
                           {member.name}
                         </p>
                         <p className="text-[11px] text-gray-400/90 truncate mt-0.5">
-                          {member.org_role?.name ?? "Anggota"}
+                          {(member as any).memberships[0]?.role?.name ?? "Anggota"}
                         </p>
                       </div>
                     </div>

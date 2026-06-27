@@ -1,6 +1,6 @@
 "use client";
 
-import { Submission_Field } from "@prisma/client";
+import type { Submission_Field } from "@prisma/client";
 import { useRouter } from "next-nprogress-bar";
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ interface FormProps {
   b: string;
   answers?: Submission_Field[];
   submission_id?: string;
+  onSuccess?: (submission_id: string) => void;
 }
 
 export default function Form({
@@ -30,6 +31,7 @@ export default function Form({
   b,
   answers,
   submission_id,
+  onSuccess,
 }: FormProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -88,7 +90,11 @@ export default function Form({
         toast.success("Jawaban terkirim!", {
           id: toastId,
         });
-        router.push(`/form/${b}/alreadysubmit`);
+        if (onSuccess) {
+          onSuccess(submission.submission_id!);
+        } else {
+          router.push(`/form/${b}/alreadysubmit`);
+        }
       } else {
         toast.error(submission.message, {
           id: toastId,

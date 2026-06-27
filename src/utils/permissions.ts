@@ -1,29 +1,22 @@
 import prisma from "@/lib/prisma";
 import { checkPermission } from "@/utils/database/orgPermission.query";
 
-// Helper to safely compare IDs (handles database padding/casing)
-const compareIds = (id1: string | null | undefined, id2: string | null | undefined): boolean => {
-  if (!id1 || !id2) return false;
-  return id1.trim().toLowerCase() === id2.trim().toLowerCase();
-};
-
 // Check if a user is an org leader (has a custom role marked as leader)
 export const isOrgLeader = async (
   userId: string,
   organisasiId: string,
 ): Promise<boolean> => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { org_role: true },
+  const membership = await prisma.org_Member.findUnique({
+    where: {
+      user_id_organisasi_id: {
+        user_id: userId,
+        organisasi_id: organisasiId
+      }
+    },
+    include: { role: true },
   });
 
-  if (!user) return false;
-  
-  // Resilient check: check user's direct organisasi_id OR the role's organisasi_id
-  const userBelongsToOrg = compareIds(user.organisasi_id, organisasiId);
-  const roleBelongsToOrg = compareIds(user.org_role?.organisasi_id, organisasiId);
-  
-  return (userBelongsToOrg || roleBelongsToOrg) && (user.org_role?.is_leader ?? false);
+  return membership?.role?.is_leader ?? false;
 };
 
 // Check if user can edit org info
@@ -31,7 +24,7 @@ export const canEditOrgInfo = async (
   userId: string,
   organisasiId: string,
 ): Promise<boolean> => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (!user) return false;
   if (user.role === "SuperAdmin" || user.role === "Admin") return true;
 
@@ -45,7 +38,7 @@ export const canEditStructure = async (
   userId: string,
   organisasiId: string,
 ): Promise<boolean> => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (!user) return false;
   if (user.role === "SuperAdmin" || user.role === "Admin") return true;
   if (await isOrgLeader(userId, organisasiId)) return true;
@@ -57,7 +50,7 @@ export const canPublishPost = async (
   userId: string,
   organisasiId: string,
 ): Promise<boolean> => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (!user) return false;
   if (user.role === "SuperAdmin" || user.role === "Admin") return true;
   if (await isOrgLeader(userId, organisasiId)) return true;
@@ -69,11 +62,50 @@ export const canManageMembers = async (
   userId: string,
   organisasiId: string,
 ): Promise<boolean> => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (!user) return false;
   if (user.role === "SuperAdmin" || user.role === "Admin") return true;
   if (await isOrgLeader(userId, organisasiId)) return true;
   return await checkPermission(userId, organisasiId, "manage_members");
+};
+
+// --- EVENT PERMISSIONS ---
+
+// Check if a user is an event leader (has a custom role marked as leader)
+export const isEventLeader = async (
+  userId: string,
+  eventId: string,
+): Promise<boolean> => {
+  const membership = await prisma.event_Member.findUnique({
+    where: {
+      user_id_event_id: {
+        user_id: userId,
+        event_id: eventId
+      }
+    },
+    include: { role: true },
+  });
+
+  return membership?.role?.is_leader ?? false;
+};
+
+// Check if a user can widely manage an event (add levels, edit roles)
+export const canManageEvent = async (
+  userId: string,
+  eventId: string,
+): Promise<boolean> => {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!user) return false;
+  if (user.role === "SuperAdmin" || user.role === "Admin") return true;
+
+  // The event leader can do anything
+  if (await isEventLeader(userId, eventId)) return true;
+
+  // Or if the user is the leader of the organization that owns this event
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (event?.organisasi_id && await isOrgLeader(userId, event.organisasi_id)) return true;
+
+  return false;
 };
 
 // Re-export constants for backward compatibility

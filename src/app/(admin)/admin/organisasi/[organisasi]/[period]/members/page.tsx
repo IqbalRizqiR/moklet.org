@@ -49,10 +49,22 @@ export default async function MembersPage({
   // Fetch all data in parallel
   const [members, customRoles, levels, permissionTemplates, guestUsers] = await Promise.all([
     // Members
+    // Members - find users who are members of this specific organization
     prisma.user.findMany({
-      where: { organisasi_id: org.id },
-      include: {
-        org_role: { include: { level: true } },
+      where: {
+        memberships: {
+          some: { organisasi_id: org.id }
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        user_pic: true,
+        memberships: {
+          where: { organisasi_id: org.id },
+          include: { role: { include: { level: true } } }
+        },
         permissions: { where: { organisasi_id: org.id } },
       },
       orderBy: { name: "asc" },
@@ -67,8 +79,15 @@ export default async function MembersPage({
     // Permission templates
     findAllTemplates(),
     // Guest users
+    // Guest users - for simplicity, show users who are not in THIS organization yet
     prisma.user.findMany({
-      where: { organisasi_id: null },
+      where: {
+        NOT: {
+          memberships: {
+            some: { organisasi_id: org.id }
+          }
+        }
+      },
       select: { id: true, name: true, email: true, user_pic: true },
       orderBy: { name: "asc" },
       take: 100,
@@ -81,14 +100,14 @@ export default async function MembersPage({
     name: m.name,
     email: m.email,
     user_pic: m.user_pic,
-    org_role: m.org_role
+    org_role: m.memberships[0]?.role
       ? {
-          id: m.org_role.id,
-          name: m.org_role.name,
-          is_leader: m.org_role.is_leader,
-          hierarchy_level: m.org_role.hierarchy_level,
-          level_id: m.org_role.level_id,
-          level: m.org_role.level ? { id: m.org_role.level.id, name: m.org_role.level.name, order: m.org_role.level.order } : null,
+          id: m.memberships[0].role.id,
+          name: m.memberships[0].role.name,
+          is_leader: m.memberships[0].role.is_leader,
+          hierarchy_level: m.memberships[0].role.hierarchy_level,
+          level_id: m.memberships[0].role.level_id,
+          level: m.memberships[0].role.level ? { id: m.memberships[0].role.level.id, name: m.memberships[0].role.level.name, order: m.memberships[0].role.level.order } : null,
         }
       : null,
     permissions: m.permissions.map((p: any) => ({

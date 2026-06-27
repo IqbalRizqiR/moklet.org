@@ -52,9 +52,9 @@ export default function Editor({
         if (!result) return toast.error("Failed to load image");
 
         const imageSizeInMb = fileSizeToMb(result.size);
-        if (imageSizeInMb >= 4.3)
+        if (imageSizeInMb > 10)
           return toast.error(
-            "Ukuran file terlalu besar! Ukuran maximum 4,3 MB",
+            "Ukuran file terlalu besar! Ukuran maximum 10 MB",
           );
 
         const data = new FormData();
@@ -62,13 +62,15 @@ export default function Editor({
         data.append("file", result!);
         data.append("hostType", hostType);
         const toastId = toast.loading("Uploading image...");
-        const upload = await fetch("/api/upload/image", {
+        const response = await fetch("/api/upload/image", {
           method: "POST",
           body: data,
-        }).then((res) => res.json());
+        });
 
-        if (upload.status != 201) {
-          toast.error("Ukuran file terlalu besar! Ukuran maximum 4,3 MB", {
+        const upload = await response.json();
+
+        if (response.status != 201) {
+          toast.error(upload.message || "Gagal mengupload gambar", {
             id: toastId,
           });
         } else {

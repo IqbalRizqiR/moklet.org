@@ -15,6 +15,7 @@ import { SelectField, TextField } from "@/app/_components/global/Input";
 import { H4, P } from "@/app/_components/global/Text";
 import { FieldsWithOptions } from "@/types/entityRelations";
 import { arrayMove } from "@/utils/atomics";
+import generateRandomSlug from "@/utils/randomSlug";
 import { toast } from "sonner";
 
 export default function QuestionEdit({
@@ -56,16 +57,10 @@ export default function QuestionEdit({
     });
   }
 
-  function addOption(e: SyntheticEvent) {
-    e.preventDefault();
+  function addOptionByIndex(indexNum: number) {
+    const inputElement = document.querySelector(`input[name="inputOption_${indexNum}"]`) as HTMLInputElement;
 
-    const { index, inputOption } = e.target as typeof e.target & {
-      index: { value: string };
-      inputOption: { value: string };
-    };
-    const indexNum = parseInt(index.value);
-
-    if (!inputOption.value || inputOption.value == "") {
+    if (!inputElement || !inputElement.value || inputElement.value == "") {
       return toast.error("Input tidak boleh kosong!");
     }
 
@@ -77,13 +72,13 @@ export default function QuestionEdit({
         {
           field_id: fields[indexNum].id,
           id: 0,
-          value: inputOption.value,
+          value: inputElement.value,
         },
-      ]),
+      ])
     );
-
     setFields(questions);
-    inputOption.value = "";
+
+    inputElement.value = "";
   }
 
   function removeOption(
@@ -170,6 +165,7 @@ export default function QuestionEdit({
             <div className="w-full flex justify-between">
               <span className="text-black font-semibold">No. {index + 1}</span>
               <button
+                type="button"
                 onClick={(e) => removeField(index, e)}
                 className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-red-500 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center transition-all"
               >
@@ -198,22 +194,24 @@ export default function QuestionEdit({
             />
             {["radio", "checkbox"].includes(item.type) && (
               <div>
-                <form
-                  className="flex flex-col md:flex-row gap-2 md:items-end"
-                  onSubmit={addOption}
-                >
+                <div className="flex flex-col md:flex-row gap-2 md:items-end">
                   <TextField
-                    name="inputOption"
+                    name={`inputOption_${index}`}
                     label="Pilihan Jawaban"
                     type="text"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addOptionByIndex(index);
+                      }
+                    }}
                   />
-                  <input type="hidden" name="index" value={index} />
                   <div>
-                    <Button variant={"primary"} type="submit">
+                    <Button variant={"primary"} type="button" onClick={() => addOptionByIndex(index)}>
                       Tambahkan
                     </Button>
                   </div>
-                </form>
+                </div>
                 <ul className="list-disc list-inside mt-2">
                   {item.options.map((option, indexOption) => (
                     <li
@@ -248,7 +246,7 @@ export default function QuestionEdit({
           </div>
         );
       })}
-      <Button variant={"primary"} onClick={addQuestion} className="w-full">
+      <Button type="button" variant={"primary"} onClick={addQuestion} className="w-full">
         Tambah Pertanyaan
       </Button>
     </div>

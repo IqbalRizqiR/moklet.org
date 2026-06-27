@@ -45,6 +45,7 @@ export const findPostByTag = async (
         include: {
           user: { select: { name: true, user_pic: true, role: true } },
           tags: true,
+          organisasi: true,
         },
       },
     },

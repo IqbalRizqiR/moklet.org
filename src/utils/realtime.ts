@@ -32,3 +32,16 @@ export async function pingBulkPermissionUpdate(userIds: string[]) {
     console.error(`[Realtime] Failed to bulk ping permission updates:`, error);
   }
 }
+
+/**
+ * Pings a campaign via Redis to trigger a real-time table refresh event.
+ * @param campaignId The ID of the campaign that received a new applicant.
+ */
+export async function pingCampaignUpdate(campaignId: string) {
+  try {
+    await redisClient.set(`campaign_ping:${campaignId}`, Date.now().toString(), { ex: 86400 }); // Expire in 24 hours
+    console.log(`[Realtime] Pinged campaign update for: ${campaignId}`);
+  } catch (error) {
+    console.error(`[Realtime] Failed to ping campaign update for ${campaignId}:`, error);
+  }
+}

@@ -48,14 +48,14 @@ export async function deleteLevel(levelId: string) {
 
   const level = await prisma.org_Level.findUnique({
     where: { id: levelId },
-    include: { roles: { include: { users: true } } },
+    include: { roles: { include: { memberships: true } } },
   });
   if (!level) return { error: true, message: "Level tidak ditemukan" };
 
   const hasAccess = await canManageMembers(session.user.id, level.organisasi_id);
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
-  const usedRoles = level.roles.filter((r: any) => r.users.length > 0);
+  const usedRoles = level.roles.filter((r: any) => r.memberships.length > 0);
   if (usedRoles.length > 0) {
     return { error: true, message: "Hapus dulu role yang masih digunakan di level ini" };
   }

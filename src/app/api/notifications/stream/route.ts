@@ -1,9 +1,10 @@
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { getNewNotifications } from "@/utils/database/notification.query";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });
@@ -62,6 +63,9 @@ export async function GET() {
 
       // Auto-close after 5 minutes (client will reconnect)
       setTimeout(cleanup, 5 * 60 * 1000);
+
+      // Cleanup on client disconnect
+      req.signal.addEventListener("abort", cleanup);
     },
   });
 

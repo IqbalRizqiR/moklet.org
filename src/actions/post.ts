@@ -68,6 +68,7 @@ export async function postCreate(
     const title = data.get("title") as string;
     const slug = data.get("slug") as string;
     const description = data.get("desc") as string;
+    const organisasi_id = data.get("organisasi_id") as string | null;
     const tag: Prisma.TagCreateOrConnectWithoutPostsInput[] = tags.map(
       (tag) => ({
         where: { tagName: tag.value },
@@ -77,16 +78,35 @@ export async function postCreate(
     const image = data.get("thumbnail") as File;
     const ABuffer = await image.arrayBuffer();
     const upload = await uploadImageCloudinary(Buffer.from(ABuffer));
+    
+    if (!upload?.data?.url) {
+      return { error: true, message: "Gagal mengupload thumbnail." };
+    }
 
     // Privilege check for creation
-    const userdb = await prisma.user.findUnique({ where: { id: session.user.id } });
+    const userdb = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, role: true }
+    });
     if (!userdb) return { error: true, message: "User tidak ditemukan!" };
 
     const isAdmin = userdb.role === "SuperAdmin" || userdb.role === "Admin";
     let hasPermission = isAdmin;
 
-    if (!hasPermission && userdb.organisasi_id) {
-      hasPermission = await canPublishPost(userdb.id, userdb.organisasi_id);
+    if (!hasPermission) {
+      if (organisasi_id) {
+        hasPermission = await canPublishPost(userdb.id, organisasi_id);
+      } else {
+        const memberships = await prisma.org_Member.findMany({
+          where: { user_id: userdb.id },
+        });
+        for (const m of memberships) {
+          if (await canPublishPost(userdb.id, m.organisasi_id)) {
+            hasPermission = true;
+            break;
+          }
+        }
+      }
     }
 
     if (!hasPermission) {
@@ -102,6 +122,7 @@ export async function postCreate(
       reaction: [],
       tags: { connectOrCreate: tag },
       user_id: session?.user?.id,
+      organisasi_id: organisasi_id || undefined,
       created_at: new Date(),
       updated_at: new Date(),
       published: false,
@@ -134,6 +155,7 @@ export async function postUpdate(
     const title = data.get("title") as string;
     const slug = data.get("slug") as string;
     const description = data.get("desc") as string;
+    const organisasi_id = data.get("organisasi_id") as string | null;
     const tag: Prisma.TagCreateOrConnectWithoutPostsInput[] = tags.map(
       (tag) => ({
         where: { tagName: tag.value },
@@ -149,7 +171,11 @@ export async function postUpdate(
 
     const post = await prisma.post.findUnique({
       where: { id },
-      include: { user: true },
+      select: {
+        id: true,
+        user_id: true,
+        slug: true
+      },
     });
 
     if (!post) return { error: true, message: "Post tidak ditemukan!" };
@@ -159,8 +185,20 @@ export async function postUpdate(
     const isAdmin = session.user.role === "SuperAdmin" || session.user.role === "Admin";
     let hasPermission = isAuthor || isAdmin;
 
-    if (!hasPermission && post.user.organisasi_id) {
-      hasPermission = await canPublishPost(session.user.id, post.user.organisasi_id);
+    if (!hasPermission) {
+      if (organisasi_id) {
+        hasPermission = await canPublishPost(session.user.id, organisasi_id);
+      } else {
+        const memberships = await prisma.org_Member.findMany({
+          where: { user_id: session.user.id },
+        });
+        for (const m of memberships) {
+          if (await canPublishPost(session.user.id, m.organisasi_id)) {
+            hasPermission = true;
+            break;
+          }
+        }
+      }
     }
 
     if (!hasPermission) return { error: true, message: "Tidak punya akses untuk mengedit berita ini." };
@@ -174,6 +212,7 @@ export async function postUpdate(
         description: description ?? undefined,
         thumbnail: upload?.data?.url ?? undefined,
         tags: { connectOrCreate: tag },
+        organisasi_id: organisasi_id || undefined,
         updated_at: new Date(),
       },
     );
@@ -200,7 +239,11 @@ export async function updatePostStatus(current_state: boolean, id: string) {
   try {
     const post = await prisma.post.findUnique({
       where: { id },
-      include: { user: true },
+      select: {
+        id: true,
+        user_id: true,
+        slug: true
+      },
     });
 
     if (!post) return { error: true, message: "Post tidak ditemukan!" };
@@ -210,8 +253,14 @@ export async function updatePostStatus(current_state: boolean, id: string) {
     const isAdmin = session.user.role === "SuperAdmin" || session.user.role === "Admin";
     let hasPermission = isAuthor || isAdmin;
 
-    if (!hasPermission && post.user.organisasi_id) {
-      hasPermission = await canPublishPost(session.user.id, post.user.organisasi_id);
+    if (!hasPermission) {
+      const memberships = await prisma.org_Member.findMany({ where: { user_id: session.user.id } });
+      for (const m of memberships) {
+        if (await canPublishPost(session.user.id, m.organisasi_id)) {
+          hasPermission = true;
+          break;
+        }
+      }
     }
 
     if (!hasPermission) return { error: true, message: "Tidak punya akses untuk mengubah status berita ini." };
@@ -238,23 +287,39 @@ export async function updatePostStatus(current_state: boolean, id: string) {
       const { dispatchNotification } = await import("@/lib/whatsapp");
       const post = await prisma.post.findUnique({
         where: { id },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          user_id: true,
           user: {
-            include: { organisasi: true },
+            select: {
+              id: true,
+              name: true,
+              memberships: {
+                include: { organisasi: true }
+              }
+            }
           },
         },
       });
 
       if (post) {
-        // Notify all org leaders if author is in an org
-        const orgId = post.user.organisasi_id;
-        if (orgId) {
+        // Notify all org leaders for each org the author is in
+        const orgMemberships = post.user.memberships;
+        for (const membership of orgMemberships) {
+          const orgId = membership.organisasi_id;
           const orgLeaders = await prisma.user.findMany({
             where: {
-              organisasi_id: orgId,
-              org_role: { is_leader: true },
-              id: { not: post.user_id },
+              memberships: {
+                some: {
+                  organisasi_id: orgId,
+                  role: { is_leader: true }
+                }
+              },
+              id: { not: post.user.id },
             },
+            select: { id: true }
           });
 
           if (orgLeaders.length > 0) {
@@ -265,7 +330,6 @@ export async function updatePostStatus(current_state: boolean, id: string) {
               targetUrl: `/berita/${post.slug}`,
               actorId: post.user_id,
               recipientIds: orgLeaders.map((l: any) => l.id),
-              organisasiId: orgId,
             }).catch(console.error);
           }
         }
@@ -286,7 +350,11 @@ export async function postDelete(id: string) {
   try {
     const post = await prisma.post.findUnique({
       where: { id },
-      include: { user: true },
+      select: {
+        id: true,
+        user_id: true,
+        slug: true
+      },
     });
 
     if (!post) return { error: true, message: "Post tidak ditemukan!" };
@@ -296,8 +364,14 @@ export async function postDelete(id: string) {
     const isAdmin = session.user.role === "SuperAdmin" || session.user.role === "Admin";
     let hasPermission = isAuthor || isAdmin;
 
-    if (!hasPermission && post.user.organisasi_id) {
-      hasPermission = await canPublishPost(session.user.id, post.user.organisasi_id);
+    if (!hasPermission) {
+      const memberships = await prisma.org_Member.findMany({ where: { user_id: session.user.id } });
+      for (const m of memberships) {
+        if (await canPublishPost(session.user.id, m.organisasi_id)) {
+          hasPermission = true;
+          break;
+        }
+      }
     }
 
     if (!hasPermission) return { error: true, message: "Tidak punya akses untuk menghapus berita ini." };

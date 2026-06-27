@@ -1,4 +1,4 @@
-import { Roles } from "@prisma/client";
+import { Roles } from "@/types/enums";
 import { Dispatch, SetStateAction } from "react";
 import { FaX } from "react-icons/fa6";
 import { toast } from "sonner";

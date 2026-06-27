@@ -14,6 +14,8 @@ import {
   findSubmission,
   updateSubmission,
 } from "@/utils/database/submission.query";
+import { pingCampaignUpdate } from "@/utils/realtime";
+import prisma from "@/lib/prisma";
 
 export const findFormById = async (form_id: string, active: boolean) => {
   const form = await findForm({ id: form_id, is_open: active });
@@ -102,6 +104,20 @@ export const submitForm = async (
       );
       if (!update) return { success: false, message: "Internal Server Error" };
 
+      const campaign = await prisma.recruitment_Campaign.findFirst({ where: { form_id } });
+      if (campaign) {
+        await prisma.recruitment_Applicant.upsert({
+          where: { submission_id: submission_id },
+          create: {
+            campaign_id: campaign.id,
+            user_id: user_id,
+            submission_id: submission_id,
+          },
+          update: {} // do nothing if it already exists
+        });
+        await pingCampaignUpdate(campaign.id);
+      }
+
       return { submission_id: submission_id, success: true };
     }
     const submission = await createSubmission({
@@ -109,6 +125,20 @@ export const submitForm = async (
       form_id,
       fields: { create: fields_create },
     });
+
+    const campaign = await prisma.recruitment_Campaign.findFirst({ where: { form_id } });
+    if (campaign) {
+      await prisma.recruitment_Applicant.upsert({
+        where: { submission_id: submission.id },
+        create: {
+          campaign_id: campaign.id,
+          user_id: user_id,
+          submission_id: submission.id,
+        },
+        update: {}
+      });
+      await pingCampaignUpdate(campaign.id);
+    }
 
     return { submission_id: submission.id, success: true };
   } catch {

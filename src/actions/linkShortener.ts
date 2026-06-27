@@ -1,7 +1,6 @@
 "use server";
 
-import { createHash } from "crypto";
-
+import { compareHash } from "@/utils/encryption";
 import { redirect } from "next/navigation";
 
 import prisma from "@/lib/prisma";
@@ -11,8 +10,8 @@ export default async function checkPass(formdata: FormData, slug: string) {
     where: { slug: slug },
   });
   const pass = formdata.get("password") as string;
-  const hashedPass = createHash("md5").update(pass).digest("hex");
-  if (destinationLink?.password === hashedPass) {
+  const isMatch = destinationLink?.password ? compareHash(pass, destinationLink.password) : false;
+  if (isMatch) {
     await prisma.link_Shortener_Count.upsert({
       where: { id: slug },
       update: { click_count: { increment: 1 } },

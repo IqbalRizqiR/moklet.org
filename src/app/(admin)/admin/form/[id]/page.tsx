@@ -4,6 +4,7 @@ import { H2 } from "@/app/_components/global/Text";
 import { auth } from "@/lib/auth";
 import { FormWithFields } from "@/types/entityRelations";
 import { findForm } from "@/utils/database/form.query";
+import { BreadcrumbSetter } from "../../components/BreadcrumbContext";
 
 import FormEditContent from "../_components/FormEditContent";
 
@@ -38,6 +39,7 @@ export default async function FormEdit({ params }: { params: Promise<{ id: strin
 
   return (
     <>
+      <BreadcrumbSetter id={id} title={form.title} />
       <H2>Edit Formulir</H2>
       <div className="py-2 flex flex-col gap-4">
         <FormEditContent form={form} isNewForm={id == "new"} />

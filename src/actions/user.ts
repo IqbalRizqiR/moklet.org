@@ -22,16 +22,18 @@ export const updateUserWithId = async (id: string | null, data: FormData) => {
     const role = data.get("role") as Roles;
     const password = data.get("password") as string;
 
-    if (userRole !== "SuperAdmin" && role !== userRole) {
-      return { error: true, message: "Unauthorized" };
+    if (userRole !== "SuperAdmin") {
+      if (role === "SuperAdmin") {
+        return { error: true, message: "Unauthorized" };
+      }
     }
 
     const findEmail = await findUser({ email });
     if (id && userRole !== "SuperAdmin") {
       const findById = await findUser({ id });
 
-      if (findById?.role !== userRole) {
-        return { error: true, message: "Unauthorized" };
+      if (findById?.role === "SuperAdmin") {
+        return { error: true, message: "Cannot edit SuperAdmin" };
       }
     }
 

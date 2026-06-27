@@ -26,6 +26,14 @@ export async function POST(req: NextRequest) {
       ]);
     }
 
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_SIZE) {
+      return badRequest([{ message: "File terlalu besar (maksimal 5MB)" }]);
+    }
+    if (!file.type.startsWith("image/")) {
+      return badRequest([{ message: "Hanya file gambar yang diizinkan" }]);
+    }
+
     if (hostType === "CLOUDINARY" && session.user.role === "Guest")
       return unauthorized();
 
@@ -38,10 +46,10 @@ export async function POST(req: NextRequest) {
         : await uploadImageImbb(fileBuffer);
 
     if (!uploader || uploader.error) {
-      if (uploader.message.includes("not allowed"))
-        return badRequest([uploader]);
+      if (uploader.message.includes("not allowed") || uploader.message.includes("limit"))
+        return badRequest([{ message: uploader.message }], uploader.message);
 
-      return internalServerError([]);
+      return internalServerError([], uploader.message || "Gagal mengupload gambar");
     }
     return created(uploader.data, uploader.message);
   } catch (error) {

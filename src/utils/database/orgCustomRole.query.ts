@@ -6,7 +6,7 @@ export const findRolesByOrg = async (organisasiId: string) => {
   return await prisma.org_Custom_Role.findMany({
     where: { organisasi_id: organisasiId },
     include: {
-      users: { select: { id: true, name: true, email: true, user_pic: true } },
+      memberships: { include: { user: { select: { id: true, name: true, email: true, user_pic: true } } } },
       level: true,
     },
     orderBy: { hierarchy_level: "asc" },
@@ -19,7 +19,7 @@ export const findCustomRole = async (
 ) => {
   return await prisma.org_Custom_Role.findUnique({
     where: filter,
-    include: { users: { select: { id: true, name: true, email: true, user_pic: true } } },
+    include: { memberships: { include: { user: { select: { id: true, name: true, email: true, user_pic: true } } } } },
   });
 };
 

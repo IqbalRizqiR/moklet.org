@@ -1,15 +1,398 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgres"
+}
+
+model User {
+  id                       String                   @id @default(uuid()) @map("user_id") @db.Char(36)
+  name                     String
+  email                    String                   @unique
+  role                     Roles                    @default(Guest)
+  user_pic                 String
+  Aspirasi                 Aspirasi[]
+  Event                    Event[]
+  forms                    Form[]
+  Link_Shortener           Link_Shortener[]
+  notifications_sent       Notification[]           @relation("NotificationActor")
+  notifications_received   Notification_Recipient[]
+  permissions              Org_Permission[]
+  posts                    Post[]
+  form_submissions         Submission[]
+  Twibbon                  Twibbon[]
+  memberships              Org_Member[]
+  event_memberships        Event_Member[]
+  userAuth                 User_Auth?
+  recruitment_applications Recruitment_Applicant[]
+}
+
+model User_Auth {
+  id                   String    @id @default(uuid()) @map("userauth_id") @db.Char(36)
+  password             String?
+  last_login           DateTime?
+  userEmail            String    @unique
+  google_access_token  String?
+  google_refresh_token String?
+  user                 User      @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+}
+
+model Post {
+  id            String      @id @default(uuid()) @map("post_id") @db.Char(36)
+  title         String
+  view_count    Int         @default(0)
+  description   String
+  content       String
+  created_at    DateTime    @default(now())
+  published_at  DateTime?
+  updated_at    DateTime    @updatedAt
+  published     Boolean     @default(false)
+  user_id       String
+  slug          String      @unique
+  thumbnail     String
+  reaction      Json
+  deleted       DateTime?
+  organisasi_id String?     @db.Char(36)
+  user          User        @relation(fields: [user_id], references: [id])
+  organisasi    Organisasi? @relation(fields: [organisasi_id], references: [id])
+  tags          Tag[]       @relation("PostToTag")
+}
+
+model Tag {
+  tagName    String   @id
+  created_at DateTime @default(now())
+  posts      Post[]   @relation("PostToTag")
+}
+
+model Form {
+  id                    String                 @id @map("form_id")
+  title                 String
+  description           String?
+  user_id               String
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  allow_edit            Boolean                @default(false)
+  submit_once           Boolean                @default(true)
+  is_open               Boolean                @default(true)
+  open_at               DateTime?
+  close_at              DateTime?
+  fields                Field[]
+  user                  User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  submissions           Submission[]
+  recruitment_campaigns Recruitment_Campaign[]
+}
+
+model Field {
+  id          Int                @id @default(autoincrement()) @map("field_id")
+  label       String
+  type        Field_Type
+  required    Boolean            @default(false)
+  form_id     String
+  fieldNumber Int                @default(0)
+  form        Form               @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  options     Field_Option[]
+  submissions Submission_Field[]
+}
+
+model Field_Option {
+  id       Int    @id @default(autoincrement()) @map("field_option_id")
+  value    String
+  field_id Int
+  field    Field  @relation(fields: [field_id], references: [id], onDelete: Cascade)
+}
+
+model Submission {
+  id                    String                 @id @default(uuid()) @map("submission_id") @db.Char(36)
+  form_id               String
+  user_id               String
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  form                  Form                   @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  user                  User                   @relation(fields: [user_id], references: [id])
+  fields                Submission_Field[]
+  recruitment_applicant Recruitment_Applicant?
+}
+
+model Submission_Field {
+  id            String     @id @default(uuid()) @map("submission_field_id") @db.Char(36)
+  submission_id String
+  field_id      Int
+  value         String
+  field         Field      @relation(fields: [field_id], references: [id], onDelete: Cascade)
+  submission    Submission @relation(fields: [submission_id], references: [id], onDelete: Cascade)
+}
+
+model Link_Shortener {
+  slug       String                @id @db.VarChar(50)
+  target_url String
+  user_id    String
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  password   String?               @db.Char(32)
+  type       LinkType              @default(User)
+  user       User                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  count      Link_Shortener_Count?
+}
+
+model Link_Shortener_Count {
+  id          String         @id @unique @db.VarChar(50)
+  click_count Int            @default(0)
+  Link        Link_Shortener @relation(fields: [id], references: [slug], onDelete: Cascade)
+}
+
+model Period_Year {
+  id          String       @id @default(uuid()) @map("periode_year_id") @db.Char(36)
+  period      String       @unique
+  is_active   Boolean      @default(false)
+  organisasis Organisasi[]
+}
+
+model Organisasi {
+  id                    String                 @id @default(uuid()) @map("suborgan_id") @db.Char(36)
+  period_id             String
+  organisasi            Organisasi_Type
+  is_suborgan           Boolean
+  organisasi_name       String                 @map("organisasi_name")
+  logo                  String
+  description           String
+  vision                String?
+  mission               String?
+  image                 String
+  image_description     String
+  companion             String
+  contact               String
+  structure             String
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  wa_notify_phone       String?
+  custom_roles          Org_Custom_Role[]
+  levels                Org_Level[]
+  period                Period_Year            @relation(fields: [period_id], references: [id])
+  memberships           Org_Member[]
+  posts                 Post[]
+  events                Event[]
+  permissions           Org_Permission[]
+  recruitment_campaigns Recruitment_Campaign[]
+
+  @@unique([organisasi, period_id])
+  @@map("Organisasi")
+}
+
+model Twibbon {
+  id         String      @id @default(uuid())
+  title      String
+  frame_url  String
+  slug       String      @unique
+  user_id    String
+  color_key  String?
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  caption    String?
+  type       TwibbonType @default(PHOTO)
+  user       User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+enum EventStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+}
+
+model Event {
+  id            String      @id @default(uuid())
+  event_name    String
+  description   String?     @db.Text
+  logo          String?
+  banner        String?
+  start_date    DateTime?
+  date          DateTime?
+  end_date      DateTime?
+  status        EventStatus @default(DRAFT)
+  organisasi_id String?     @db.Char(36)
+  user_id       String      @db.Char(36)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+
+  organisasi Organisasi?         @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  aspirasi   Aspirasi[]
+  levels     Event_Level[]
+  roles      Event_Custom_Role[]
+  members    Event_Member[]
+}
+
+model Event_Level {
+  id         String   @id @default(uuid()) @db.Char(36)
+  name       String
+  order      Int      @default(0)
+  event_id   String   @db.Char(36)
+  created_at DateTime @default(now())
+
+  event Event               @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  roles Event_Custom_Role[]
+
+  @@unique([name, event_id])
+}
+
+model Event_Custom_Role {
+  id              String  @id @default(uuid()) @db.Char(36)
+  name            String
+  event_id        String  @db.Char(36)
+  level_id        String? @db.Char(36)
+  hierarchy_level Int     @default(5)
+  is_leader       Boolean @default(false)
+
+  // Granular Contextual Permissions
+  can_edit_rundown  Boolean @default(false)
+  can_manage_task   Boolean @default(false)
+  can_manage_budget Boolean @default(false)
+  can_post_news     Boolean @default(false)
+
+  created_at DateTime @default(now())
+
+  event       Event          @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  level       Event_Level?   @relation(fields: [level_id], references: [id])
+  memberships Event_Member[]
+
+  @@unique([name, event_id])
+}
+
+model Event_Member {
+  id         String   @id @default(uuid()) @db.Char(36)
+  user_id    String   @db.Char(36)
+  event_id   String   @db.Char(36)
+  role_id    String   @db.Char(36)
+  created_at DateTime @default(now())
+
+  user  User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  event Event             @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  role  Event_Custom_Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, event_id])
+}
+
+model Aspirasi {
+  id              String           @id @default(uuid())
+  user_id         String
+  event_id        String?          @db.Char(36)
+  judul_aspirasi  String
+  pesan_aspirasi  String
+  organisasi      Organisasi_Type?
+  unit_sekolah    UnitSekolah?
+  created_at      DateTime         @default(now())
+  is_anonymous    Boolean          @default(false)
+  gambar_aspirasi String?
+  event           Event?           @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([organisasi])
+  @@index([unit_sekolah])
+  @@index([created_at])
+}
+
+model SchoolUnitConfig {
+  unit            UnitSekolah @id
+  wa_notify_phone String?
+  updated_at      DateTime    @updatedAt
+
+  @@map("Unit_Sekolah_Config")
+}
+
+model Org_Level {
+  id            String            @id @default(uuid()) @db.Char(36)
+  name          String
+  order         Int               @default(0)
+  organisasi_id String            @db.Char(36)
+  created_at    DateTime          @default(now())
+  roles         Org_Custom_Role[]
+  organisasi    Organisasi        @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
+
+  @@unique([name, organisasi_id])
+}
+
+model Org_Custom_Role {
+  id              String       @id @default(uuid()) @db.Char(36)
+  name            String
+  organisasi_id   String       @db.Char(36)
+  is_leader       Boolean      @default(false)
+  hierarchy_level Int          @default(5)
+  created_at      DateTime     @default(now())
+  level_id        String?      @db.Char(36)
+  level           Org_Level?   @relation(fields: [level_id], references: [id])
+  organisasi      Organisasi   @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
+  memberships     Org_Member[]
+
+  @@unique([name, organisasi_id])
+}
+
+model Org_Permission {
+  id            String     @id @default(uuid()) @db.Char(36)
+  user_id       String     @db.Char(36)
+  organisasi_id String     @db.Char(36)
+  permission    String
+  granted_by    String     @db.Char(36)
+  granted_at    DateTime   @default(now())
+  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  organisasi    Organisasi @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, organisasi_id, permission])
+}
+
+model Permission_Template {
+  id          String                     @id @default(uuid()) @db.Char(36)
+  name        String                     @unique
+  description String?
+  created_at  DateTime                   @default(now())
+  updated_at  DateTime                   @updatedAt
+  items       Permission_Template_Item[]
+}
+
+model Permission_Template_Item {
+  id          String              @id @default(uuid()) @db.Char(36)
+  template_id String              @db.Char(36)
+  permission  String
+  template    Permission_Template @relation(fields: [template_id], references: [id], onDelete: Cascade)
+
+  @@unique([template_id, permission])
+}
+
+model Notification {
+  id         String                   @id @default(uuid()) @db.Char(36)
+  type       String
+  title      String
+  message    String
+  target_url String?
+  actor_id   String                   @db.Char(36)
+  created_at DateTime                 @default(now())
+  actor      User                     @relation("NotificationActor", fields: [actor_id], references: [id])
+  recipients Notification_Recipient[]
+}
+
+model Notification_Recipient {
+  id              String       @id @default(uuid()) @db.Char(36)
+  notification_id String       @db.Char(36)
+  user_id         String       @db.Char(36)
+  read            Boolean      @default(false)
+  read_at         DateTime?
+  notification    Notification @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([notification_id, user_id])
+}
+
+model Org_Member {
+  id            String          @id @default(uuid()) @db.Char(36)
+  user          User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id       String          @db.Char(36)
+  organisasi    Organisasi      @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
+  organisasi_id String          @db.Char(36)
+  role          Org_Custom_Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role_id       String          @db.Char(36)
+  is_main       Boolean         @default(false)
+  created_at    DateTime        @default(now())
+
+  @@unique([user_id, organisasi_id])
 }
 
 enum Roles {
@@ -50,81 +433,6 @@ enum LinkType {
   System
 }
 
-model User {
-  id               String           @id @default(uuid()) @map("user_id") @db.Char(36)
-  name             String
-  email            String           @unique
-  role             Roles            @default(Guest)
-  user_pic         String
-  org_role         Org_Custom_Role? @relation(fields: [org_role_id], references: [id])
-  org_role_id      String?          @db.Char(36)
-  organisasi       Organisasi?      @relation(fields: [organisasi_id], references: [id])
-  organisasi_id    String?          @db.Char(36)
-  userAuth         User_Auth?
-  posts            Post[]
-  forms            Form[]
-  form_submissions Submission[]
-  Link_Shortener   Link_Shortener[]
-  Twibbon          Twibbon[]
-  Event            Event[]
-  Aspirasi         Aspirasi[]
-  permissions              Org_Permission[]
-  notifications_sent       Notification[]           @relation("NotificationActor")
-  notifications_received   Notification_Recipient[]
-}
-
-model User_Auth {
-  id                   String    @id @default(uuid()) @map("userauth_id") @db.Char(36)
-  password             String?
-  last_login           DateTime?
-  google_access_token  String?   @db.Text
-  google_refresh_token String?   @db.Text
-  userEmail            String    @unique
-  user                 User      @relation(references: [email], fields: [userEmail], onDelete: Cascade)
-}
-
-model Post {
-  id           String    @id @default(uuid()) @map("post_id") @db.Char(36)
-  title        String
-  view_count   Int       @default(0)
-  description  String    @db.Text
-  content      String    @db.Text
-  tags         Tag[]
-  created_at   DateTime  @default(now())
-  published_at DateTime?
-  updated_at   DateTime  @updatedAt
-  published    Boolean   @default(false)
-  user_id      String
-  user         User      @relation(fields: [user_id], references: [id])
-  slug         String    @unique
-  thumbnail    String
-  reaction     Json
-  deleted      DateTime?
-}
-
-model Tag {
-  tagName    String   @id
-  created_at DateTime @default(now())
-  posts      Post[]
-}
-
-model Form {
-  id          String       @id @map("form_id")
-  title       String
-  description String?      @db.Text
-  user        User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id     String
-  fields      Field[]
-  submissions Submission[]
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-  allow_edit  Boolean      @default(false)
-  submit_once Boolean      @default(true)
-  is_open     Boolean      @default(true)
-  open_at     DateTime?
-  close_at    DateTime?
-}
-
 enum Field_Type {
   text
   number
@@ -133,63 +441,6 @@ enum Field_Type {
   longtext
   radio
   checkbox
-}
-
-model Field {
-  id          Int                @id @default(autoincrement()) @map("field_id")
-  label       String
-  type        Field_Type
-  required    Boolean            @default(false)
-  form        Form               @relation(fields: [form_id], references: [id], onDelete: Cascade)
-  form_id     String
-  options     Field_Option[]
-  submissions Submission_Field[]
-  fieldNumber Int                @default(0)
-}
-
-model Field_Option {
-  id       Int    @id @default(autoincrement()) @map("field_option_id")
-  value    String
-  field    Field  @relation(fields: [field_id], references: [id], onDelete: Cascade)
-  field_id Int
-}
-
-model Submission {
-  id         String             @id @default(uuid()) @map("submission_id") @db.Char(36)
-  form       Form               @relation(fields: [form_id], references: [id], onDelete: Cascade)
-  form_id    String
-  user       User               @relation(fields: [user_id], references: [id])
-  user_id    String
-  created_at DateTime           @default(now())
-  updated_at DateTime           @updatedAt
-  fields     Submission_Field[]
-}
-
-model Submission_Field {
-  id            String     @id @default(uuid()) @map("submission_field_id") @db.Char(36)
-  submission    Submission @relation(fields: [submission_id], references: [id], onDelete: Cascade)
-  submission_id String
-  field         Field      @relation(fields: [field_id], references: [id], onDelete: Cascade)
-  field_id      Int
-  value         String     @db.Text
-}
-
-model Link_Shortener {
-  slug       String                @id @unique @db.VarChar(50)
-  target_url String                @db.Text
-  user       User                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id    String
-  created_at DateTime              @default(now())
-  updated_at DateTime              @updatedAt
-  password   String?               @db.Char(32)
-  type       LinkType              @default(User)
-  count      Link_Shortener_Count?
-}
-
-model Link_Shortener_Count {
-  id          String         @id @unique @db.VarChar(50)
-  Link        Link_Shortener @relation(fields: [id], references: [slug], onDelete: Cascade)
-  click_count Int            @default(0)
 }
 
 enum Organisasi_Type {
@@ -201,6 +452,7 @@ enum Organisasi_Type {
   TSBC
   TSFC
   TSVC
+  TSCC
   PMR
   MEMO
   MAC
@@ -212,174 +464,74 @@ enum Organisasi_Type {
   @@map("Organisasi_Type")
 }
 
-model Period_Year {
-  id          String       @id @default(uuid()) @map("periode_year_id") @db.Char(36)
-  period      String       @unique
-  is_active   Boolean      @default(false)
-  organisasis Organisasi[]
-}
-
-model Organisasi {
-  id                String            @id @default(uuid()) @map("suborgan_id") @db.Char(36)
-  period_id         String
-  period            Period_Year       @relation(fields: [period_id], references: [id])
-  organisasi        Organisasi_Type
-  is_suborgan       Boolean
-  organisasi_name   String            @map("organisasi_name")
-  logo              String
-  description       String            @db.Text
-  vision            String?           @db.Text
-  mission           String?           @db.Text
-  image             String
-  image_description String
-  companion         String
-  contact           String
-  structure         String            @db.Text
-  wa_notify_phone   String?
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @updatedAt
-  members           User[]
-  custom_roles      Org_Custom_Role[]
-  levels            Org_Level[]
-
-  @@unique([organisasi, period_id])
-  @@map("Organisasi")
-}
-
 enum TwibbonType {
   PHOTO
   VIDEO
 }
 
-model Twibbon {
-  id         String      @id @default(uuid())
-  title      String
-  frame_url  String
-  slug       String      @unique
-  user       User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id    String
-  color_key  String?
-  created_at DateTime    @default(now())
-  updated_at DateTime    @updatedAt
-  caption    String?     @db.Text
-  type       TwibbonType @default(PHOTO)
+model Recruitment_Campaign {
+  id              String    @id @default(uuid()) @db.Char(36)
+  organisasi_id   String    @db.Char(36)
+  form_id         String
+  default_role_id String?   @db.Char(36)
+  title           String
+  description     String?   @db.Text
+  is_active       Boolean   @default(false)
+  open_date       DateTime?
+  close_date      DateTime?
+
+  organisasi Organisasi              @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
+  form       Form                    @relation(fields: [form_id], references: [id])
+  steps      Recruitment_Step[]
+  applicants Recruitment_Applicant[]
 }
 
-model Event {
-  id         String     @id @default(uuid())
-  event_name String
-  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id    String     @db.Char(36)
-  aspirasi   Aspirasi[]
-  date       DateTime
+model Recruitment_Step {
+  id                String    @id @default(uuid()) @db.Char(36)
+  campaign_id       String    @db.Char(36)
+  name              String
+  order             Int       @default(0)
+  announcement_date DateTime?
+
+  campaign           Recruitment_Campaign    @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  applicant_statuses Applicant_Step_Status[]
 }
 
-model Aspirasi {
-  id             String           @id @default(uuid())
-  user           User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id        String
-  event          Event?           @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  event_id       String?          @db.Char(36)
-  judul_aspirasi String
-  pesan_aspirasi String           @db.Text
-  gambar_aspirasi String?          @db.Text
-  organisasi     Organisasi_Type?
-  unit_sekolah   UnitSekolah?
-  is_anonymous   Boolean          @default(false)
-  created_at     DateTime         @default(now())
+enum ApplicantStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
-// Global config for unit school notifications
-model SchoolUnitConfig {
-  unit            UnitSekolah @id
-  wa_notify_phone String?
-  updated_at      DateTime    @updatedAt
+model Recruitment_Applicant {
+  id            String          @id @default(uuid()) @db.Char(36)
+  campaign_id   String          @db.Char(36)
+  user_id       String          @db.Char(36)
+  submission_id String          @unique
+  status        ApplicantStatus @default(PENDING)
 
-  @@map("Unit_Sekolah_Config")
+  campaign      Recruitment_Campaign    @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  user          User                    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  submission    Submission              @relation(fields: [submission_id], references: [id], onDelete: Cascade)
+  step_statuses Applicant_Step_Status[]
+
+  @@unique([campaign_id, user_id])
 }
 
-// Dynamic org roles — leaders define per org (e.g. "PIC Acoustic", "Head of Design")
-model Org_Level {
-  id            String            @id @default(uuid()) @db.Char(36)
-  name          String
-  order         Int               @default(0)
-  organisasi    Organisasi        @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
-  organisasi_id String            @db.Char(36)
-  roles         Org_Custom_Role[]
-  created_at    DateTime          @default(now())
-
-  @@unique([name, organisasi_id])
+enum StepStatus {
+  PENDING
+  PASSED
+  FAILED
 }
 
-model Org_Custom_Role {
-  id             String     @id @default(uuid()) @db.Char(36)
-  name           String
-  organisasi     Organisasi @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
-  organisasi_id  String     @db.Char(36)
-  is_leader       Boolean    @default(false)
-  hierarchy_level Int        @default(5)
-  level          Org_Level? @relation(fields: [level_id], references: [id], onDelete: SetNull)
-  level_id       String?    @db.Char(36)
-  created_at      DateTime   @default(now())
-  users           User[]
+model Applicant_Step_Status {
+  id           String     @id @default(uuid()) @db.Char(36)
+  applicant_id String     @db.Char(36)
+  step_id      String     @db.Char(36)
+  status       StepStatus @default(PENDING)
 
-  @@unique([name, organisasi_id])
+  applicant Recruitment_Applicant @relation(fields: [applicant_id], references: [id], onDelete: Cascade)
+  step      Recruitment_Step      @relation(fields: [step_id], references: [id], onDelete: Cascade)
+
+  @@unique([applicant_id, step_id])
 }
-
-// Granular permission grants per user per org
-model Org_Permission {
-  id             String   @id @default(uuid()) @db.Char(36)
-  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id        String   @db.Char(36)
-  organisasi_id  String   @db.Char(36)
-  permission     String
-  granted_by     String   @db.Char(36)
-  granted_at     DateTime @default(now())
-
-  @@unique([user_id, organisasi_id, permission])
-}
-
-// Named permission bundles (SuperAdmin creates via drag-and-drop builder)
-model Permission_Template {
-  id          String                    @id @default(uuid()) @db.Char(36)
-  name        String                    @unique
-  description String?
-  items       Permission_Template_Item[]
-  created_at  DateTime                  @default(now())
-  updated_at  DateTime                  @updatedAt
-}
-
-model Permission_Template_Item {
-  id          String              @id @default(uuid()) @db.Char(36)
-  template    Permission_Template @relation(fields: [template_id], references: [id], onDelete: Cascade)
-  template_id String              @db.Char(36)
-  permission  String
-
-  @@unique([template_id, permission])
-}
-
-// In-app notifications
-model Notification {
-  id          String                   @id @default(uuid()) @db.Char(36)
-  type        String
-  title       String
-  message     String                   @db.Text
-  target_url  String?
-  actor_id    String                   @db.Char(36)
-  actor       User                     @relation("NotificationActor", fields: [actor_id], references: [id])
-  recipients  Notification_Recipient[]
-  created_at  DateTime                 @default(now())
-}
-
-model Notification_Recipient {
-  id              String       @id @default(uuid()) @db.Char(36)
-  notification    Notification @relation(fields: [notification_id], references: [id], onDelete: Cascade)
-  notification_id String       @db.Char(36)
-  user            User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id         String       @db.Char(36)
-  read            Boolean      @default(false)
-  read_at         DateTime?
-
-  @@unique([notification_id, user_id])
-}
-

@@ -1,7 +1,6 @@
 "use server";
 
-import { createHash } from "crypto";
-
+import { encrypt } from "@/utils/encryption";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
@@ -14,9 +13,7 @@ export async function addLink(data: FormData) {
   let slug = data.get("slug") as string | null;
   try {
     if (data.get("password")) {
-      hashedpass = createHash("md5")
-        .update((data.get("password") as string) || "")
-        .digest("hex");
+      hashedpass = encrypt(data.get("password") as string);
     }
     if (!slug) slug = generateRandomSlug();
 
@@ -52,9 +49,12 @@ export async function updateLink(data: FormData) {
   try {
     if (!data.get("private_url")) hashedpass = null;
     else {
-      hashedpass = createHash("md5")
-        .update((data.get("password") as string) || "")
-        .digest("hex");
+      const pass = data.get("password") as string;
+      if (pass) {
+        hashedpass = encrypt(pass);
+      } else {
+        hashedpass = undefined;
+      }
     }
     if (!slug) slug = generateRandomSlug();
 

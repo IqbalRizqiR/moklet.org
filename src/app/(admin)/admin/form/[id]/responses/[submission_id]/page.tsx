@@ -13,6 +13,8 @@ import { H2, P } from "@/app/_components/global/Text";
 import { transformToArrayCheckbox } from "@/utils/atomics";
 import { findForm } from "@/utils/database/form.query";
 import { findSubmission } from "@/utils/database/submission.query";
+import prisma from "@/lib/prisma";
+import Link from "next/link";
 
 export default async function SubmissionDetail({
   params,
@@ -25,8 +27,23 @@ export default async function SubmissionDetail({
 
   if (!form || !submission) return notFound();
 
+  const campaign = await prisma.recruitment_Campaign.findFirst({
+    where: { form_id: id },
+    include: { organisasi: true }
+  });
+
   return (
     <div className="block">
+      {campaign && (
+        <div className="p-6 pb-0">
+          <Link 
+            href={`/admin/organisasi/${campaign.organisasi.organisasi.toLowerCase()}/recruitment/${campaign.id}`} 
+            className="text-gray-500 hover:text-black inline-block"
+          >
+            &larr; Kembali ke Campaign
+          </Link>
+        </div>
+      )}
       <div className="w-full p-6 border-b border-black box-border">
         <H2>{form.title}</H2>
         <P>{form.description}</P>

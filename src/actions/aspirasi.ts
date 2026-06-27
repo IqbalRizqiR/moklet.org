@@ -82,8 +82,12 @@ export async function submitAspiration(
       if (org) {
         const leaders = await prisma.user.findMany({
           where: {
-            organisasi_id: org.id,
-            org_role: { is_leader: true }
+            memberships: {
+              some: {
+                organisasi_id: org.id,
+                role: { is_leader: true }
+              }
+            }
           },
           select: { id: true }
         });
@@ -103,25 +107,47 @@ export async function submitAspiration(
     } else if (type === "EVENT") {
       const event = await prisma.event.findUnique({
         where: { id: recipent },
-        include: { user: { include: { organisasi: true } } }
+        select: {
+          id: true,
+          event_name: true,
+          user_id: true,
+          user: {
+            select: {
+              id: true,
+              memberships: {
+                include: { organisasi: true }
+              }
+            }
+          }
+        }
       });
       if (event) {
         // Collect recipients: event creator + org leaders (if event is linked to an org)
         const recipientIds = [event.user_id];
         let organisasiId: string | undefined;
 
-        if (event.user.organisasi_id) {
-          organisasiId = event.user.organisasi_id;
-          const leaders = await prisma.user.findMany({
-            where: {
-              organisasi_id: organisasiId,
-              org_role: { is_leader: true }
-            },
-            select: { id: true }
-          });
-          leaders.forEach((l: { id: string }) => {
-            if (!recipientIds.includes(l.id)) recipientIds.push(l.id);
-          });
+        if (event.user.memberships.length > 0) {
+          // For events, we notify leaders of all orgs the creator is in
+          for (const membership of event.user.memberships) {
+            const orgId = membership.organisasi_id;
+            const leaders = await prisma.user.findMany({
+              where: {
+                memberships: {
+                  some: {
+                    organisasi_id: orgId,
+                    role: { is_leader: true }
+                  }
+                },
+                NOT: { id: event.user_id }
+              },
+              select: { id: true }
+            });
+            leaders.forEach((l: { id: string }) => {
+              if (!recipientIds.includes(l.id)) recipientIds.push(l.id);
+            });
+            // Use the first org as the primary context for the notification
+            if (!organisasiId) organisasiId = orgId;
+          }
         }
 
         dispatchNotification({
@@ -221,7 +247,9 @@ export const getAspirations = async ({
         event: { id: event },
       };
 
-    if (!query) return { count: 0, data: [] };
+    if (!query) {
+      query = {};
+    }
 
     const aspirations = await findAllAspirations(query, take, skip);
     const count = await countAllAspirations(query);

@@ -1,0 +1,46 @@
+export enum Roles {
+  SuperAdmin = "SuperAdmin",
+  Admin = "Admin",
+  OSIS = "OSIS",
+  MPK = "MPK",
+  BDI = "BDI",
+  PALWAGA = "PALWAGA",
+  PASKATEMA = "PASKATEMA",
+  TSBC = "TSBC",
+  TSFC = "TSFC",
+  TSVC = "TSVC",
+  TSCC = "TSCC",
+  PMR = "PMR",
+  MEMO = "MEMO",
+  MAC = "MAC",
+  METIC = "METIC",
+  DA = "DA",
+  PUSTEL = "PUSTEL",
+  Guest = "Guest",
+}
+
+export enum UnitSekolah {
+  RPL = "RPL",
+  TKJ = "TKJ",
+  SIJA = "SIJA",
+  TJA = "TJA",
+  TR = "TR",
+}
+
+export enum Organisasi_Type {
+  OSIS = "OSIS",
+  MPK = "MPK",
+  BDI = "BDI",
+  PALWAGA = "PALWAGA",
+  PASKATEMA = "PASKATEMA",
+  TSBC = "TSBC",
+  TSFC = "TSFC",
+  TSVC = "TSVC",
+  TSCC = "TSCC",
+  PMR = "PMR",
+  MEMO = "MEMO",
+  MAC = "MAC",
+  METIC = "METIC",
+  DA = "DA",
+  PUSTEL = "PUSTEL",
+}

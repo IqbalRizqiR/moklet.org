@@ -43,10 +43,12 @@ export async function GET(req: NextRequest) {
       }, 5000); // Check every 5 seconds
 
       // Handle connection close
-      req.signal.onabort = () => {
+      req.signal.addEventListener("abort", () => {
         clearInterval(interval);
-        controller.close();
-      };
+        try {
+          controller.close();
+        } catch {}
+      });
     },
   });
 

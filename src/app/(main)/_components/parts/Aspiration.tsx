@@ -1,4 +1,5 @@
 import LinkButton from "@/app/_components/global/Button";
+import AspirationButton from "./AspirationButton";
 import { H2, P } from "@/app/_components/global/Text";
 import { SectionWrapper } from "@/app/_components/global/Wrapper";
 import EclipseIcon from "@/app/_components/icons/EclipseIcon";
@@ -19,9 +20,7 @@ export default function Aspiration() {
         </div>
         
         <div className="z-10 mt-4">
-          <LinkButton variant={"primary"} href="/aspirasi">
-            Kirim aspirasi
-          </LinkButton>
+          <AspirationButton />
         </div>
 
         {/* Decorative eclipses adjusted for centered layout */}

@@ -43,8 +43,12 @@ export async function createRoleAction(
 
     const leaders = await prisma.user.findMany({
       where: {
-        organisasi_id: organisasiId,
-        org_role: { is_leader: true },
+        memberships: {
+          some: {
+            organisasi_id: organisasiId,
+            role: { is_leader: true }
+          }
+        },
         NOT: { id: session.user.id },
       },
       select: { id: true },
@@ -111,7 +115,11 @@ export async function updateRoleAction(
 
     // Notify all users in this role about permission changes
     const roleUsers = await prisma.user.findMany({
-      where: { org_role_id: roleId },
+      where: {
+        memberships: {
+          some: { role_id: roleId }
+        }
+      },
       select: { id: true },
     });
     if (roleUsers.length > 0) {
@@ -133,14 +141,14 @@ export async function deleteRoleAction(roleId: string) {
 
   const role = await prisma.org_Custom_Role.findUnique({
     where: { id: roleId },
-    include: { users: true },
+    include: { memberships: true },
   });
   if (!role) return { error: true, message: "Role tidak ditemukan" };
 
   const hasAccess = await canManageMembers(session.user.id, role.organisasi_id);
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
-  if (role.users.length > 0) {
+  if (role.memberships.length > 0) {
     return { error: true, message: "Tidak bisa menghapus role yang masih digunakan" };
   }
 

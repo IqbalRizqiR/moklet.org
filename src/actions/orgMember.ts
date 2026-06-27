@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { canManageMembers } from "@/utils/permissions";
@@ -27,7 +28,10 @@ export async function registerAndAssign(
   }
 
   // Check if email is already registered
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, email: true }
+  });
   if (existing) {
     return { error: true, message: "Email sudah terdaftar. Gunakan fitur 'Tambah Anggota' untuk user yang sudah terdaftar." };
   }
@@ -53,14 +57,26 @@ export async function registerAndAssign(
         email: email.trim().toLowerCase(),
         role: systemRole,
         user_pic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=E04E4E&color=fff`,
-        organisasi_id: organisasiId,
-        org_role_id: orgRoleId,
+        memberships: {
+          create: {
+            organisasi_id: organisasiId,
+            role_id: orgRoleId,
+            is_main: true
+          }
+        },
         userAuth: {
           create: {} // Prisma automatically links userEmail
         }
       },
-      include: {
-        org_role: { include: { level: true } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        user_pic: true,
+        memberships: {
+          where: { organisasi_id: organisasiId },
+          include: { role: { include: { level: true } } }
+        },
         permissions: { where: { organisasi_id: organisasiId } },
       },
     });
@@ -69,8 +85,12 @@ export async function registerAndAssign(
     // Notify org leaders
     const leaders = await prisma.user.findMany({
       where: {
-        organisasi_id: organisasiId,
-        org_role: { is_leader: true },
+        memberships: {
+          some: {
+            organisasi_id: organisasiId,
+            role: { is_leader: true }
+          }
+        },
         NOT: { id: session.user.id },
       },
       select: { id: true },
@@ -101,15 +121,15 @@ export async function registerAndAssign(
         name: newUser.name,
         email: newUser.email,
         user_pic: newUser.user_pic,
-        org_role: newUser.org_role
+        org_role: newUser.memberships[0]?.role
           ? {
-              id: newUser.org_role.id,
-              name: newUser.org_role.name,
-              is_leader: newUser.org_role.is_leader,
-              hierarchy_level: newUser.org_role.hierarchy_level,
-              level_id: newUser.org_role.level_id,
-              level: newUser.org_role.level
-                ? { id: newUser.org_role.level.id, name: newUser.org_role.level.name, order: newUser.org_role.level.order }
+              id: newUser.memberships[0].role.id,
+              name: newUser.memberships[0].role.name,
+              is_leader: newUser.memberships[0].role.is_leader,
+              hierarchy_level: newUser.memberships[0].role.hierarchy_level,
+              level_id: newUser.memberships[0].role.level_id,
+              level: newUser.memberships[0].role.level
+                ? { id: newUser.memberships[0].role.level.id, name: newUser.memberships[0].role.level.name, order: newUser.memberships[0].role.level.order }
                 : null,
             }
           : null,
@@ -135,21 +155,39 @@ export async function assignToOrg(
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
   try {
-    const roleToAssign = await prisma.org_Custom_Role.findUnique({
-      where: { id: orgRoleId },
-      select: { name: true, is_leader: true },
-    });
+    const [roleToAssign, targetOrg, userMemberships] = await Promise.all([
+      prisma.org_Custom_Role.findUnique({
+        where: { id: orgRoleId },
+        select: { name: true, is_leader: true },
+      }),
+      prisma.organisasi.findUnique({
+        where: { id: organisasiId },
+        select: { organisasi: true }
+      }),
+      prisma.org_Member.findMany({
+        where: { user_id: userId },
+        include: { organisasi: { select: { organisasi: true } } }
+      })
+    ]);
 
-    if (!roleToAssign) {
-      return { error: true, message: "Role tidak ditemukan" };
+    if (!roleToAssign || !targetOrg) {
+      return { error: true, message: "Role atau organisasi tidak ditemukan" };
+    }
+
+    // OSIS/MPK Exclusivity check
+    const isTargetOsisMpk = targetOrg.organisasi === "OSIS" || targetOrg.organisasi === "MPK";
+    const existingOsisMpk = userMemberships.find((m: any) => m.organisasi.organisasi === "OSIS" || m.organisasi.organisasi === "MPK");
+    
+    if (isTargetOsisMpk && existingOsisMpk && existingOsisMpk.organisasi_id !== organisasiId) {
+      return { error: true, message: `User sudah memiliki role di ${existingOsisMpk.organisasi.organisasi}. Tidak bisa menjadi OSIS dan MPK sekaligus.` };
     }
 
     if (roleToAssign.is_leader) {
-      const existingLeaderCount = await prisma.user.count({
+      const existingLeaderCount = await prisma.org_Member.count({
         where: {
           organisasi_id: organisasiId,
-          org_role: { is_leader: true },
-          NOT: { id: userId }
+          role: { is_leader: true },
+          NOT: { user_id: userId }
         }
       });
       if (existingLeaderCount > 0) {
@@ -157,25 +195,73 @@ export async function assignToOrg(
       }
     }
 
-    const updatedUser = await prisma.user.update({
+    // Determine if this should be the main membership
+    let shouldBeMain = userMemberships.length === 0 || isTargetOsisMpk;
+
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (shouldBeMain) {
+        // Unset previous mains
+        await tx.org_Member.updateMany({
+          where: { user_id: userId, is_main: true },
+          data: { is_main: false }
+        });
+      }
+
+      await tx.org_Member.upsert({
+        where: {
+          user_id_organisasi_id: {
+            user_id: userId,
+            organisasi_id: organisasiId
+          }
+        },
+        create: {
+          user_id: userId,
+          organisasi_id: organisasiId,
+          role_id: orgRoleId,
+          is_main: shouldBeMain
+        },
+        update: {
+          role_id: orgRoleId,
+          is_main: shouldBeMain
+        }
+      });
+
+      if (shouldBeMain) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { role: targetOrg.organisasi as any }
+        });
+      }
+    });
+
+    const updatedUser = await prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        organisasi_id: organisasiId,
-        org_role_id: orgRoleId,
-      },
-      include: {
-        org_role: { include: { level: true } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        user_pic: true,
+        memberships: {
+          where: { organisasi_id: organisasiId },
+          include: { role: { include: { level: true } } }
+        },
         permissions: { where: { organisasi_id: organisasiId } },
       },
     });
 
-    const role = updatedUser.org_role;
+    if (!updatedUser) throw new Error("User not found after update");
+
+    const role = updatedUser.memberships[0]?.role;
 
     // Notify org leaders + the new member
     const leaders = await prisma.user.findMany({
       where: {
-        organisasi_id: organisasiId,
-        org_role: { is_leader: true },
+        memberships: {
+          some: {
+            organisasi_id: organisasiId,
+            role: { is_leader: true }
+          }
+        },
         NOT: { id: session.user.id },
       },
       select: { id: true },
@@ -211,15 +297,15 @@ export async function assignToOrg(
         name: updatedUser.name,
         email: updatedUser.email,
         user_pic: updatedUser.user_pic,
-        org_role: updatedUser.org_role
+        org_role: updatedUser.memberships[0]?.role
           ? {
-              id: updatedUser.org_role.id,
-              name: updatedUser.org_role.name,
-              is_leader: updatedUser.org_role.is_leader,
-              hierarchy_level: updatedUser.org_role.hierarchy_level,
-              level_id: updatedUser.org_role.level_id,
-              level: updatedUser.org_role.level
-                ? { id: updatedUser.org_role.level.id, name: updatedUser.org_role.level.name, order: updatedUser.org_role.level.order }
+              id: updatedUser.memberships[0].role.id,
+              name: updatedUser.memberships[0].role.name,
+              is_leader: updatedUser.memberships[0].role.is_leader,
+              hierarchy_level: updatedUser.memberships[0].role.hierarchy_level,
+              level_id: updatedUser.memberships[0].role.level_id,
+              level: updatedUser.memberships[0].role.level
+                ? { id: updatedUser.memberships[0].role.level.id, name: updatedUser.memberships[0].role.level.name, order: updatedUser.memberships[0].role.level.order }
                 : null,
             }
           : null,
@@ -233,35 +319,90 @@ export async function assignToOrg(
 }
 
 // Remove a user from their organisation
-export async function removeFromOrg(userId: string) {
+export async function removeFromOrg(userId: string, organisasiId: string) {
   const session = await auth();
   if (!session?.user?.id) return { error: true, message: "Unauthorized" };
 
-  const targetUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (!targetUser?.organisasi_id)
-    return { error: true, message: "User tidak tergabung organisasi" };
-
-  const organisasiId = targetUser.organisasi_id;
   const hasAccess = await canManageMembers(session.user.id, organisasiId);
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      memberships: {
+        select: {
+          organisasi_id: true,
+          is_main: true
+        }
+      }
+    }
+  });
+  
+  if (!targetUser) return { error: true, message: "User tidak ditemukan" };
+  
+  const membershipToRemove = targetUser.memberships.find((m: any) => m.organisasi_id === organisasiId);
+  if (!membershipToRemove)
+    return { error: true, message: "User tidak tergabung organisasi ini" };
+
   try {
     // Remove org assignment and all permissions
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: userId },
-        data: { organisasi_id: null, org_role_id: null },
-      }),
-      prisma.org_Permission.deleteMany({
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.org_Member.delete({
+        where: {
+          user_id_organisasi_id: {
+            user_id: userId,
+            organisasi_id: organisasiId
+          }
+        }
+      });
+      
+      await tx.org_Permission.deleteMany({
         where: { user_id: userId, organisasi_id: organisasiId },
-      }),
-    ]);
+      });
+
+      // If we removed the main membership, reassign main to another one if available
+      if (membershipToRemove.is_main) {
+        const remainingMembership = await tx.org_Member.findFirst({
+          where: { user_id: userId },
+          include: { organisasi: true }
+        });
+
+        if (remainingMembership) {
+          await tx.org_Member.update({
+            where: { id: remainingMembership.id },
+            data: { is_main: true }
+          });
+          
+          if (targetUser.role !== "SuperAdmin" && targetUser.role !== "Admin") {
+            await tx.user.update({
+              where: { id: userId },
+              data: { role: remainingMembership.organisasi.organisasi as any }
+            });
+          }
+        } else {
+          // No memberships left
+          if (targetUser.role !== "SuperAdmin" && targetUser.role !== "Admin") {
+            await tx.user.update({
+              where: { id: userId },
+              data: { role: "Guest" }
+            });
+          }
+        }
+      }
+    });
 
     // Notify org leaders
     const leaders = await prisma.user.findMany({
       where: {
-        organisasi_id: organisasiId,
-        org_role: { is_leader: true },
+        memberships: {
+          some: {
+            organisasi_id: organisasiId,
+            role: { is_leader: true }
+          }
+        },
         NOT: { id: session.user.id },
       },
       select: { id: true },
@@ -292,15 +433,10 @@ export async function removeFromOrg(userId: string) {
 }
 
 // Update a member's org role
-export async function updateOrgRole(userId: string, orgRoleId: string) {
+export async function updateOrgRole(userId: string, organisasiId: string, orgRoleId: string) {
   const session = await auth();
   if (!session?.user?.id) return { error: true, message: "Unauthorized" };
 
-  const targetUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (!targetUser?.organisasi_id)
-    return { error: true, message: "User tidak tergabung organisasi" };
-
-  const organisasiId = targetUser.organisasi_id;
   const hasAccess = await canManageMembers(session.user.id, organisasiId);
   if (!hasAccess) return { error: true, message: "Tidak punya akses" };
 
@@ -315,11 +451,11 @@ export async function updateOrgRole(userId: string, orgRoleId: string) {
     }
 
     if (roleToAssign.is_leader) {
-      const existingLeaderCount = await prisma.user.count({
+      const existingLeaderCount = await prisma.org_Member.count({
         where: {
           organisasi_id: organisasiId,
-          org_role: { is_leader: true },
-          NOT: { id: userId } // Don't count the user if they're already the leader
+          role: { is_leader: true },
+          NOT: { user_id: userId } 
         }
       });
       if (existingLeaderCount > 0) {
@@ -327,19 +463,25 @@ export async function updateOrgRole(userId: string, orgRoleId: string) {
       }
     }
 
-    const [, role] = await Promise.all([
-      prisma.user.update({
-        where: { id: userId },
-        data: { org_role_id: orgRoleId },
-      }),
-      Promise.resolve(roleToAssign),
-    ]);
+    await prisma.org_Member.update({
+      where: {
+        user_id_organisasi_id: {
+          user_id: userId,
+          organisasi_id: organisasiId
+        }
+      },
+      data: { role_id: orgRoleId },
+    });
 
     // Notify the affected user + org leaders
     const leaders = await prisma.user.findMany({
       where: {
-        organisasi_id: organisasiId,
-        org_role: { is_leader: true },
+        memberships: {
+          some: {
+            organisasi_id: organisasiId,
+            role: { is_leader: true }
+          }
+        },
         NOT: { id: session.user.id },
       },
       select: { id: true },
@@ -351,10 +493,11 @@ export async function updateOrgRole(userId: string, orgRoleId: string) {
     ].filter((id) => id !== session.user.id))];
 
     if (recipientIds.length > 0) {
+      const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
       dispatchNotification({
         type: "role_changed",
         title: "Role Anggota Diubah",
-        message: `Role ${targetUser.name} diubah menjadi ${role?.name ?? "unknown"} oleh ${session.user.name ?? "Admin"}.`,
+        message: `Role ${targetUser?.name ?? "Anggota"} diubah menjadi ${roleToAssign.name} oleh ${session.user.name ?? "Admin"}.`,
         targetUrl: `/admin/organisasi`,
         actorId: session.user.id,
         recipientIds,

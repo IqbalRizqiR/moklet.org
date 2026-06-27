@@ -14,6 +14,17 @@ import { deleteFormById } from "./";
 
 export const deleteForm = async (form_id: string) => {
   try {
+    const session = await auth();
+    const user = session?.user;
+    if (!user) return { error: true, message: "Unauthorized" };
+
+    const form = await findForm({ id: form_id });
+    if (!form) return { error: true, message: "Form not found" };
+
+    if (user.role !== "SuperAdmin" && user.id !== form.user_id) {
+      return { error: true, message: "Forbidden access" };
+    }
+
     await deleteFormById(form_id);
     revalidatePath("/admin/form");
     revalidatePath(`/admin/form/${form_id}`);
@@ -32,14 +43,15 @@ export const saveForm = async (
 ) => {
   try {
     const session = await auth();
-    const { user } = session!;
+    if (!session?.user) return { error: true, message: "Unauthorized" };
+    const { user } = session;
     console.log(isFieldsEdited);
     if (!is_new) {
       const form = await findFormWithSubmission({ id: data.id });
 
       if (!form) return { error: false, message: "Form not found" };
       if (user?.role !== "SuperAdmin" && user?.id != form.user_id) {
-        return { error: false, message: "Forbidden access" };
+        return { error: true, message: "Forbidden access" };
       }
 
       // reject if the form has respondents
@@ -167,7 +179,8 @@ export const saveForm = async (
 export const cloneForm = async (id: string) => {
   try {
     const session = await auth();
-    const { user } = session!;
+    if (!session?.user) return { error: true, message: "Unauthorized" };
+    const { user } = session;
 
     const form = await findForm({
       id: id,
@@ -177,7 +190,7 @@ export const cloneForm = async (id: string) => {
     const createFormInput = { ...form, _count: undefined };
 
     if (user?.role !== "SuperAdmin" && user?.id != form.user_id) {
-      return { error: false, message: "Forbidden access" };
+      return { error: true, message: "Forbidden access" };
     }
 
     const newForm: Prisma.FormUncheckedCreateInput = {
@@ -231,6 +244,17 @@ export const cloneForm = async (id: string) => {
 
 export const deleteSubmission = async (id: string) => {
   try {
+    const session = await auth();
+    const user = session?.user;
+    if (!user) return { error: true, message: "Unauthorized" };
+
+    const form = await findForm({ id });
+    if (!form) return { error: true, message: "Form not found" };
+
+    if (user.role !== "SuperAdmin" && user.id !== form.user_id) {
+      return { error: true, message: "Forbidden access" };
+    }
+
     await prisma.submission.deleteMany({
       where: { form_id: id },
     });
@@ -241,6 +265,6 @@ export const deleteSubmission = async (id: string) => {
     return { error: false, message: "Berhasil menghapus jawaban" };
   } catch (e) {
     console.error(e);
-    return { error: true, message: "Berhasil menghapus jawaban" };
+    return { error: true, message: "Gagal menghapus jawaban" };
   }
 };

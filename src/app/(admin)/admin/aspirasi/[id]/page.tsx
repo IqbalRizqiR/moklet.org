@@ -2,6 +2,7 @@ import { findAspiration } from "@/utils/database/aspiration.query";
 import { notFound } from "next/navigation";
 import MdViewer from "@/app/(main)/berita/[slug]/_components/MdViewer";
 import { H3, P } from "@/app/_components/global/Text";
+import { BreadcrumbSetter } from "../../components/BreadcrumbContext";
 
 export default async function AspirationDetail({
   params,
@@ -15,6 +16,7 @@ export default async function AspirationDetail({
 
   return (
     <div>
+      <BreadcrumbSetter id={data.id} title={data.judul_aspirasi} />
       <div className="mb-10">
         <H3>{data.judul_aspirasi}</H3>
         <P>

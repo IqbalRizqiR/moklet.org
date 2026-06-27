@@ -37,6 +37,7 @@ export default function Select({
       <SelectField
         name="period"
         value={period}
+        disabled={!user?.role.includes("Admin")}
         handleChange={(e) =>
           router.push(
             `/admin/organisasi/${organisasi || "OSIS"}/${e.target.value}`,

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 import { postCreate } from "@/actions/post";
 import Image from "@/app/_components/global/Image";
-import { TextArea, TextField } from "@/app/_components/global/Input";
+import { TextArea, TextField, SelectField } from "@/app/_components/global/Input";
 import { TagWithPostCount } from "@/types/entityRelations";
 
 import Modal from "../../_components/ImageModal";
@@ -19,7 +19,13 @@ import FormButton from "../../_components/parts/SubmitButton";
 import Tags from "./Tags";
 import { fileSizeToMb } from "@/utils/atomics";
 
-export default function PostForm({ tags }: { tags: TagWithPostCount[] }) {
+export default function PostForm({
+  tags,
+  organizations,
+}: {
+  tags: TagWithPostCount[];
+  organizations: any[];
+}) {
   const [tag, setTag] =
     useState<MultiValue<{ value: string; label: string }>>();
   const [isOpen, setIsOpen] = useState(false);
@@ -59,8 +65,8 @@ export default function PostForm({ tags }: { tags: TagWithPostCount[] }) {
             ? fileSizeToMb(thumbnail.size)
             : 0;
 
-          if (thumbnailSizeInMb >= 4.3) {
-            toast.error("Ukuran file terlalu besar! Ukuran maximum 4,3 MB", {
+          if (thumbnailSizeInMb > 10) {
+            toast.error("Ukuran file terlalu besar! Ukuran maximum 10 MB", {
               id: toastId,
             });
             return;
@@ -105,6 +111,17 @@ export default function PostForm({ tags }: { tags: TagWithPostCount[] }) {
           value={slug}
           placeholder="berita-paling-panas-2024"
         />
+        {organizations.length > 0 && (
+          <SelectField
+            label="Post Terkait Organisasi"
+            name="organisasi_id"
+            required
+            options={organizations.map((m: any) => ({
+              label: m.organisasi.organisasi_name,
+              value: m.organisasi_id,
+            }))}
+          />
+        )}
         <Tags tags={tags} setState={setTag} state={tag} session={session} />
         <div className="flex flex-col">
           <label

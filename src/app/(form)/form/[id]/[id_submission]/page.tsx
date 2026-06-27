@@ -11,6 +11,8 @@ import {
 } from "@/utils/atomics";
 import { findForm } from "@/utils/database/form.query";
 import { findSubmissionWithForm } from "@/utils/database/submission.query";
+import prisma from "@/lib/prisma";
+import ApplicantProgressBanner from "./_components/ApplicantProgressBanner";
 
 import ForbiddenForm from "../../_components/ForbiddenForm";
 import Form from "../../_components/Form";
@@ -58,8 +60,65 @@ const page = async ({ params }: Props) => {
   if (!form.allow_edit)
     return <ForbiddenForm message="Anda sudah menjawab formulir ini." />;
 
+  // Fetch applicant status if this is a recruitment form
+  const applicant = await prisma.recruitment_Applicant.findFirst({
+    where: { submission_id: id_submission },
+    include: {
+      campaign: {
+        include: { steps: { orderBy: { order: 'asc' } } }
+      },
+      step_statuses: true
+    }
+  });
+
+  let bannerStatus: "WAITING_ANNOUNCEMENT" | "REJECTED_STEP" | "REJECTED_FINAL" | "ACCEPTED_FINAL" | "PENDING_FINAL" | undefined;
+  let bannerStepName: string | undefined;
+  let bannerDate: Date | undefined;
+
+  if (applicant) {
+    const now = new Date();
+    // 1. Check past announced steps for rejections
+    const pastSteps = applicant.campaign.steps.filter((s: any) => s.announcement_date && new Date(s.announcement_date) <= now);
+    let rejectedInPastStep = false;
+
+    for (const step of pastSteps) {
+      const status = applicant.step_statuses.find((s: any) => s.step_id === step.id)?.status || "PENDING";
+      if (status === "REJECTED" || status === "FAILED") {
+        bannerStatus = "REJECTED_STEP";
+        bannerStepName = step.name;
+        rejectedInPastStep = true;
+        break;
+      }
+    }
+
+    if (!rejectedInPastStep) {
+      // 2. Look for the next unannounced step
+      const futureStep = applicant.campaign.steps.find((s: any) => s.announcement_date && new Date(s.announcement_date) > now);
+      
+      if (futureStep) {
+        bannerStatus = "WAITING_ANNOUNCEMENT";
+        bannerStepName = futureStep.name;
+        bannerDate = futureStep.announcement_date as Date;
+      } else {
+        // 3. No future steps, and they passed all past steps (or there are no steps).
+        // Let's check their global final status
+        if (applicant.status === "ACCEPTED") bannerStatus = "ACCEPTED_FINAL";
+        else if (applicant.status === "REJECTED") bannerStatus = "REJECTED_FINAL";
+        else bannerStatus = "PENDING_FINAL";
+      }
+    }
+  }
+
   return (
-    <div className="items-start justify-between mx-auto max-w-[90vw] w-[640px] bg-white rounded-md">
+    <div className="flex flex-col items-center">
+      {bannerStatus && (
+        <ApplicantProgressBanner 
+          status={bannerStatus} 
+          stepName={bannerStepName} 
+          announcementDate={bannerDate} 
+        />
+      )}
+      <div className="items-start justify-between mx-auto max-w-[90vw] w-[640px] bg-white rounded-md">
       <div className="w-full p-6 border-b border-black box-border">
         <H2>{form.title}</H2>
         <P>{form.description}</P>
@@ -91,6 +150,7 @@ const page = async ({ params }: Props) => {
         answers={transformToArrayCheckbox(submission.fields)}
         submission_id={id_submission}
       />
+      </div>
     </div>
   );
 };

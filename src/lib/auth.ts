@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { Roles } from "@prisma/client";
+import { Roles } from "@/types/enums";
 
 import { findUser, createUser, updateUser } from "@/utils/database/user.query";
 import { compareHash } from "@/utils/encryption";
@@ -127,6 +127,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               },
             },
           });
+        } else {
+          await updateUser(
+            { id: userdb.id },
+            {
+              user_pic: user.image ?? undefined,
+              userAuth: { update: { last_login: new Date() } },
+            },
+          );
         }
       }
 
@@ -149,13 +157,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.name = userdb?.name as string;
         session.user.email = userdb?.email as string;
         session.user.id = userdb?.id as string;
-        await updateUser(
-          { id: token.id as string },
-          {
-            user_pic: (token.image as string) ?? undefined,
-            userAuth: { update: { last_login: new Date() } },
-          },
-        );
       }
       return session;
     },

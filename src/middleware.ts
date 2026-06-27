@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth.edge";
-import { Roles } from "@prisma/client";
+import { Roles } from "./types/enums";
 
 import { protectedRoutes } from "./utils/protectedRoutes";
 

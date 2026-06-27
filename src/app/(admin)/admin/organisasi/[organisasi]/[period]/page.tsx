@@ -10,6 +10,7 @@ import { H2, P } from "@/app/_components/global/Text";
 import Form from "../../_components/Form";
 import { auth } from "@/lib/auth";
 import Select from "../../_components/Select";
+import { canEditOrgInfo } from "@/utils/permissions";
 
 export default async function Edit({
   params,
@@ -72,6 +73,14 @@ export default async function Edit({
       };
   }
 
+  let isReadOnly = true;
+  if (user.role === "SuperAdmin" || user.role === "Admin") {
+    isReadOnly = false;
+  } else if (organization.id) {
+    const hasAccess = await canEditOrgInfo(user.id, organization.id);
+    if (hasAccess) isReadOnly = false;
+  }
+
   return (
     <>
       <div>
@@ -104,6 +113,7 @@ export default async function Edit({
         period={period}
         organisasiType={organisasi}
         currentPeriod={period}
+        isReadOnly={isReadOnly}
       />
     </>
   );

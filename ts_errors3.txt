@@ -1,0 +1,2 @@
+src/app/(admin)/admin/events/[id]/committee/_components/CustomRoleManager.tsx(157,73): error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'string'.
+src/app/(admin)/admin/events/[id]/committee/_components/CustomRoleManager.tsx(179,26): error TS2554: Expected 2 arguments, but got 1.

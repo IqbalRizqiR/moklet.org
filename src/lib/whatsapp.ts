@@ -93,7 +93,6 @@ export async function dispatchNotification({
     let waMessage = `📣 *${title}*\n\n${message}`;
 
     if (imageUrl) {
-      console.log(imageUrl)
       waMessage += `\n\n📌 *Terdapat lampiran gambar:*\n${imageUrl}`;
     }
 

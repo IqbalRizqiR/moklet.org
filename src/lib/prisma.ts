@@ -15,8 +15,8 @@ declare global {
 
 // Stale client check logic
 if (process.env.NODE_ENV !== "production") {
-  if (global.globalPrisma && !("schoolUnitConfig" in global.globalPrisma)) {
-    console.log("[Prisma] Stale client detected (missing schoolUnitConfig). Re-instantiating...");
+  if (global.globalPrisma && !global.globalPrisma.$transaction) {
+    console.log("[Prisma] Stale client detected. Re-instantiating...");
     global.globalPrisma = undefined;
   }
 }

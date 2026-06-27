@@ -7,8 +7,9 @@ import { toast } from "sonner";
 
 import { postUpdate } from "@/actions/post";
 import Image from "@/app/_components/global/Image";
-import { TextArea, TextField } from "@/app/_components/global/Input";
-import { PostWithTagsAndUser, TagWithPostCount } from "@/types/entityRelations";
+import { TextArea, TextField, SelectField } from "@/app/_components/global/Input";
+import { Roles } from "@/types/enums";
+import type { PostWithTagsAndUser, TagWithPostCount } from "@/types/entityRelations";
 
 import Editor from "@/app/(admin)/admin/components/LazyEditor";
 import FormButton from "../../_components/parts/SubmitButton";
@@ -19,9 +20,11 @@ import Tags from "./Tags";
 export default function EditForm({
   tags,
   post,
+  organizations,
 }: Readonly<{
   tags: TagWithPostCount[];
   post: PostWithTagsAndUser;
+  organizations: any[];
 }>) {
   const [value, setValue] = useState(post.content);
   const [image, setImage] = useState(post.thumbnail);
@@ -59,8 +62,8 @@ export default function EditForm({
         if (thumbnail?.name === "") data.delete("thumbnail");
 
         const thumbnailSizeInMb = thumbnail ? fileSizeToMb(thumbnail.size) : 0;
-        if (thumbnailSizeInMb >= 4.3) {
-          toast.error("Ukuran file terlalu besar! Ukuran maximum 4,3 MB", {
+        if (thumbnailSizeInMb > 10) {
+          toast.error("Ukuran file terlalu besar! Ukuran maximum 10 MB", {
             id: toastId,
           });
           return;
@@ -104,7 +107,19 @@ export default function EditForm({
         value={slug}
         placeholder="berita-paling-panas-2024"
       />
-      <Tags tags={tags} setState={setTag} state={tag} role={post.user?.role} />
+      {organizations.length > 0 && (
+        <SelectField
+          label="Post Terkait Organisasi"
+          name="organisasi_id"
+          required
+          value={post.organisasi_id ?? undefined}
+          options={organizations.map((m: any) => ({
+            label: m.organisasi.organisasi_name,
+            value: m.organisasi_id,
+          }))}
+        />
+      )}
+      <Tags tags={tags} setState={setTag} state={tag} role={post.user?.role as any as Roles} />
       <div className="flex flex-col">
         <label htmlFor="thumbnail" className="">
           Thumbnail

@@ -12,6 +12,9 @@ import Overview from "./_components/parts/Overview";
 import RelatedNews from "./_components/parts/RelatedNews";
 import OrgStructureChart from "./_components/parts/OrgStructureChart";
 import VisiMisi from "./_components/parts/VisiMisi";
+import RecruitmentBanner from "./_components/parts/RecruitmentBanner";
+import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 interface Props {
   params: Promise<{ slug: string; period: string }>;
@@ -74,6 +77,63 @@ export default async function Organ({ params }: Readonly<Props>) {
     },
   });
 
+  const activeCampaigns = await prisma.recruitment_Campaign.findMany({
+    where: {
+      is_active: true,
+      organisasi: {
+        organisasi: organisasiType
+      }
+    }
+  });
+
+  const session = await auth();
+  let applicantStatus: "WAITING_ANNOUNCEMENT" | "REJECTED_STEP" | "REJECTED_FINAL" | "ACCEPTED_FINAL" | "PENDING_FINAL" | undefined;
+  let applicantStepName: string | undefined;
+  let applicantDate: Date | undefined;
+
+  if (activeCampaigns.length > 0 && session?.user?.id) {
+    const applicant = await prisma.recruitment_Applicant.findFirst({
+      where: {
+        campaign_id: activeCampaigns[0].id,
+        user_id: session.user.id
+      },
+      include: {
+        campaign: { include: { steps: { orderBy: { order: 'asc' } } } },
+        step_statuses: true
+      }
+    });
+
+    if (applicant) {
+      const now = new Date();
+      const pastSteps = applicant.campaign.steps.filter((s: any) => s.announcement_date && new Date(s.announcement_date) <= now);
+      let rejectedInPastStep = false;
+
+      for (const step of pastSteps) {
+        const status = applicant.step_statuses.find((s: any) => s.step_id === step.id)?.status || "PENDING";
+        if (status === "REJECTED" || status === "FAILED") {
+          applicantStatus = "REJECTED_STEP";
+          applicantStepName = step.name;
+          rejectedInPastStep = true;
+          break;
+        }
+      }
+
+      if (!rejectedInPastStep) {
+        const futureStep = applicant.campaign.steps.find((s: any) => s.announcement_date && new Date(s.announcement_date) > now);
+        
+        if (futureStep) {
+          applicantStatus = "WAITING_ANNOUNCEMENT";
+          applicantStepName = futureStep.name;
+          applicantDate = futureStep.announcement_date as Date;
+        } else {
+          if (applicant.status === "ACCEPTED") applicantStatus = "ACCEPTED_FINAL";
+          else if (applicant.status === "REJECTED") applicantStatus = "REJECTED_FINAL";
+          else applicantStatus = "PENDING_FINAL";
+        }
+      }
+    }
+  }
+
   return (
     <div className="pt-3 md:pt-0">
       <Overview
@@ -81,6 +141,13 @@ export default async function Organ({ params }: Readonly<Props>) {
         description={organisasi.description}
         period={periodData.period}
         logo={organisasi.logo}
+      />
+      <RecruitmentBanner 
+        campaigns={activeCampaigns} 
+        orgName={organisasi.organisasi} 
+        applicantStatus={applicantStatus}
+        stepName={applicantStepName}
+        announcementDate={applicantDate}
       />
       {organisasi.vision && organisasi.mission && (
         <VisiMisi visi={organisasi.vision} misi={organisasi.mission} />

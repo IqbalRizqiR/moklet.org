@@ -4,6 +4,14 @@ export type PostWithTagsAndUser = Prisma.PostGetPayload<{
   include: {
     tags: true;
     user: { select: { name: true; user_pic: true; role: true } };
+    organisasi: true;
+  };
+}>;
+
+export type EventWithRelations = Prisma.EventGetPayload<{
+  include: {
+    organisasi: true;
+    user: { select: { name: true; user_pic: true; role: true } };
   };
 }>;
 

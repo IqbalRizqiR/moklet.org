@@ -5,14 +5,40 @@ import prisma from "@/lib/prisma";
 export const findAllUsers = async (filter?: Prisma.UserWhereInput) => {
   return await prisma.user.findMany({
     where: filter,
-    include: { userAuth: { select: { last_login: true } } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      user_pic: true,
+      userAuth: { select: { last_login: true } },
+      memberships: {
+        include: {
+          role: { include: { level: true } },
+          organisasi: true
+        }
+      }
+    },
   });
 };
 
 export const findUser = async (filter: Prisma.UserWhereInput) => {
   return await prisma.user.findFirst({
     where: filter,
-    include: { userAuth: { select: { last_login: true } } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      user_pic: true,
+      userAuth: { select: { last_login: true } },
+      memberships: {
+        include: {
+          role: { include: { level: true } },
+          organisasi: true
+        }
+      }
+    },
   });
 };
 

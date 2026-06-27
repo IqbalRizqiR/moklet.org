@@ -33,11 +33,28 @@ export function WideNewsFigure({
         </Link>
         <div className="flex flex-col justify-start gap-[10px] lg:flex-row w-full md:gap-0 items-start lg:items-center lg:justify-between">
           <div className="flex items-center gap-2">
+            {post.organisasi && (
+              <>
+                <Image
+                  src={post.organisasi.logo}
+                  alt={post.organisasi.organisasi_name + " Logo"}
+                  height={28}
+                  width={28}
+                  unoptimized
+                  className="h-7 w-7 object-cover rounded-full"
+                />
+                <span className="text-base text-black font-semibold">
+                  {post.organisasi.organisasi_name}
+                </span>
+                <span className="text-neutral-400">|</span>
+              </>
+            )}
             <Image
               src={post.user.user_pic}
               alt={post.user.name + "'s Pfp"}
               height={28}
               width={28}
+              unoptimized
               className="h-7 w-7 object-cover rounded-full"
             />
             <span className="text-base text-black">

@@ -20,6 +20,7 @@ export const findPosts = async (
         include: {
           tags: true,
           user: { select: { name: true, user_pic: true } },
+          organisasi: true,
         },
       },
     );
@@ -28,7 +29,7 @@ export const findPosts = async (
   return await prisma.post.findMany({
     where: filter,
     orderBy: { published_at: "desc" },
-    include: { tags: true, user: { select: { name: true, user_pic: true } } },
+    include: { tags: true, user: { select: { name: true, user_pic: true } }, organisasi: true },
   });
 };
 
@@ -43,6 +44,7 @@ export const findNewestPost = async (
     include: {
       tags: true,
       user: { select: { name: true, user_pic: true, role: true } },
+      organisasi: true,
     },
   });
 };
@@ -55,6 +57,7 @@ export const findPopularPost = async (limit: number = 10) => {
     include: {
       tags: true,
       user: { select: { name: true, user_pic: true, role: true } },
+      organisasi: true,
     },
   });
 };
@@ -66,6 +69,7 @@ export const findPost = async (filter: Prisma.PostWhereInput) => {
     include: {
       tags: true,
       user: { select: { name: true, user_pic: true, role: true } },
+      organisasi: true,
     },
   });
 };

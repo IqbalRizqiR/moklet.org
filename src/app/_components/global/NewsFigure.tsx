@@ -52,11 +52,28 @@ export function NewsFigure({ post }: Readonly<{ post: PostWithTagsAndUser }>) {
         </div>
         <div className="flex w-full justify-between">
           <div className="flex items-center gap-2">
+            {post.organisasi && (
+              <>
+                <Image
+                  src={post.organisasi.logo}
+                  alt={post.organisasi.organisasi_name + " Logo"}
+                  height={28}
+                  width={28}
+                  unoptimized
+                  className="h-7 w-7 object-cover rounded-full"
+                />
+                <span className="text-base text-black font-semibold">
+                  {post.organisasi.organisasi_name}
+                </span>
+                <span className="text-neutral-400">|</span>
+              </>
+            )}
             <Image
               src={post.user.user_pic}
               alt={post.user.name + "'s Pfp"}
               height={28}
               width={28}
+              unoptimized
               className="h-7 w-7 object-cover rounded-full"
             />
             <span className="text-base text-black">
@@ -107,11 +124,28 @@ export function NewsFigureOrganization({
         </div>
         <div className="flex w-full justify-between">
           <div className="flex items-center gap-2">
+            {post.organisasi && (
+              <>
+                <Image
+                  src={post.organisasi.logo}
+                  alt={post.organisasi.organisasi_name + " Logo"}
+                  height={28}
+                  width={28}
+                  unoptimized
+                  className="h-7 w-7 object-cover rounded-full"
+                />
+                <span className="text-base text-black font-semibold">
+                  {post.organisasi.organisasi_name}
+                </span>
+                <span className="text-neutral-400">|</span>
+              </>
+            )}
             <Image
               src={post.user.user_pic}
               alt={post.user.name + "'s Pfp"}
               height={28}
               width={28}
+              unoptimized
               className="h-7 w-7 object-cover rounded-full"
             />
             <span className="text-base text-black">
@@ -163,6 +197,22 @@ export function NewsSearchFigure({
         </div>
         <div className="flex w-full justify-between">
           <div className="flex items-center gap-2">
+            {post.organisasi && (
+              <>
+                <Image
+                  src={post.organisasi.logo}
+                  alt={post.organisasi.organisasi_name + " Logo"}
+                  height={28}
+                  width={28}
+                  unoptimized
+                  className="h-7 w-7 object-cover rounded-full"
+                />
+                <span className="text-base text-black font-semibold">
+                  {post.organisasi.organisasi_name}
+                </span>
+                <span className="text-neutral-400">|</span>
+              </>
+            )}
             <Image
               src={post.user.user_pic}
               alt={post.user.name + "'s Pfp"}

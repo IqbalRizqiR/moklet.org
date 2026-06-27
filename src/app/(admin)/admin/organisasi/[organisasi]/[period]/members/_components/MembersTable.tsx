@@ -214,7 +214,7 @@ export default function MembersTable({
   const handleRemoveMember = async (userId: string, name: string) => {
     if (!confirm(`Yakin menghapus ${name} dari organisasi?`)) return;
     setIsLoading(true);
-    const result = await removeFromOrg(userId);
+    const result = await removeFromOrg(userId, organisasiId);
     setIsLoading(false);
     if (result.error) toast.error(result.message);
     else {
@@ -225,7 +225,7 @@ export default function MembersTable({
 
   const handleRoleChange = async (userId: string, roleId: string) => {
     setIsLoading(true);
-    const result = await updateOrgRole(userId, roleId);
+    const result = await updateOrgRole(userId, organisasiId, roleId);
     setIsLoading(false);
     if (result.error) toast.error(result.message);
     else {
