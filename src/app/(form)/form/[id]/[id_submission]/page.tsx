@@ -74,6 +74,7 @@ const page = async ({ params }: Props) => {
   let bannerStatus: "WAITING_ANNOUNCEMENT" | "REJECTED_STEP" | "REJECTED_FINAL" | "ACCEPTED_FINAL" | "PENDING_FINAL" | undefined;
   let bannerStepName: string | undefined;
   let bannerDate: Date | undefined;
+  let bannerPassedStepName: string | undefined;
 
   if (applicant) {
     const now = new Date();
@@ -92,6 +93,13 @@ const page = async ({ params }: Props) => {
     }
 
     if (!rejectedInPastStep) {
+      // Find if they passed any previous steps to congratulate them
+      const lastPassedStep = [...pastSteps].reverse().find(step => {
+        const status = applicant.step_statuses.find((s: any) => s.step_id === step.id)?.status || "PENDING";
+        return status === "PASSED" || status === "ACCEPTED";
+      });
+      if (lastPassedStep) bannerPassedStepName = lastPassedStep.name;
+
       // 2. Look for the next unannounced step
       const futureStep = applicant.campaign.steps.find((s: any) => s.announcement_date && new Date(s.announcement_date) > now);
       
@@ -116,6 +124,7 @@ const page = async ({ params }: Props) => {
           status={bannerStatus} 
           stepName={bannerStepName} 
           announcementDate={bannerDate} 
+          passedStepName={bannerPassedStepName}
         />
       )}
       <div className="items-start justify-between mx-auto max-w-[90vw] w-[640px] bg-white rounded-md">

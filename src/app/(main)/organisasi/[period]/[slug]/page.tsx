@@ -90,6 +90,7 @@ export default async function Organ({ params }: Readonly<Props>) {
   let applicantStatus: "WAITING_ANNOUNCEMENT" | "REJECTED_STEP" | "REJECTED_FINAL" | "ACCEPTED_FINAL" | "PENDING_FINAL" | undefined;
   let applicantStepName: string | undefined;
   let applicantDate: Date | undefined;
+  let applicantPassedStepName: string | undefined;
 
   if (activeCampaigns.length > 0 && session?.user?.id) {
     const applicant = await prisma.recruitment_Applicant.findFirst({
@@ -119,6 +120,13 @@ export default async function Organ({ params }: Readonly<Props>) {
       }
 
       if (!rejectedInPastStep) {
+        // Find if they passed any previous steps to congratulate them
+        const lastPassedStep = [...pastSteps].reverse().find(step => {
+          const status = applicant.step_statuses.find((s: any) => s.step_id === step.id)?.status || "PENDING";
+          return status === "PASSED" || status === "ACCEPTED";
+        });
+        if (lastPassedStep) applicantPassedStepName = lastPassedStep.name;
+
         const futureStep = applicant.campaign.steps.find((s: any) => s.announcement_date && new Date(s.announcement_date) > now);
         
         if (futureStep) {
@@ -148,6 +156,7 @@ export default async function Organ({ params }: Readonly<Props>) {
         applicantStatus={applicantStatus}
         stepName={applicantStepName}
         announcementDate={applicantDate}
+        passedStepName={applicantPassedStepName}
       />
       {organisasi.vision && organisasi.mission && (
         <VisiMisi visi={organisasi.vision} misi={organisasi.mission} />

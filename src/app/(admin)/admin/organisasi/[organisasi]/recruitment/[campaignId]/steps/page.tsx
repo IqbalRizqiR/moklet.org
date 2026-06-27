@@ -11,6 +11,7 @@ import { TextField } from "@/app/_components/global/Input";
 import { findLatestPeriod } from "@/utils/database/periodYear.query";
 import { findOrganisasi } from "@/utils/database/organisasi.query";
 import { Organisasi_Type } from "@prisma/client";
+import EditStepTime from "./_components/EditStepTime";
 
 export default async function CampaignStepsDashboard({ params }: { params: Promise<{ organisasi: string, campaignId: string }> }) {
   const { organisasi: orgTypeString, campaignId } = await params;
@@ -76,9 +77,9 @@ export default async function CampaignStepsDashboard({ params }: { params: Promi
               required 
             />
             <TextField 
-              label="Tanggal Pengumuman (Opsional)" 
+              label="Waktu Pengumuman (Opsional)" 
               name="announcementDate" 
-              type="date"
+              type="datetime-local"
             />
             <Button type="submit" variant="primary">Simpan Tahapan</Button>
           </form>
@@ -97,11 +98,7 @@ export default async function CampaignStepsDashboard({ params }: { params: Promi
                       <span className="text-primary-500 mr-2">{index + 1}.</span> 
                       {step.name}
                     </div>
-                    {step.announcement_date && (
-                      <div className="text-sm text-gray-500 mt-1">
-                        Pengumuman: {new Date(step.announcement_date).toLocaleDateString('id-ID')}
-                      </div>
-                    )}
+                    <EditStepTime stepId={step.id} currentDate={step.announcement_date} />
                   </div>
                   {/* Future enhancement: add move up/down or delete buttons here */}
                 </li>

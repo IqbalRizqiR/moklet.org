@@ -224,6 +224,56 @@ export async function toggleCampaign(campaignId: string, isActive: boolean) {
   revalidatePath(`/admin/organisasi/${campaign.organisasi_id}/recruitment`);
 }
 
+export async function editCampaignDates(campaignId: string, openDate?: string, closeDate?: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const campaign = await prisma.recruitment_Campaign.findUnique({
+    where: { id: campaignId },
+    include: { organisasi: true }
+  });
+  if (!campaign) throw new Error("Campaign tidak ditemukan.");
+
+  const currentPeriod = await findLatestPeriod(true);
+  let hasAccess = false;
+
+  if (session.user.role === "SuperAdmin" || session.user.role === "Admin") {
+    hasAccess = true;
+  } else if (currentPeriod) {
+    const currentOrg = await findOrganisasi({
+      organisasi_period_id: {
+        period_id: currentPeriod.id,
+        organisasi: campaign.organisasi.organisasi
+      }
+    });
+    if (currentOrg) {
+      hasAccess = await isOrgLeader(session.user.id, currentOrg.id);
+    }
+  }
+
+  if (!hasAccess) {
+    throw new Error("Tidak punya akses.");
+  }
+
+  const parseDate = (d?: string) => {
+    if (!d) return null;
+    const tzString = d.includes("T") && !d.includes("Z") && !d.includes("+") 
+      ? `${d}:00+07:00` 
+      : d;
+    return new Date(tzString);
+  };
+
+  await prisma.recruitment_Campaign.update({
+    where: { id: campaignId },
+    data: {
+      open_date: parseDate(openDate),
+      close_date: parseDate(closeDate),
+    }
+  });
+  
+  revalidatePath(`/admin/organisasi/${campaign.organisasi_id}/recruitment`);
+}
+
 export async function addStep(campaignId: string, name: string, announcementDate?: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -257,17 +307,73 @@ export async function addStep(campaignId: string, name: string, announcementDate
 
   const existingSteps = await prisma.recruitment_Step.count({ where: { campaign_id: campaignId } });
 
+  let parsedDate: Date | null = null;
+  if (announcementDate) {
+    // If it's a datetime-local without timezone, append +07:00 (WIB)
+    const tzString = announcementDate.includes("T") && !announcementDate.includes("Z") && !announcementDate.includes("+") 
+      ? `${announcementDate}:00+07:00` 
+      : announcementDate;
+    parsedDate = new Date(tzString);
+  }
+
   const step = await prisma.recruitment_Step.create({
     data: {
       campaign_id: campaignId,
       name,
       order: existingSteps + 1,
-      announcement_date: announcementDate ? new Date(announcementDate) : null,
+      announcement_date: parsedDate,
     }
   });
   
   revalidatePath(`/admin/organisasi/${campaign.organisasi_id}/recruitment`);
   return step;
+}
+
+export async function editStepTime(stepId: string, announcementDate?: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const step = await prisma.recruitment_Step.findUnique({
+    where: { id: stepId },
+    include: { campaign: { include: { organisasi: true } } }
+  });
+  if (!step) throw new Error("Step tidak ditemukan.");
+  
+  const currentPeriod = await findLatestPeriod(true);
+  let hasAccess = false;
+
+  if (session.user.role === "SuperAdmin" || session.user.role === "Admin") {
+    hasAccess = true;
+  } else if (currentPeriod) {
+    const currentOrg = await findOrganisasi({
+      organisasi_period_id: {
+        period_id: currentPeriod.id,
+        organisasi: step.campaign.organisasi.organisasi
+      }
+    });
+    if (currentOrg) {
+      hasAccess = await isOrgLeader(session.user.id, currentOrg.id);
+    }
+  }
+
+  if (!hasAccess) {
+    throw new Error("Tidak punya akses.");
+  }
+
+  let parsedDate: Date | null = null;
+  if (announcementDate) {
+    const tzString = announcementDate.includes("T") && !announcementDate.includes("Z") && !announcementDate.includes("+") 
+      ? `${announcementDate}:00+07:00` 
+      : announcementDate;
+    parsedDate = new Date(tzString);
+  }
+
+  await prisma.recruitment_Step.update({
+    where: { id: stepId },
+    data: { announcement_date: parsedDate }
+  });
+
+  revalidatePath(`/admin/organisasi/${step.campaign.organisasi_id}/recruitment`);
 }
 
 export async function registerApplicant(campaignId: string, submissionId: string) {

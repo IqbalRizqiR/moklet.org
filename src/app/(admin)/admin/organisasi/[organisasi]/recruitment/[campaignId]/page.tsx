@@ -10,6 +10,7 @@ import CampaignRealtimeListener from "@/app/_components/global/CampaignRealtimeL
 import { findLatestPeriod } from "@/utils/database/periodYear.query";
 import { findOrganisasi } from "@/utils/database/organisasi.query";
 import { Organisasi_Type } from "@prisma/client";
+import EditCampaignTime from "./_components/EditCampaignTime";
 
 type PageProps = {
   params: Promise<{ organisasi: string, campaignId: string }>;
@@ -66,8 +67,11 @@ export default async function CampaignDashboard({ params }: PageProps) {
         <div>
           <H2>{campaign.title}</H2>
           <p className="text-gray-500">Total Pendaftar: {campaign.applicants.length}</p>
+          <div className="mt-4 max-w-sm">
+            <EditCampaignTime campaignId={campaignId} currentOpenDate={campaign.open_date} currentCloseDate={campaign.close_date} />
+          </div>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-4 items-end md:items-center">
           <Link href={`/admin/organisasi/${orgTypeString}/recruitment/${campaignId}/steps`} className="bg-primary-500 hover:bg-primary-600 transition-colors text-white px-4 py-2 rounded font-medium">
             Kelola Tahapan (Steps)
           </Link>

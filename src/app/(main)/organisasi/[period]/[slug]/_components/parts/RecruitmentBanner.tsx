@@ -18,9 +18,10 @@ interface Props {
   applicantStatus?: "WAITING_ANNOUNCEMENT" | "REJECTED_STEP" | "REJECTED_FINAL" | "ACCEPTED_FINAL" | "PENDING_FINAL";
   stepName?: string;
   announcementDate?: Date;
+  passedStepName?: string;
 }
 
-export default function RecruitmentBanner({ campaigns, orgName, applicantStatus, stepName, announcementDate }: Props) {
+export default function RecruitmentBanner({ campaigns, orgName, applicantStatus, stepName, announcementDate, passedStepName }: Props) {
   const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function RecruitmentBanner({ campaigns, orgName, applicantStatus,
 
       if (difference <= 0) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        window.location.reload();
         return;
       }
 
@@ -68,6 +70,13 @@ export default function RecruitmentBanner({ campaigns, orgName, applicantStatus,
           <h3 className="mt-6 text-3xl md:text-4xl font-extrabold tracking-tight">
             {applicantStatus ? `Pendaftaran ${orgName}` : `Open Recruitment ${orgName}`}
           </h3>
+          
+          {passedStepName && applicantStatus === "WAITING_ANNOUNCEMENT" && (
+            <div className="mt-4 inline-block bg-green-500/20 border border-green-400/50 rounded-lg px-4 py-2">
+              <span className="text-green-100 font-medium">Selamat! Anda lolos pada tahap {passedStepName}.</span>
+            </div>
+          )}
+
           <p className="text-primary-50 mt-4 text-lg">
             {applicantStatus === "WAITING_ANNOUNCEMENT" ? `Pengumuman untuk tahap ${stepName} sedang diproses. Mohon tunggu informasi selanjutnya.` :
              applicantStatus === "REJECTED_STEP" ? `Mohon maaf, Anda tidak lolos pada tahap ${stepName}. Jangan patah semangat!` :
@@ -104,13 +113,7 @@ export default function RecruitmentBanner({ campaigns, orgName, applicantStatus,
                 <span className="text-xs font-medium text-white/80 uppercase tracking-wider mt-1">Detik</span>
               </div>
             </div>
-          ) : (
-            <Link href={`/form/${campaign.form_id}`}>
-              <Button variant="secondary" className="w-full md:w-auto text-lg font-bold px-10 py-4 shadow-xl hover:scale-105 transition-transform">
-                Lihat Jawaban
-              </Button>
-            </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </section>

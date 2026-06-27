@@ -7,9 +7,10 @@ interface ApplicantProgressBannerProps {
   status: "WAITING_ANNOUNCEMENT" | "REJECTED_STEP" | "REJECTED_FINAL" | "ACCEPTED_FINAL" | "PENDING_FINAL";
   stepName?: string;
   announcementDate?: Date;
+  passedStepName?: string;
 }
 
-export default function ApplicantProgressBanner({ status, stepName, announcementDate }: ApplicantProgressBannerProps) {
+export default function ApplicantProgressBanner({ status, stepName, announcementDate, passedStepName }: ApplicantProgressBannerProps) {
   const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
 
   useEffect(() => {
@@ -76,6 +77,13 @@ export default function ApplicantProgressBanner({ status, stepName, announcement
   if (status === "WAITING_ANNOUNCEMENT" && timeLeft) {
     return (
       <div className="mx-auto max-w-[90vw] w-[640px] bg-indigo-50 border border-indigo-200 rounded-md p-6 mb-6 text-center shadow-sm">
+        {passedStepName && (
+          <div className="mb-4 pb-4 border-b border-indigo-100">
+            <H3 className="text-green-700 mb-1">Selamat!</H3>
+            <P className="text-green-600 font-medium">Anda lolos pada tahap {passedStepName}.</P>
+          </div>
+        )}
+        
         <H3 className="text-indigo-800 mb-2">Pengumuman: {stepName}</H3>
         <P className="text-indigo-600 mb-6">Hasil seleksi tahap ini akan diumumkan dalam:</P>
         
