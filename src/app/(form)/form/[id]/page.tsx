@@ -77,7 +77,7 @@ const page = async ({ params }: Props) => {
           * Menunjukkan pertanyaan yang wajib diisi
         </P>
       </div>
-      <Form form={form} a={session.user?.id as string} b={id} />
+      <Form form={form} formId={id} />
     </div>
   );
 };

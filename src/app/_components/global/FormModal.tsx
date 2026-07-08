@@ -57,8 +57,7 @@ export function FormModal({ isOpen, onClose, formId, userId, onSuccess }: FormMo
           <div className="border-t pt-4">
             <Form 
               form={form} 
-              a={userId} 
-              b={formId} 
+              formId={formId} 
               onSuccess={(subId) => {
                 onSuccess(subId);
               }} 

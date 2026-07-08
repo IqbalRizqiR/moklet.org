@@ -13,13 +13,13 @@ import {
   TextArea,
   TextField,
 } from "@/app/_components/global/Input";
+import FileField from "./FileField";
 import { FormWithFields } from "@/types/entityRelations";
 import { formToJSON } from "@/utils/atomics";
 
 interface FormProps {
   form: FormWithFields;
-  a: string;
-  b: string;
+  formId: string;
   answers?: Submission_Field[];
   submission_id?: string;
   onSuccess?: (submission_id: string) => void;
@@ -27,8 +27,7 @@ interface FormProps {
 
 export default function Form({
   form,
-  a,
-  b,
+  formId,
   answers,
   submission_id,
   onSuccess,
@@ -85,7 +84,7 @@ export default function Form({
           : [{ name: key, value: value }];
       });
 
-      const submission = await submitForm(a, b, arrayAnswers, submission_id);
+      const submission = await submitForm(formId, arrayAnswers, submission_id);
       if (submission.success) {
         toast.success("Jawaban terkirim!", {
           id: toastId,
@@ -93,7 +92,7 @@ export default function Form({
         if (onSuccess) {
           onSuccess(submission.submission_id!);
         } else {
-          router.push(`/form/${b}/alreadysubmit`);
+          router.push(`/form/${formId}/alreadysubmit`);
         }
       } else {
         toast.error(submission.message, {
@@ -157,6 +156,16 @@ export default function Form({
               }))}
               className="mb-6 w-full"
               required={field.required}
+              value={answers?.find((item) => item.field_id == field.id)?.value}
+            />
+          )}
+          {field.type === "file" && (
+            <FileField
+              label={field.label}
+              name={field.id.toString()}
+              className="mb-6 w-full"
+              required={field.required}
+              acceptTypes={(field as unknown as { accept_types?: string | null }).accept_types}
               value={answers?.find((item) => item.field_id == field.id)?.value}
             />
           )}

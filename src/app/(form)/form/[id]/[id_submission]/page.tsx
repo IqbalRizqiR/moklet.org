@@ -154,8 +154,7 @@ const page = async ({ params }: Props) => {
       </div>
       <Form
         form={form}
-        a={session.user?.id as string}
-        b={id}
+        formId={id}
         answers={transformToArrayCheckbox(submission.fields)}
         submission_id={id_submission}
       />

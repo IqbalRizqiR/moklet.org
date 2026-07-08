@@ -2,14 +2,12 @@ import React from "react";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { isOrgLeader } from "@/utils/permissions";
+import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2, H3, P } from "@/app/_components/global/Text";
 import { TextField, TextArea, RadioField, CheckboxField } from "@/app/_components/global/Input";
 
-import { findLatestPeriod } from "@/utils/database/periodYear.query";
-import { findOrganisasi } from "@/utils/database/organisasi.query";
-import { Organisasi_Type, Submission_Field, StepStatus } from "@prisma/client";
+import { Submission_Field } from "@prisma/client";
 import { transformToArrayCheckbox } from "@/utils/atomics";
 
 type PageProps = {
@@ -21,26 +19,8 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
   const session = await auth();
   if (!session?.user?.id) redirect("/api/auth/signin");
 
-  const currentPeriod = await findLatestPeriod(true);
-  let hasAccess = false;
-
-  if (session.user.role === "SuperAdmin" || session.user.role === "Admin") {
-    hasAccess = true;
-  } else if (currentPeriod) {
-    const currentOrg = await findOrganisasi({
-      organisasi_period_id: {
-        period_id: currentPeriod.id,
-        organisasi: orgTypeString.toUpperCase() as Organisasi_Type
-      }
-    });
-    if (currentOrg) {
-      hasAccess = await isOrgLeader(session.user.id, currentOrg.id);
-    }
-  }
-
-  if (!hasAccess) {
-    redirect("/admin/organisasi");
-  }
+  const { hasAccess } = await canManageRecruitment(session.user.id, orgTypeString);
+  if (!hasAccess) redirect("/admin/organisasi");
 
   const applicant = await prisma.recruitment_Applicant.findUnique({
     where: { id: applicantId },
@@ -131,6 +111,34 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
                     disabled
                   />
                 )}
+                {field.type === "file" && (() => {
+                  const fileUrl = submissionFields.find((item) => item.field_id == field.id)?.value;
+                  const isImg = fileUrl && /\.(png|jpe?g|webp|gif)$/i.test(fileUrl);
+                  return (
+                    <div className="mb-6 w-full">
+                      <label className="block mb-2 font-medium text-neutral-900">{field.label}</label>
+                      {fileUrl ? (
+                        <div className="flex items-center gap-4 rounded-lg border border-gray-200 p-3">
+                          {isImg ? (
+                            <img src={fileUrl} alt="jawaban" className="h-20 w-20 rounded object-cover" />
+                          ) : (
+                            <div className="flex h-16 w-16 items-center justify-center rounded bg-primary-50 text-primary-500">
+                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                          )}
+                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline text-sm font-medium">
+                            Buka / Unduh File
+                          </a>
+                        </div>
+                      ) : (
+                        <P className="text-sm text-gray-400 italic">Tidak ada file diunggah.</P>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>

@@ -123,6 +123,22 @@ export const protectedRoutes: ProtectedRoutes[] = [
     roles: "All",
   },
   {
+    title: "Recruitment",
+    path: "/admin/recruitment",
+    regex: /^\/admin\/recruitment(\/.*)?$/i,
+    icon: `
+    <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18 7.16C17.94 7.15 17.87 7.15 17.81 7.16C16.43 7.11 15.33 5.98 15.33 4.58C15.33 3.15 16.48 2 17.91 2C19.34 2 20.49 3.16 20.49 4.58C20.48 5.98 19.38 7.11 18 7.16Z" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+      <path d="M17.0809 14.7C18.4509 14.93 19.9609 14.69 21.0209 13.98C22.4309 13.04 22.4309 11.5 21.0209 10.56C19.9509 9.85 18.4209 9.61 17.0509 9.85" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+      <path d="M5.96998 7.16C6.02998 7.15 6.09998 7.15 6.15998 7.16C7.53998 7.11 8.63998 5.98 8.63998 4.58C8.63998 3.15 7.48998 2 6.05998 2C4.62998 2 3.47998 3.16 3.47998 4.58C3.48998 5.98 4.58998 7.11 5.96998 7.16Z" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+      <path d="M6.89014 14.7C5.52014 14.93 4.01014 14.69 2.95014 13.98C1.54014 13.04 1.54014 11.5 2.95014 10.56C4.02014 9.85 5.55014 9.61 6.92014 9.85" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+      <path d="M12 14.87C11.94 14.86 11.87 14.86 11.81 14.87C10.43 14.82 9.32996 13.69 9.32996 12.29C9.32996 10.86 10.48 9.71 11.91 9.71C13.34 9.71 14.49 10.87 14.49 12.29C14.48 13.69 13.38 14.83 12 14.87Z" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+      <path d="M9.08997 18.06C7.67997 19 7.67997 20.54 9.08997 21.48C10.69 22.55 13.31 22.55 14.91 21.48C16.32 20.54 16.32 19 14.91 18.06C13.32 17 10.69 17 9.08997 18.06Z" stroke="#E04E4E" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"/>
+    </svg>
+    `,
+    roles: "All",
+  },
+  {
     title: "Aspirasi",
     path: "/admin/aspirasi",
     regex: /^\/admin\/aspirasi(\/.*)?$/i,

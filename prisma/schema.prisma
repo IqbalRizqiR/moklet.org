@@ -81,18 +81,20 @@ model Form {
   user                  User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   submissions           Submission[]
   recruitment_campaigns Recruitment_Campaign[]
+  recruitment_steps     Recruitment_Step[]
 }
 
 model Field {
-  id          Int                @id @default(autoincrement()) @map("field_id")
-  label       String
-  type        Field_Type
-  required    Boolean            @default(false)
-  form_id     String
-  fieldNumber Int                @default(0)
-  form        Form               @relation(fields: [form_id], references: [id], onDelete: Cascade)
-  options     Field_Option[]
-  submissions Submission_Field[]
+  id           Int                @id @default(autoincrement()) @map("field_id")
+  label        String
+  type         Field_Type
+  required     Boolean            @default(false)
+  form_id      String
+  fieldNumber  Int                @default(0)
+  accept_types String?
+  form         Form               @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  options      Field_Option[]
+  submissions  Submission_Field[]
 }
 
 model Field_Option {
@@ -112,6 +114,7 @@ model Submission {
   user                  User                   @relation(fields: [user_id], references: [id])
   fields                Submission_Field[]
   recruitment_applicant Recruitment_Applicant?
+  step_status           Applicant_Step_Status?
 }
 
 model Submission_Field {
@@ -441,6 +444,7 @@ enum Field_Type {
   longtext
   radio
   checkbox
+  file
 }
 
 enum Organisasi_Type {
@@ -486,14 +490,24 @@ model Recruitment_Campaign {
   applicants Recruitment_Applicant[]
 }
 
+enum StepType {
+  ANNOUNCEMENT
+  FORM
+}
+
 model Recruitment_Step {
   id                String    @id @default(uuid()) @db.Char(36)
   campaign_id       String    @db.Char(36)
   name              String
+  description       String?   @db.Text
   order             Int       @default(0)
+  type              StepType  @default(ANNOUNCEMENT)
   announcement_date DateTime?
+  close_date        DateTime?
+  form_id           String?
 
   campaign           Recruitment_Campaign    @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  form               Form?                   @relation(fields: [form_id], references: [id])
   applicant_statuses Applicant_Step_Status[]
 }
 
@@ -525,13 +539,15 @@ enum StepStatus {
 }
 
 model Applicant_Step_Status {
-  id           String     @id @default(uuid()) @db.Char(36)
-  applicant_id String     @db.Char(36)
-  step_id      String     @db.Char(36)
-  status       StepStatus @default(PENDING)
+  id            String     @id @default(uuid()) @db.Char(36)
+  applicant_id  String     @db.Char(36)
+  step_id       String     @db.Char(36)
+  status        StepStatus @default(PENDING)
+  submission_id String?    @unique
 
-  applicant Recruitment_Applicant @relation(fields: [applicant_id], references: [id], onDelete: Cascade)
-  step      Recruitment_Step      @relation(fields: [step_id], references: [id], onDelete: Cascade)
+  applicant  Recruitment_Applicant @relation(fields: [applicant_id], references: [id], onDelete: Cascade)
+  step       Recruitment_Step      @relation(fields: [step_id], references: [id], onDelete: Cascade)
+  submission Submission?           @relation(fields: [submission_id], references: [id], onDelete: SetNull)
 
   @@unique([applicant_id, step_id])
 }

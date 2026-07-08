@@ -2,13 +2,10 @@ import React from "react";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { isOrgLeader } from "@/utils/permissions";
+import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2 } from "@/app/_components/global/Text";
 import { getOrCreateNextPeriodOrganisasi } from "@/actions/recruitment";
-import { findLatestPeriod } from "@/utils/database/periodYear.query";
-import { findOrganisasi } from "@/utils/database/organisasi.query";
-import { Organisasi_Type } from "@prisma/client";
 
 type PageProps = {
   params: Promise<{ organisasi: string }>;
@@ -19,32 +16,11 @@ export default async function AdminRecruitmentPage({ params }: PageProps) {
   const session = await auth();
   if (!session?.user?.id) redirect("/api/auth/signin");
 
-  // Get current period for Auth check
-  const currentPeriod = await findLatestPeriod(true);
-  let hasAccess = false;
+  const { hasAccess } = await canManageRecruitment(session.user.id, orgTypeString);
+  if (!hasAccess) redirect("/admin/organisasi");
 
-  if (session.user.role === "SuperAdmin" || session.user.role === "Admin") {
-    hasAccess = true;
-  } else if (currentPeriod) {
-    const currentOrg = await findOrganisasi({
-      organisasi_period_id: {
-        period_id: currentPeriod.id,
-        organisasi: orgTypeString.toUpperCase() as Organisasi_Type
-      }
-    });
-    if (currentOrg) {
-      hasAccess = await isOrgLeader(session.user.id, currentOrg.id);
-    }
-  }
-
-  if (!hasAccess) {
-    redirect("/admin/organisasi");
-  }
-
-  // Get or Create NEXT period Organization for Oprec
   const { organisasi, period: nextPeriod } = await getOrCreateNextPeriodOrganisasi(orgTypeString);
 
-  // Fetch campaigns for the NEXT period
   const organisasiWithCampaigns = await prisma.organisasi.findUnique({
     where: { id: organisasi.id },
     include: {
@@ -63,7 +39,7 @@ export default async function AdminRecruitmentPage({ params }: PageProps) {
           <H2>Recruitment Campaigns</H2>
           <p className="text-gray-500">Kelola open recruitment untuk {orgTypeString.toUpperCase()} (Masa Bakti {nextPeriod.period})</p>
         </div>
-        <Link 
+        <Link
           href={`/admin/organisasi/${orgTypeString}/recruitment/new`}
           className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition"
         >

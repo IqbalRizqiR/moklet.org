@@ -2,15 +2,13 @@ import React from "react";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { isOrgLeader } from "@/utils/permissions";
+import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2 } from "@/app/_components/global/Text";
 import CampaignRealtimeListener from "@/app/_components/global/CampaignRealtimeListener";
-
-import { findLatestPeriod } from "@/utils/database/periodYear.query";
-import { findOrganisasi } from "@/utils/database/organisasi.query";
-import { Organisasi_Type } from "@prisma/client";
 import EditCampaignTime from "./_components/EditCampaignTime";
+import EditCampaignDetails from "./_components/EditCampaignDetails";
+import ApplicantTable from "./_components/ApplicantTable";
 
 type PageProps = {
   params: Promise<{ organisasi: string, campaignId: string }>;
@@ -21,27 +19,8 @@ export default async function CampaignDashboard({ params }: PageProps) {
   const session = await auth();
   if (!session?.user?.id) redirect("/api/auth/signin");
 
-  // Get current period for Auth check
-  const currentPeriod = await findLatestPeriod(true);
-  let hasAccess = false;
-
-  if (session.user.role === "SuperAdmin" || session.user.role === "Admin") {
-    hasAccess = true;
-  } else if (currentPeriod) {
-    const currentOrg = await findOrganisasi({
-      organisasi_period_id: {
-        period_id: currentPeriod.id,
-        organisasi: orgTypeString.toUpperCase() as Organisasi_Type
-      }
-    });
-    if (currentOrg) {
-      hasAccess = await isOrgLeader(session.user.id, currentOrg.id);
-    }
-  }
-
-  if (!hasAccess) {
-    redirect("/admin/organisasi");
-  }
+  const { hasAccess } = await canManageRecruitment(session.user.id, orgTypeString);
+  if (!hasAccess) redirect("/admin/organisasi");
 
   const campaign = await prisma.recruitment_Campaign.findUnique({
     where: { id: campaignId },
@@ -58,68 +37,60 @@ export default async function CampaignDashboard({ params }: PageProps) {
 
   if (!campaign) return <div>Campaign tidak ditemukan</div>;
 
+  const applicantsData = campaign.applicants.map((app: any) => ({
+    id: app.id,
+    name: app.user.name,
+    email: app.user.email,
+    status: app.status,
+    user_pic: app.user.user_pic,
+  }));
+
   return (
     <div className="p-6">
       <CampaignRealtimeListener campaignId={campaignId} />
       <Link href={`/admin/organisasi/${orgTypeString}/recruitment`} className="text-gray-500 hover:text-black mb-4 inline-block">&larr; Kembali</Link>
-      
-      <div className="bg-white p-6 rounded-xl border shadow-sm mb-6 flex justify-between items-center">
-        <div>
-          <H2>{campaign.title}</H2>
-          <p className="text-gray-500">Total Pendaftar: {campaign.applicants.length}</p>
-          <div className="mt-4 max-w-sm">
-            <EditCampaignTime campaignId={campaignId} currentOpenDate={campaign.open_date} currentCloseDate={campaign.close_date} />
+
+      <div className="bg-white p-6 rounded-xl border shadow-sm mb-6">
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="flex-1">
+            <EditCampaignDetails
+              campaignId={campaignId}
+              currentTitle={campaign.title}
+              currentDescription={campaign.description}
+            />
+            <p className="text-gray-500 mt-2">Total Pendaftar: {campaign.applicants.length}</p>
+            <div className="mt-4 max-w-sm">
+              <EditCampaignTime campaignId={campaignId} currentOpenDate={campaign.open_date} currentCloseDate={campaign.close_date} />
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col md:flex-row gap-4 items-end md:items-center">
-          <Link href={`/admin/organisasi/${orgTypeString}/recruitment/${campaignId}/steps`} className="bg-primary-500 hover:bg-primary-600 transition-colors text-white px-4 py-2 rounded font-medium">
-            Kelola Tahapan (Steps)
-          </Link>
-          <form action={async () => {
-            "use server";
-            const { toggleCampaign } = await import("@/actions/recruitment");
-            await toggleCampaign(campaignId, !campaign.is_active);
-          }}>
-            <button type="submit" className={`px-4 py-2 rounded text-white ${campaign.is_active ? 'bg-red-500' : 'bg-green-500'}`}>
-              {campaign.is_active ? 'Tutup Campaign' : 'Buka Campaign'}
-            </button>
-          </form>
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+            <Link href={`/admin/organisasi/${orgTypeString}/recruitment/${campaignId}/steps`} className="bg-primary-500 hover:bg-primary-600 transition-colors text-white px-4 py-2 rounded font-medium text-sm">
+              Kelola Tahapan
+            </Link>
+            <a
+              href={`/admin/organisasi/${orgTypeString}/recruitment/${campaignId}/excel`}
+              className="bg-green-600 hover:bg-green-700 transition-colors text-white px-4 py-2 rounded font-medium text-sm"
+            >
+              Export Excel
+            </a>
+            <form action={async () => {
+              "use server";
+              const { toggleCampaign } = await import("@/actions/recruitment");
+              await toggleCampaign(campaignId, !campaign.is_active);
+            }}>
+              <button type="submit" className={`px-4 py-2 rounded text-white text-sm font-medium ${campaign.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'} transition-colors`}>
+                {campaign.is_active ? 'Tutup Campaign' : 'Buka Campaign'}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="p-4">Nama Pendaftar</th>
-              <th className="p-4">Status Akhir</th>
-              <th className="p-4">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {campaign.applicants.map((app: any) => (
-              <tr key={app.id} className="border-b">
-                <td className="p-4 font-medium">{app.user.name}</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${app.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' : app.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {app.status}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <Link href={`/admin/organisasi/${orgTypeString}/recruitment/${campaignId}/applicant/${app.id}`} className="text-primary-500 hover:underline font-medium">
-                    Review Pendaftar
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {campaign.applicants.length === 0 && (
-              <tr>
-                <td colSpan={3} className="p-8 text-center text-gray-500">Belum ada pendaftar.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ApplicantTable
+        applicants={applicantsData}
+        orgTypeString={orgTypeString}
+        campaignId={campaignId}
+      />
     </div>
   );
 }

@@ -103,8 +103,9 @@ export default function QuestionEdit({
     type FieldsProps = keyof (typeof fields)[0];
     const name = e.target.name;
     const value = e.target.value;
-    const index = parseInt(name.split("_")[0]);
-    const props = name.split("_")[1] as FieldsProps;
+    const parts = name.split("_");
+    const index = parseInt(parts[0]);
+    const props = parts.slice(1).join("_") as FieldsProps;
 
     setFields((prev) => {
       const array = [...prev];
@@ -145,6 +146,7 @@ export default function QuestionEdit({
           required: true,
           type: "text",
           fieldNumber: fields.length,
+          accept_types: null,
         },
       ];
     });
@@ -225,6 +227,20 @@ export default function QuestionEdit({
                 </ul>
                 <P>Klik untuk menghapus pilihan</P>
               </div>
+            )}
+            {item.type === "file" && (
+              <SelectField
+                name={index + "_accept_types"}
+                label="Jenis File yang Diizinkan"
+                options={[
+                  { label: "Gambar & Dokumen (PDF/Word)", value: "image/*,application/pdf,.doc,.docx" },
+                  { label: "Gambar saja", value: "image/*" },
+                  { label: "PDF saja", value: "application/pdf" },
+                  { label: "Dokumen (PDF/Word)", value: "application/pdf,.doc,.docx" },
+                ]}
+                value={(item as any).accept_types || "image/*,application/pdf,.doc,.docx"}
+                handleChange={handleChange}
+              />
             )}
             <div className="flex gap-x-2 cursor-pointer items-center">
               <input

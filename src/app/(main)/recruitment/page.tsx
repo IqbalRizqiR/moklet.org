@@ -19,7 +19,8 @@ export default async function RecruitmentPage() {
       applicants: {
         where: { user_id: session?.user?.id || 'none' }
       }
-    }
+    },
+    orderBy: { close_date: "asc" }
   });
 
   return (

@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { auth } from "@/lib/auth";
 import {
   deleteForm,
   findAllForms,
@@ -37,12 +38,18 @@ export const deleteFormById = async (form_id: string) => {
 };
 
 export const submitForm = async (
-  user_id: string,
   form_id: string,
   answers: Array<{ name: string; value: string }>,
   submission_id?: string,
 ) => {
   try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+    // Use the session user_id, NOT the caller-supplied parameter. The parameter
+    // is kept for API compat but is always overridden server-side.
+    const actualUserId = session.user.id;
+
     const form = await findForm({ id: form_id, is_open: true });
     if (submission_id) {
       const submission = await findSubmission({ id: submission_id });
@@ -59,7 +66,7 @@ export const submitForm = async (
       return { success: false, message: "Form closed" };
 
     if (form.submit_once && !submission_id) {
-      const submission = await findSubmission({ user_id, form_id });
+      const submission = await findSubmission({ user_id: actualUserId, form_id });
       if (submission && !form.allow_edit)
         return { success: false, message: "Already submit" };
     }
@@ -110,7 +117,7 @@ export const submitForm = async (
           where: { submission_id: submission_id },
           create: {
             campaign_id: campaign.id,
-            user_id: user_id,
+            user_id: actualUserId,
             submission_id: submission_id,
           },
           update: {} // do nothing if it already exists
@@ -121,7 +128,7 @@ export const submitForm = async (
       return { submission_id: submission_id, success: true };
     }
     const submission = await createSubmission({
-      user_id,
+      user_id: actualUserId,
       form_id,
       fields: { create: fields_create },
     });
@@ -132,7 +139,7 @@ export const submitForm = async (
         where: { submission_id: submission.id },
         create: {
           campaign_id: campaign.id,
-          user_id: user_id,
+          user_id: actualUserId,
           submission_id: submission.id,
         },
         update: {}

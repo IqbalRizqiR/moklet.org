@@ -5,8 +5,11 @@ import prisma from "@/lib/prisma";
 export const findLatestPeriod = async (isActive?: boolean) => {
   let latestPeriodYear = await prisma.period_Year.findMany({});
 
+  // Periods are stored as "YYYY-YYYY" (e.g. "2024-2025"), so the start year is
+  // the segment before the first "-". Splitting on "/" (the previous behaviour)
+  // returned the whole string and only worked by accident via parseInt().
   latestPeriodYear.sort((a: any, b: any) => {
-    return parseInt(b.period.split("/")[0]) - parseInt(a.period.split("/")[0]);
+    return parseInt(b.period.split("-")[0]) - parseInt(a.period.split("-")[0]);
   });
 
   if (isActive != undefined) {
