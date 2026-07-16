@@ -78,10 +78,20 @@ model Form {
   open_at               DateTime?
   close_at              DateTime?
   fields                Field[]
+  sections              Field_Section[]
   user                  User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   submissions           Submission[]
   recruitment_campaigns Recruitment_Campaign[]
   recruitment_steps     Recruitment_Step[]
+}
+
+model Field_Section {
+  id      Int     @id @default(autoincrement()) @map("field_section_id")
+  form_id String
+  title   String?
+  order   Int     @default(0)
+  form    Form    @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  fields  Field[]
 }
 
 model Field {
@@ -92,7 +102,9 @@ model Field {
   form_id      String
   fieldNumber  Int                @default(0)
   accept_types String?
+  section_id   Int?
   form         Form               @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  section      Field_Section?     @relation(fields: [section_id], references: [id], onDelete: SetNull)
   options      Field_Option[]
   submissions  Submission_Field[]
 }
@@ -385,15 +397,16 @@ model Notification_Recipient {
 }
 
 model Org_Member {
-  id            String          @id @default(uuid()) @db.Char(36)
-  user          User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id       String          @db.Char(36)
-  organisasi    Organisasi      @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
-  organisasi_id String          @db.Char(36)
-  role          Org_Custom_Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  role_id       String          @db.Char(36)
-  is_main       Boolean         @default(false)
-  created_at    DateTime        @default(now())
+  id                       String               @id @default(uuid()) @db.Char(36)
+  user                     User                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id                  String               @db.Char(36)
+  organisasi               Organisasi           @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
+  organisasi_id            String               @db.Char(36)
+  role                     Org_Custom_Role      @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role_id                  String               @db.Char(36)
+  is_main                  Boolean              @default(false)
+  created_at               DateTime             @default(now())
+  recruitment_campaign_id  String?              @db.Char(36)
 
   @@unique([user_id, organisasi_id])
 }
@@ -474,15 +487,17 @@ enum TwibbonType {
 }
 
 model Recruitment_Campaign {
-  id              String    @id @default(uuid()) @db.Char(36)
-  organisasi_id   String    @db.Char(36)
-  form_id         String
-  default_role_id String?   @db.Char(36)
-  title           String
-  description     String?   @db.Text
-  is_active       Boolean   @default(false)
-  open_date       DateTime?
-  close_date      DateTime?
+  id                           String    @id @default(uuid()) @db.Char(36)
+  organisasi_id                String    @db.Char(36)
+  form_id                      String
+  default_role_id              String?   @db.Char(36)
+  title                        String
+  description                  String?   @db.Text
+  is_active                    Boolean   @default(false)
+  open_date                    DateTime?
+  close_date                   DateTime?
+  registration_success_message String?   @db.Text
+  registration_success_links   Json?
 
   organisasi Organisasi              @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
   form       Form                    @relation(fields: [form_id], references: [id])
@@ -505,6 +520,8 @@ model Recruitment_Step {
   announcement_date DateTime?
   close_date        DateTime?
   form_id           String?
+  success_message   String?   @db.Text
+  success_links     Json?
 
   campaign           Recruitment_Campaign    @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   form               Form?                   @relation(fields: [form_id], references: [id])

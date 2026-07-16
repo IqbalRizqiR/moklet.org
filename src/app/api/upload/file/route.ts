@@ -46,8 +46,6 @@ export async function POST(req: NextRequest) {
       ]);
     }
 
-    if (session.user.role === "Guest") return unauthorized();
-
     const fileArrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(new Uint8Array(fileArrayBuffer));
 

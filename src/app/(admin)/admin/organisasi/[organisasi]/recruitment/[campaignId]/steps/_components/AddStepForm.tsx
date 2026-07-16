@@ -15,6 +15,7 @@ export default function AddStepForm({ campaignId }: { campaignId: string }) {
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState<"ANNOUNCEMENT" | "FORM">("ANNOUNCEMENT");
   const [questions, setQuestions] = useState<FieldsWithOptions[]>([]);
+  const [successLinks, setSuccessLinks] = useState<{ label: string; url: string }[]>([]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,10 +39,13 @@ export default function AddStepForm({ campaignId }: { campaignId: string }) {
           description: formData.get("description") as string,
           closeDate: formData.get("closeDate") as string,
           questions: type === "FORM" ? questions : undefined,
+          success_message: formData.get("success_message") as string,
+          success_links: successLinks,
         },
       );
       toast.success("Tahapan berhasil ditambahkan!");
       setQuestions([]);
+      setSuccessLinks([]);
       setType("ANNOUNCEMENT");
       (e.target as HTMLFormElement).reset();
       router.refresh();
@@ -51,6 +55,14 @@ export default function AddStepForm({ campaignId }: { campaignId: string }) {
       setLoading(false);
     }
   };
+
+  const addLink = () => setSuccessLinks([...successLinks, { label: "", url: "" }]);
+  const updateLink = (index: number, field: "label" | "url", value: string) => {
+    const updated = [...successLinks];
+    updated[index] = { ...updated[index], [field]: value };
+    setSuccessLinks(updated);
+  };
+  const removeLink = (index: number) => setSuccessLinks(successLinks.filter((_, i) => i !== index));
 
   return (
     <div className="bg-white p-6 rounded-xl border shadow-sm h-fit">
@@ -100,6 +112,32 @@ export default function AddStepForm({ campaignId }: { campaignId: string }) {
           name="announcementDate"
           type="datetime-local"
         />
+
+        <div className="border-t pt-4 mt-2">
+          <h4 className="text-sm font-semibold text-neutral-700 mb-3">Setelah Peserta Lulus Tahap Ini</h4>
+          <TextArea
+            label="Pesan Sukses (Opsional)"
+            name="success_message"
+            placeholder="Selamat! Silakan bergabung ke grup berikut."
+          />
+          <div className="mt-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-medium text-neutral-600">Tautan (WhatsApp Group, dll.)</span>
+              <button type="button" onClick={addLink} className="text-xs text-primary-500 hover:underline">+ Tambah Tautan</button>
+            </div>
+            {successLinks.map((link, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <div className="flex-1">
+                  <input type="text" placeholder="Label" value={link.label} onChange={(e) => updateLink(i, "label", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs mb-1" />
+                  <input type="url" placeholder="URL" value={link.url} onChange={(e) => updateLink(i, "url", e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs" />
+                </div>
+                <button type="button" onClick={() => removeLink(i)} className="text-red-400 hover:text-red-600 p-1 mt-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {type === "FORM" && (
           <>

@@ -26,6 +26,7 @@ export const findSubmissionWithForm = async (
             include: { options: true },
             orderBy: { fieldNumber: "asc" },
           },
+          sections: { orderBy: { order: "asc" } },
           _count: { select: { submissions: true } },
         },
       },

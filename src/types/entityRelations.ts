@@ -18,6 +18,7 @@ export type EventWithRelations = Prisma.EventGetPayload<{
 export type FormWithFields = Prisma.FormGetPayload<{
   include: {
     fields: { include: { options: true } };
+    sections: true;
     _count: { select: { submissions: true } };
   };
 }>;

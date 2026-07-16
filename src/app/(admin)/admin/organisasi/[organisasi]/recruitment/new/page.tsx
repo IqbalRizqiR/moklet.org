@@ -16,9 +16,8 @@ export default function NewCampaignPage({ params }: { params: Promise<{ organisa
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<FieldsWithOptions[]>([]);
-
-  // We should ideally fetch available forms here, but for now we let the user enter form ID 
-  // or we can fetch them via a Server Action if needed.
+  const [successLinks, setSuccessLinks] = useState<{ label: string; url: string }[]>([]);
+  const [sections, setSections] = useState<{ id: number; title: string; order: number }[]>([]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,6 +32,8 @@ export default function NewCampaignPage({ params }: { params: Promise<{ organisa
         open_date: formData.get("open_date") as string,
         close_date: formData.get("close_date") as string,
         questions: questions,
+        registration_success_message: formData.get("registration_success_message") as string,
+        registration_success_links: successLinks,
       });
       toast.success("Campaign berhasil dibuat!");
       router.push(`/admin/organisasi/${id}/recruitment`);
@@ -41,6 +42,20 @@ export default function NewCampaignPage({ params }: { params: Promise<{ organisa
     } finally {
       setLoading(false);
     }
+  };
+
+  const addLink = () => {
+    setSuccessLinks([...successLinks, { label: "", url: "" }]);
+  };
+
+  const updateLink = (index: number, field: "label" | "url", value: string) => {
+    const updated = [...successLinks];
+    updated[index] = { ...updated[index], [field]: value };
+    setSuccessLinks(updated);
+  };
+
+  const removeLink = (index: number) => {
+    setSuccessLinks(successLinks.filter((_, i) => i !== index));
   };
 
   return (
@@ -75,12 +90,52 @@ export default function NewCampaignPage({ params }: { params: Promise<{ organisa
           />
         </div>
 
+        <div className="border-t pt-6 mt-6">
+          <h3 className="font-semibold text-neutral-800 mb-4">Pesan & Tautan Setelah Pendaftaran</h3>
+          <TextArea
+            label="Pesan Sukses (Opsional)"
+            name="registration_success_message"
+            placeholder="Selamat! Anda telah terdaftar. Silakan bergabung ke grup WhatsApp di bawah."
+          />
+          <div className="mt-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-neutral-700">Tautan (WhatsApp Group, dll.)</span>
+              <button type="button" onClick={addLink} className="text-xs text-primary-500 hover:underline">+ Tambah Tautan</button>
+            </div>
+            {successLinks.map((link, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Label (contoh: Grup WA Angkatan)"
+                    value={link.label}
+                    onChange={(e) => updateLink(i, "label", e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-1"
+                  />
+                  <input
+                    type="url"
+                    placeholder="URL (contoh: https://chat.whatsapp.com/...)"
+                    value={link.url}
+                    onChange={(e) => updateLink(i, "url", e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  />
+                </div>
+                <button type="button" onClick={() => removeLink(i)} className="text-red-400 hover:text-red-600 p-2 mt-1">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-8 border-t pt-8">
           <H2 className="mb-4 text-xl">Pertanyaan Formulir</H2>
           <QuestionEdit 
             fields={questions} 
             setFields={setQuestions} 
-            formId="new" 
+            formId="new"
+            sections={sections}
+            setSections={setSections}
           />
         </div>
 

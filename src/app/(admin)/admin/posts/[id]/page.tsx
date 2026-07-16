@@ -26,7 +26,7 @@ export default async function Edit({
   if (!data) return notFound();
 
   const user = await findUser({ id: session?.user?.id });
-  let organizations = user?.memberships ?? [];
+  let organizations: any[] = user?.memberships ?? [];
 
   // Ensure the post's current organization is in the list, so Admins can see/keep the selection
   if (data.organisasi_id && data.organisasi) {
@@ -39,7 +39,7 @@ export default async function Edit({
         {
           organisasi_id: data.organisasi_id,
           organisasi: data.organisasi,
-          role: null, // Dummy role for the option to render
+          role: undefined as unknown as undefined,
         },
       ];
     }

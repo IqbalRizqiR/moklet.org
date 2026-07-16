@@ -1,11 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
 declare global {
-  var prisma: PrismaClient;
-
-  namespace NodeJS {
-    interface ProcessEnv {
-      DATABASE_URL: string;
-    }
-  }
+  var globalPrisma: import("@prisma/client").PrismaClient | undefined;
 }
+
+export {};

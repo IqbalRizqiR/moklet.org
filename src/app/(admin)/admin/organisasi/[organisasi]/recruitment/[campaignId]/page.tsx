@@ -6,8 +6,10 @@ import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2 } from "@/app/_components/global/Text";
 import CampaignRealtimeListener from "@/app/_components/global/CampaignRealtimeListener";
+import { toggleCampaign } from "@/actions/recruitment";
 import EditCampaignTime from "./_components/EditCampaignTime";
 import EditCampaignDetails from "./_components/EditCampaignDetails";
+import EditCampaignSuccessConfig from "./_components/EditCampaignSuccessConfig";
 import ApplicantTable from "./_components/ApplicantTable";
 
 type PageProps = {
@@ -73,11 +75,7 @@ export default async function CampaignDashboard({ params }: PageProps) {
             >
               Export Excel
             </a>
-            <form action={async () => {
-              "use server";
-              const { toggleCampaign } = await import("@/actions/recruitment");
-              await toggleCampaign(campaignId, !campaign.is_active);
-            }}>
+            <form action={toggleCampaign.bind(null, campaignId, !campaign.is_active)}>
               <button type="submit" className={`px-4 py-2 rounded text-white text-sm font-medium ${campaign.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'} transition-colors`}>
                 {campaign.is_active ? 'Tutup Campaign' : 'Buka Campaign'}
               </button>
@@ -85,6 +83,12 @@ export default async function CampaignDashboard({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      <EditCampaignSuccessConfig
+        campaignId={campaignId}
+        currentMessage={campaign.registration_success_message}
+        currentLinks={campaign.registration_success_links as Array<{ label: string; url: string }> | null}
+      />
 
       <ApplicantTable
         applicants={applicantsData}

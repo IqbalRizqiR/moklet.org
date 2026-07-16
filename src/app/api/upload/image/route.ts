@@ -34,8 +34,7 @@ export async function POST(req: NextRequest) {
       return badRequest([{ message: "Hanya file gambar yang diizinkan" }]);
     }
 
-    if (hostType === "CLOUDINARY" && session.user.role === "Guest")
-      return unauthorized();
+    if (session.user.role === "Guest") return unauthorized();
 
     const fileArrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(new Uint8Array(fileArrayBuffer));

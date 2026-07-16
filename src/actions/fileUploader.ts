@@ -46,13 +46,13 @@ export async function uploadImageImbb(file: Buffer | any) {
     const formData = new FormData();
     formData.append("image", file.toString("base64"));
 
-    const upload = await fetch(
-      "https://api.imgbb.com/1/upload?key=" + process.env.IMGBB_KEY,
-      {
-        method: "POST",
-        body: formData,
-      },
-    ).then((res) => res.json());
+    const uploadUrl = new URL("https://api.imgbb.com/1/upload");
+    uploadUrl.searchParams.set("key", process.env.IMGBB_KEY || "");
+
+    const upload = await fetch(uploadUrl, {
+      method: "POST",
+      body: formData,
+    }).then((res) => res.json());
 
     if (upload?.status !== 200)
       return { error: true, message: "Terjadi kesalahan" };

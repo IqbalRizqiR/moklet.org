@@ -76,7 +76,7 @@ export default function FileField({
       </label>
 
       {/* Hidden input carries the URL so formToJSON captures the value */}
-      <input type="hidden" name={name} value={url} required={required} />
+      <input type="hidden" name={name} value={url} />
 
       {url ? (
         <div className="flex items-center gap-4 rounded-lg border border-gray-200 p-3">

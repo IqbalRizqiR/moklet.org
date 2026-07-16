@@ -76,7 +76,7 @@ export default async function Edit({
   let isReadOnly = true;
   if (user.role === "SuperAdmin" || user.role === "Admin") {
     isReadOnly = false;
-  } else if (organization.id) {
+  } else if (organization?.id) {
     const hasAccess = await canEditOrgInfo(user.id, organization.id);
     if (hasAccess) isReadOnly = false;
   }

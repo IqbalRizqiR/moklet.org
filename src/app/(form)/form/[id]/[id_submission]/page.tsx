@@ -84,7 +84,7 @@ const page = async ({ params }: Props) => {
 
     for (const step of pastSteps) {
       const status = applicant.step_statuses.find((s: any) => s.step_id === step.id)?.status || "PENDING";
-      if (status === "REJECTED" || status === "FAILED") {
+      if (status === "FAILED") {
         bannerStatus = "REJECTED_STEP";
         bannerStepName = step.name;
         rejectedInPastStep = true;
@@ -96,7 +96,7 @@ const page = async ({ params }: Props) => {
       // Find if they passed any previous steps to congratulate them
       const lastPassedStep = [...pastSteps].reverse().find(step => {
         const status = applicant.step_statuses.find((s: any) => s.step_id === step.id)?.status || "PENDING";
-        return status === "PASSED" || status === "ACCEPTED";
+        return status === "PASSED";
       });
       if (lastPassedStep) bannerPassedStepName = lastPassedStep.name;
 

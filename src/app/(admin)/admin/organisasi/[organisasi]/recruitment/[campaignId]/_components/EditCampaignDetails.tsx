@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { editCampaignDetails } from "@/actions/recruitment";
+import { updateCampaign } from "@/actions/recruitment";
 
 interface Props {
   campaignId: string;
@@ -19,7 +19,7 @@ export default function EditCampaignDetails({ campaignId, currentTitle, currentD
     if (!title.trim()) return;
     setLoading(true);
     try {
-      await editCampaignDetails(campaignId, title, description || undefined);
+      await updateCampaign(campaignId, { title, description: description || undefined });
       setIsEditing(false);
     } catch (error) {
       console.error(error);

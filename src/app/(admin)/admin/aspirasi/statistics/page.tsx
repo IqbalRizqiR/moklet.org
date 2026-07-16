@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 
 import { H2, H3, P } from "@/app/_components/global/Text";
 import StatsCard from "./_components/StatsCard";
@@ -51,7 +51,9 @@ export default async function StatisticsPage({
         </P>
       </div>
 
-      <FilterSection />
+      <Suspense fallback={<div className="bg-white p-4 rounded-xl shadow mb-6 animate-pulse h-24" />}>
+        <FilterSection />
+      </Suspense>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <StatsCard

@@ -1,3 +1,4 @@
+import { Organisasi_Type } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 /**
@@ -12,17 +13,18 @@ export const findAccessibleCampaigns = async (
   userId: string,
   role: string,
 ) => {
+  const include = {
+    organisasi: { include: { period: true } },
+    _count: { select: { applicants: true, steps: true } },
+  } as const;
+
   if (role === "SuperAdmin" || role === "Admin") {
     return await prisma.recruitment_Campaign.findMany({
-      include: {
-        organisasi: { include: { period: true } },
-        _count: { select: { applicants: true } },
-      },
+      include,
       orderBy: { open_date: "desc" },
     });
   }
 
-  // Org types the user leads (as leader) or has explicit recruitment permission for
   const ledMemberships = await prisma.org_Member.findMany({
     where: { user_id: userId, role: { is_leader: true } },
     select: { organisasi: { select: { organisasi: true } } },
@@ -43,11 +45,8 @@ export const findAccessibleCampaigns = async (
   if (orgTypes.length === 0) return [];
 
   return await prisma.recruitment_Campaign.findMany({
-    where: { organisasi: { organisasi: { in: orgTypes } } },
-    include: {
-      organisasi: { include: { period: true } },
-      _count: { select: { applicants: true } },
-    },
+    where: { organisasi: { organisasi: { in: orgTypes as Organisasi_Type[] } } },
+    include,
     orderBy: { open_date: "desc" },
   });
 };

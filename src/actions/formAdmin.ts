@@ -63,7 +63,7 @@ export const saveForm = async (
       }
 
       // eslint-disable-next-line no-unused-vars
-      const { _count, fields, ...formData } = data;
+      const { _count, fields, sections: _sections, ...formData } = data;
       const updateInput = formData;
 
       await prisma.form.update({
@@ -127,7 +127,7 @@ export const saveForm = async (
       };
     } else {
       // eslint-disable-next-line no-unused-vars
-      const { _count, fields, ...formData } = data;
+      const { _count, fields, sections: _sections, ...formData } = data;
       const createInput: Prisma.FormUncheckedCreateInput = formData;
 
       const createdForm = await prisma.form.create({
@@ -187,7 +187,9 @@ export const cloneForm = async (id: string) => {
     });
     if (!form) throw new Error("Form tidak dimukan");
 
-    const createFormInput = { ...form, _count: undefined };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { sections: _sections, ...formWithoutSections } = form;
+    const createFormInput = { ...formWithoutSections, _count: undefined };
 
     if (user?.role !== "SuperAdmin" && user?.id != form.user_id) {
       return { error: true, message: "Forbidden access" };

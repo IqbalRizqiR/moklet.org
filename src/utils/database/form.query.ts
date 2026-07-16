@@ -14,6 +14,7 @@ export const findForm = async (filter: Prisma.FormWhereInput) => {
     where: filter,
     include: {
       fields: { include: { options: true }, orderBy: { fieldNumber: "asc" } },
+      sections: { orderBy: { order: "asc" } },
       _count: { select: { submissions: true } },
     },
   });

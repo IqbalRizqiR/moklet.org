@@ -56,10 +56,9 @@ export default async function RiwayatAspirasi() {
                   <EditAspirationModal aspiration={aspiration} />
                 </div>
                 
-                <div 
-                  className="prose prose-sm max-w-none text-neutral-600 line-clamp-3"
-                  dangerouslySetInnerHTML={{ __html: aspiration.pesan_aspirasi }}
-                />
+                <p className="prose prose-sm max-w-none text-neutral-600 line-clamp-3 whitespace-pre-wrap">
+                  {aspiration.pesan_aspirasi}
+                </p>
 
                 {aspiration.gambar_aspirasi && (
                   <div className="mt-4 pt-4 border-t border-neutral-100 flex items-center gap-2 text-xs font-semibold text-neutral-500">

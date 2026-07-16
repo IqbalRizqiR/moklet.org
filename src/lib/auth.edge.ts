@@ -1,9 +1,22 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import { Roles } from "@/types/enums";
 
-// Auth configuration that's Edge-compatible (no Node.js-only modules like bcrypt or Prisma)
-// This is used only for middleware - the full auth with callbacks is in auth.ts
+import type { DefaultSession } from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: Roles;
+      name: string;
+      user_pic: string;
+      email: string;
+    } & DefaultSession["user"];
+  }
+}
+
 export const { auth } = NextAuth({
   theme: {
     colorScheme: "light",
@@ -45,7 +58,8 @@ export const { auth } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user && token.role) {
-        (session.user as any).role = token.role;
+        session.user.role = token.role as Roles;
+        session.user.id = token.id as string;
       }
       return session;
     },

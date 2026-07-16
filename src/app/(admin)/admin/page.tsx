@@ -11,8 +11,8 @@ export default async function Admin() {
   const campaigns = user?.id
     ? await findAccessibleCampaigns(user.id, user.role)
     : [];
-  const activeCampaigns = campaigns.filter((c: { is_active: boolean }) => c.is_active).length;
-  const totalApplicants = campaigns.reduce((sum: number, c: { _count: { applicants: number } }) => sum + c._count.applicants, 0);
+  const activeCampaigns = (campaigns as any[]).filter((c) => c.is_active).length;
+  const totalApplicants = (campaigns as any[]).reduce((sum: number, c: any) => sum + (c._count?.applicants ?? 0), 0);
 
   return (
     <>

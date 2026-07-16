@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import type { User as NextAuthUser } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { Roles } from "@/types/enums";
@@ -64,7 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           placeholder: "********",
         },
       },
-      async authorize(credentials) {
+      async authorize(credentials, _request): Promise<NextAuthUser | null> {
         try {
           const foundUser = await prisma.user.findUnique({
             where: { email: credentials?.email as string },
@@ -81,7 +82,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const user = {
             id: foundUser.id,
-            role: foundUser.role,
+            role: foundUser.role as Roles,
             name: foundUser.name,
             email: foundUser.email,
             user_pic: foundUser.user_pic,
@@ -140,23 +141,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user?.email) {
         const userdb = await findUser({ email: user.email });
         if (!userdb) return token;
-        token.id = userdb?.id;
-        token.role = userdb?.role;
+        token.id = userdb.id;
+        token.role = userdb.role as Roles;
+        token.name = userdb.name;
+        token.email = userdb.email;
+        token.user_pic = userdb.user_pic;
+      }
+      if (trigger === "update") {
+        const userdb = await findUser({ id: token.id as string });
+        if (userdb) {
+        token.role = userdb.role as Roles;
+          token.name = userdb.name;
+          token.email = userdb.email;
+          token.user_pic = userdb.user_pic;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (token.id && session.user) {
-        const userdb = await findUser({ id: token.id as string });
-        session.user.role = userdb?.role || "Guest";
-        session.user.user_pic = userdb?.user_pic as string;
-        session.user.name = userdb?.name as string;
-        session.user.email = userdb?.email as string;
-        session.user.id = userdb?.id as string;
+        session.user.id = token.id as string;
+        session.user.role = (token.role as Roles) || "Guest";
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.user_pic = token.user_pic as string;
       }
       return session;
     },

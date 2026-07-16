@@ -12,7 +12,7 @@ export default async function EventPanel() {
 
   // If Admin or SuperAdmin, see all events. 
   // Otherwise, only see events where user is leader of the org OR member of the event
-  let events = [];
+  let events: EventWithRelations[] = [];
   
   if (session?.user?.role === "Admin" || session?.user?.role === "SuperAdmin") {
     events = await prisma.event.findMany({

@@ -19,15 +19,15 @@ export default async function AdminRecruitmentOverview() {
   const isSuperView = role === "SuperAdmin" || role === "Admin";
 
   // Group campaigns by org type
-  const grouped = campaigns.reduce((acc: Record<string, typeof campaigns>, c: typeof campaigns[number]) => {
-    const key = c.organisasi.organisasi;
+  const grouped = campaigns.reduce((acc: Record<string, typeof campaigns>, c: any) => {
+    const key = c.organisasi?.organisasi || c.organisasi_id;
     if (!acc[key]) acc[key] = [];
     acc[key].push(c);
     return acc;
   }, {});
 
-  const totalActive = campaigns.filter((c: { is_active: boolean }) => c.is_active).length;
-  const totalApplicants = campaigns.reduce((sum: number, c: { _count: { applicants: number } }) => sum + c._count.applicants, 0);
+  const totalActive = campaigns.filter((c: any) => c.is_active).length;
+  const totalApplicants = campaigns.reduce((sum: number, c: any) => sum + (c._count?.applicants ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,7 +68,7 @@ export default async function AdminRecruitmentOverview() {
                 <span className="text-xs font-normal text-gray-400">({orgCampaigns.length})</span>
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {orgCampaigns.map((c: typeof campaigns[number]) => (
+                {(orgCampaigns as any[]).map((c) => (
                   <Link
                     key={c.id}
                     href={`/admin/organisasi/${orgType.toLowerCase()}/recruitment/${c.id}`}
@@ -83,6 +83,7 @@ export default async function AdminRecruitmentOverview() {
                       <div className="text-sm text-gray-500 space-y-1">
                         <p>Masa Bakti: <span className="font-medium text-gray-700">{c.organisasi.period.period}</span></p>
                         <p>Pendaftar: <span className="font-bold text-black">{c._count.applicants}</span></p>
+                        <p>Tahapan: <span className="font-bold text-black">{c._count.steps}</span></p>
                         {c.close_date && (
                           <p>Tutup: {new Date(c.close_date).toLocaleDateString("id-ID", { dateStyle: "medium" })}</p>
                         )}

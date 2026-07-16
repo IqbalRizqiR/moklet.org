@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { editCampaignDates } from "@/actions/recruitment";
+import { updateCampaign } from "@/actions/recruitment";
 
 interface Props {
   campaignId: string;
@@ -26,7 +26,7 @@ export default function EditCampaignTime({ campaignId, currentOpenDate, currentC
   const handleSave = async () => {
     setLoading(true);
     try {
-      await editCampaignDates(campaignId, openDate || undefined, closeDate || undefined);
+      await updateCampaign(campaignId, { open_date: openDate || undefined, close_date: closeDate || undefined });
       setIsEditing(false);
     } catch (error) {
       console.error(error);

@@ -10,15 +10,7 @@ const prismaClientSingleton = () => {
 };
 
 declare global {
-  var globalPrisma: any;
-}
-
-// Stale client check logic
-if (process.env.NODE_ENV !== "production") {
-  if (global.globalPrisma && !global.globalPrisma.$transaction) {
-    console.log("[Prisma] Stale client detected. Re-instantiating...");
-    global.globalPrisma = undefined;
-  }
+  var globalPrisma: ReturnType<typeof prismaClientSingleton> | undefined;
 }
 
 const prisma = global.globalPrisma ?? prismaClientSingleton();

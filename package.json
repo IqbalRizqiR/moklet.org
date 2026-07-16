@@ -12,7 +12,8 @@
     "prepare": "husky install",
     "prisma": "dotenv -e .env.local prisma migrate dev",
     "prisma:push": "dotenv -e .env.local prisma db push",
-    "prisma:studio": "dotenv -e .env.local prisma studio"
+    "prisma:studio": "dotenv -e .env.local prisma studio",
+    "seed:2025": "dotenv -e .env -- npx tsx prisma/seed_2025_2026.ts"
   },
   "engines": {
     "node": ">=18.18.0"

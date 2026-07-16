@@ -247,20 +247,26 @@ async function getMonthlyTrends(
     };
   });
 
-  for (const element of monthlyData) {
-    const { monthStart, monthEnd } = element;
+  const globalStart = monthlyData[0]?.monthStart ?? startDate;
+  const globalEnd = monthlyData[monthlyData.length - 1]?.monthEnd ?? endDate;
 
-    const count = await prisma.aspirasi.count({
-      where: {
-        ...whereClause,
-        created_at: {
-          gte: monthStart,
-          lte: monthEnd,
-        },
-      },
-    });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { created_at: _ignored, ...restWhere } = whereClause;
 
-    element.count = count;
+  const rows = await prisma.aspirasi.findMany({
+    where: {
+      ...restWhere,
+      created_at: { gte: globalStart, lte: globalEnd },
+    },
+    select: { created_at: true },
+  });
+
+  for (const row of rows) {
+    const d = new Date(row.created_at);
+    const idx = monthlyData.findIndex(
+      (m) => d >= m.monthStart && d <= m.monthEnd,
+    );
+    if (idx !== -1) monthlyData[idx].count++;
   }
 
   return monthlyData.map(({ month, count }) => ({ month, count }));

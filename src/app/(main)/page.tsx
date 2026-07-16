@@ -7,6 +7,7 @@ import EventBannerSlider from "./_components/parts/EventBannerSlider";
 import Header from "./_components/parts/Header";
 import News from "./_components/parts/News";
 import Opinions from "./_components/parts/Opinions";
+import OprecSection from "./_components/parts/OprecSection";
 import SubOrgan from "./_components/parts/SubOrgan";
 
 export default async function Home() {
@@ -16,6 +17,7 @@ export default async function Home() {
     <>
       <Header />
       <EventBannerSlider />
+      <OprecSection />
       <News latestPosts={latestPosts} />
       <About />
       <SubOrgan />

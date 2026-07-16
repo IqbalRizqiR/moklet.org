@@ -29,6 +29,7 @@ export default async function FormEdit({ params }: { params: Promise<{ id: strin
       updated_at: new Date(),
       user_id: user?.id || "",
       _count: { submissions: 0 },
+      sections: [],
     };
     form = formBlankTemplate;
   } else form = await findForm({ id });
