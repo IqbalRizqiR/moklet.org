@@ -67,29 +67,44 @@ export async function getOrCreateNextPeriodOrganisasi(organisasiStr: string) {
 export type SuccessLink = { label: string; url: string };
 
 export async function createCampaign(data: {
-  organisasi_id: string;
-  form_id: string;
+  organisasi_string: string;
   title: string;
   description?: string;
   open_date?: string;
   close_date?: string;
-  default_role_id?: string;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  await requireRecruitmentAccessByOrgId(session.user.id, data.organisasi_id);
+  await requireRecruitmentAccess(session.user.id, data.organisasi_string);
+
+  const { organisasi } = await getOrCreateNextPeriodOrganisasi(
+    data.organisasi_string,
+  );
+
+  const formId = generateRandomSlug();
+  await prisma.form.create({
+    data: {
+      id: formId,
+      user_id: session.user.id,
+      title: `Form: ${data.title}`,
+      is_open: false,
+    },
+  });
 
   const campaign = await prisma.recruitment_Campaign.create({
     data: {
-      ...data,
+      organisasi_id: organisasi.id,
+      form_id: formId,
+      title: data.title,
+      description: data.description || null,
       open_date: parseDateWIB(data.open_date),
       close_date: parseDateWIB(data.close_date),
       is_active: false,
     },
   });
 
-  revalidatePath(`/admin/organisasi/${data.organisasi_id}/recruitment`);
+  revalidatePath(`/admin/organisasi/${data.organisasi_string}/recruitment`);
   return campaign;
 }
 
