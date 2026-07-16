@@ -16,6 +16,7 @@ export default function AddStepForm({ campaignId }: { campaignId: string }) {
   const [type, setType] = useState<"ANNOUNCEMENT" | "FORM">("ANNOUNCEMENT");
   const [questions, setQuestions] = useState<FieldsWithOptions[]>([]);
   const [successLinks, setSuccessLinks] = useState<{ label: string; url: string }[]>([]);
+  const [sections, setSections] = useState<{ id: number; title: string; order: number }[]>([]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,11 +42,13 @@ export default function AddStepForm({ campaignId }: { campaignId: string }) {
           questions: type === "FORM" ? questions : undefined,
           success_message: formData.get("success_message") as string,
           success_links: successLinks,
+          sections: sections.length > 0 ? sections.map((s) => ({ tempId: s.id, title: s.title, order: s.order })) : undefined,
         },
       );
       toast.success("Tahapan berhasil ditambahkan!");
       setQuestions([]);
       setSuccessLinks([]);
+      setSections([]);
       setType("ANNOUNCEMENT");
       (e.target as HTMLFormElement).reset();
       router.refresh();
@@ -147,7 +150,13 @@ export default function AddStepForm({ campaignId }: { campaignId: string }) {
               type="datetime-local"
             />
             <div className="border-t pt-4">
-              <QuestionEdit fields={questions} setFields={setQuestions} formId="new-step" />
+              <QuestionEdit
+                fields={questions}
+                setFields={setQuestions}
+                formId="new-step"
+                sections={sections}
+                setSections={setSections}
+              />
             </div>
           </>
         )}

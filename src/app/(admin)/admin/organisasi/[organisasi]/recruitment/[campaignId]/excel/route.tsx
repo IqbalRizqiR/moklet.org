@@ -45,7 +45,7 @@ export async function GET(
 
   // Build header row
   const staticHeaders = ["Nama", "Email", "Status Akhir"];
-  const questionHeaders = campaign.form.fields.map((f: { label: string }) => f.label);
+  const questionHeaders = campaign.form?.fields?.map((f: { label: string }) => f.label) || [];
   const stepHeaders = campaign.steps.map((s: { name: string }) => `Tahap: ${s.name}`);
 
   const headerRow = [...staticHeaders, ...questionHeaders, ...stepHeaders].map(
@@ -70,7 +70,7 @@ export async function GET(
       { type: String, value: app.status },
     ];
 
-    const questionCells = campaign.form.fields.map((field: { id: number }) => {
+    const questionCells = (campaign.form?.fields || []).map((field: { id: number }) => {
       const found = answers.find((a) => a.field_id === field.id);
       let value = "";
       if (found) {

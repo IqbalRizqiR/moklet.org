@@ -40,7 +40,7 @@ export async function registerApplicant(
   if (!submission) throw new Error("Submission tidak ditemukan.");
   if (submission.user_id !== session.user.id)
     throw new Error("Submission bukan milik Anda.");
-  if (submission.form_id !== campaign.form_id)
+  if (campaign.form_id && submission.form_id !== campaign.form_id)
     throw new Error("Submission tidak sesuai dengan campaign ini.");
 
   try {

@@ -128,7 +128,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
               </p>
               <CampaignDetailClient
                 campaignId={campaign.id}
-                formId={campaign.form_id}
+                formId={campaign.form_id || ""}
                 userId={session.user.id}
                 registrationSuccessMessage={
                   campaign.registration_success_message

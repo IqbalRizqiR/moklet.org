@@ -9,7 +9,7 @@ interface Campaign {
   id: string;
   title: string;
   description: string | null;
-  form_id: string;
+  form_id?: string | null;
 }
 
 interface Props {
@@ -89,7 +89,7 @@ export default function RecruitmentBanner({ campaigns, orgName, applicantStatus,
 
         <div className="relative z-10 shrink-0 w-full md:w-auto">
           {!applicantStatus ? (
-            <Link href={`/form/${campaign.form_id}`}>
+            <Link href={campaign.form_id ? `/form/${campaign.form_id}` : `/recruitment/${campaign.id}`}>
               <Button variant="secondary" className="w-full md:w-auto text-lg font-bold px-10 py-4 shadow-xl hover:scale-105 transition-transform">
                 Daftar Sekarang
               </Button>

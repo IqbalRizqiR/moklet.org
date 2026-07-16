@@ -19,7 +19,7 @@ export default async function AdminRecruitmentOverview() {
   const isSuperView = role === "SuperAdmin" || role === "Admin";
 
   // Group campaigns by org type
-  const grouped = campaigns.reduce((acc: Record<string, typeof campaigns>, c: any) => {
+  const grouped = campaigns.reduce((acc: Record<string, any[]>, c: any) => {
     const key = c.organisasi?.organisasi || c.organisasi_id;
     if (!acc[key]) acc[key] = [];
     acc[key].push(c);
@@ -61,7 +61,7 @@ export default async function AdminRecruitmentOverview() {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          {Object.entries(grouped).map(([orgType, orgCampaigns]: [string, typeof campaigns]) => (
+          {Object.entries(grouped).map(([orgType, orgCampaigns]) => (
             <div key={orgType}>
               <h3 className="font-bold text-lg text-gray-700 mb-3 flex items-center gap-2">
                 {orgType}

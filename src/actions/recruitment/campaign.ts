@@ -82,20 +82,9 @@ export async function createCampaign(data: {
     data.organisasi_string,
   );
 
-  const formId = generateRandomSlug();
-  await prisma.form.create({
-    data: {
-      id: formId,
-      user_id: session.user.id,
-      title: `Form: ${data.title}`,
-      is_open: false,
-    },
-  });
-
   const campaign = await prisma.recruitment_Campaign.create({
     data: {
       organisasi_id: organisasi.id,
-      form_id: formId,
       title: data.title,
       description: data.description || null,
       open_date: parseDateWIB(data.open_date),

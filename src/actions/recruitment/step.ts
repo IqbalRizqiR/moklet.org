@@ -20,6 +20,7 @@ export async function addStep(
     questions?: FieldsWithOptions[];
     success_message?: string;
     success_links?: SuccessLink[];
+    sections?: { tempId: number; title: string; order: number }[];
   },
 ) {
   const session = await auth();
@@ -63,11 +64,23 @@ export async function addStep(
       },
     });
 
+    const sectionIdMap = new Map<number, number>();
+    if (options.sections && options.sections.length > 0) {
+      for (let i = 0; i < options.sections.length; i++) {
+        const s = options.sections[i];
+        const created = await prisma.field_Section.create({
+          data: { form_id: stepForm.id, title: s.title, order: s.order },
+        });
+        sectionIdMap.set(s.tempId, created.id);
+      }
+    }
+
     await Promise.all(
       options.questions.map(async (field, index) => {
-        const fieldOptions = field.options.map((option) => ({
-          value: option.value,
-        }));
+        const fieldOptions = field.options.map((option) => ({ value: option.value }));
+        const resolvedSectionId = field.section_id != null
+          ? (sectionIdMap.get(field.section_id) ?? null)
+          : null;
         await prisma.field.create({
           data: {
             label: field.label,
@@ -77,9 +90,9 @@ export async function addStep(
             form_id: stepForm.id,
             accept_types:
               field.type === "file"
-                ? (field.accept_types ??
-                  "image/*,application/pdf,.doc,.docx")
+                ? (field.accept_types ?? "image/*,application/pdf,.doc,.docx")
                 : null,
+            section_id: resolvedSectionId,
             options: { createMany: { data: fieldOptions } },
           },
         });

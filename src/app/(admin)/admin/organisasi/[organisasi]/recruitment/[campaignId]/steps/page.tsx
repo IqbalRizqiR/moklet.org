@@ -52,6 +52,8 @@ export default async function CampaignStepsDashboard({ params }: { params: Promi
                   announcementDate={step.announcement_date}
                   type={step.type}
                   description={step.description}
+                  successMessage={step.success_message}
+                  successLinks={step.success_links as Array<{ label: string; url: string }> | null}
                 />
               ))}
             </ul>

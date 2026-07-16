@@ -489,7 +489,7 @@ enum TwibbonType {
 model Recruitment_Campaign {
   id                           String    @id @default(uuid()) @db.Char(36)
   organisasi_id                String    @db.Char(36)
-  form_id                      String
+  form_id                      String?
   default_role_id              String?   @db.Char(36)
   title                        String
   description                  String?   @db.Text
@@ -500,7 +500,7 @@ model Recruitment_Campaign {
   registration_success_links   Json?
 
   organisasi Organisasi              @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
-  form       Form                    @relation(fields: [form_id], references: [id])
+  form       Form?                   @relation(fields: [form_id], references: [id])
   steps      Recruitment_Step[]
   applicants Recruitment_Applicant[]
 }
