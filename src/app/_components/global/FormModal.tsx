@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import type { Submission_Field } from "@prisma/client";
 import { findFormById } from "@/actions/formAspirasi";
 import Form from "@/app/(form)/form/_components/Form";
 import { FormWithFields } from "@/types/entityRelations";
@@ -12,9 +13,11 @@ interface FormModalProps {
   formId: string;
   userId: string;
   onSuccess: (submissionId: string) => void;
+  answers?: Submission_Field[];
+  submission_id?: string;
 }
 
-export function FormModal({ isOpen, onClose, formId, userId, onSuccess }: FormModalProps) {
+export function FormModal({ isOpen, onClose, formId, userId, onSuccess, answers, submission_id }: FormModalProps) {
   const [form, setForm] = useState<FormWithFields | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -58,6 +61,8 @@ export function FormModal({ isOpen, onClose, formId, userId, onSuccess }: FormMo
             <Form 
               form={form} 
               formId={formId} 
+              answers={answers}
+              submission_id={submission_id}
               onSuccess={(subId) => {
                 onSuccess(subId);
               }} 

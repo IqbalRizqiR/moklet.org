@@ -27,6 +27,12 @@ export async function registerApplicant(campaignId: string) {
   if (campaign.close_date && campaign.close_date < now)
     throw new Error("Pendaftaran sudah ditutup.");
 
+  const userExists = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  });
+  if (!userExists) throw new Error("Akun Anda tidak ditemukan.");
+
   try {
     const applicant = await prisma.recruitment_Applicant.create({
       data: {
@@ -41,6 +47,12 @@ export async function registerApplicant(campaignId: string) {
       err.code === "P2002"
     ) {
       throw new Error("Anda sudah mendaftar pada campaign ini.");
+    }
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2003"
+    ) {
+      throw new Error("Terjadi kesalahan referensi data. Silakan coba lagi.");
     }
     throw err;
   }

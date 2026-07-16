@@ -29,6 +29,7 @@ interface StepCardProps {
   applicantId?: string;
   userId?: string;
   hasSubmission?: boolean;
+  submissionId?: string | null;
 }
 
 export default function StepCard({
@@ -38,6 +39,7 @@ export default function StepCard({
   applicantId,
   userId,
   hasSubmission,
+  submissionId,
 }: StepCardProps) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -196,6 +198,8 @@ export default function StepCard({
               formId={step.form_id}
               applicantId={applicantId}
               userId={userId}
+              hasSubmission={hasSubmission}
+              submissionId={submissionId}
             />
           )}
         </div>

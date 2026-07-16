@@ -122,3 +122,8 @@ export const submitForm = async (
     return { success: false, message: "Internal Server Error" };
   }
 };
+
+export const getSubmissionFields = async (submission_id: string) => {
+  const submission = await findSubmission({ id: submission_id });
+  return submission?.fields || null;
+};

@@ -191,6 +191,10 @@ export default function StatusTimeline({
                   !!applicantStepStatuses.find((s) => s.step_id === step.id)
                     ?.submission_id
                 }
+                submissionId={
+                  applicantStepStatuses.find((s) => s.step_id === step.id)
+                    ?.submission_id
+                }
               />
             </div>
           </div>
