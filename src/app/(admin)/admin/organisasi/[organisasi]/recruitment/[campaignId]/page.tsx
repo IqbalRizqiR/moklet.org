@@ -9,7 +9,6 @@ import CampaignRealtimeListener from "@/app/_components/global/CampaignRealtimeL
 import { toggleCampaign } from "@/actions/recruitment";
 import EditCampaignTime from "./_components/EditCampaignTime";
 import EditCampaignDetails from "./_components/EditCampaignDetails";
-import EditCampaignSuccessConfig from "./_components/EditCampaignSuccessConfig";
 import ApplicantTable from "./_components/ApplicantTable";
 
 type PageProps = {
@@ -83,12 +82,6 @@ export default async function CampaignDashboard({ params }: PageProps) {
           </div>
         </div>
       </div>
-
-      <EditCampaignSuccessConfig
-        campaignId={campaignId}
-        currentMessage={campaign.registration_success_message}
-        currentLinks={campaign.registration_success_links as Array<{ label: string; url: string }> | null}
-      />
 
       <ApplicantTable
         applicants={applicantsData}

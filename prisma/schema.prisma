@@ -81,8 +81,7 @@ model Form {
   sections              Field_Section[]
   user                  User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   submissions           Submission[]
-  recruitment_campaigns Recruitment_Campaign[]
-  recruitment_steps     Recruitment_Step[]
+  recruitment_steps Recruitment_Step[]
 }
 
 model Field_Section {
@@ -487,20 +486,16 @@ enum TwibbonType {
 }
 
 model Recruitment_Campaign {
-  id                           String    @id @default(uuid()) @db.Char(36)
-  organisasi_id                String    @db.Char(36)
-  form_id                      String?
-  default_role_id              String?   @db.Char(36)
-  title                        String
-  description                  String?   @db.Text
-  is_active                    Boolean   @default(false)
-  open_date                    DateTime?
-  close_date                   DateTime?
-  registration_success_message String?   @db.Text
-  registration_success_links   Json?
+  id              String    @id @default(uuid()) @db.Char(36)
+  organisasi_id   String    @db.Char(36)
+  default_role_id String?   @db.Char(36)
+  title           String
+  description     String?   @db.Text
+  is_active       Boolean   @default(false)
+  open_date       DateTime?
+  close_date      DateTime?
 
   organisasi Organisasi              @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
-  form       Form?                   @relation(fields: [form_id], references: [id])
   steps      Recruitment_Step[]
   applicants Recruitment_Applicant[]
 }
@@ -538,12 +533,12 @@ model Recruitment_Applicant {
   id            String          @id @default(uuid()) @db.Char(36)
   campaign_id   String          @db.Char(36)
   user_id       String          @db.Char(36)
-  submission_id String          @unique
+  submission_id String?         @unique
   status        ApplicantStatus @default(PENDING)
 
   campaign      Recruitment_Campaign    @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   user          User                    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  submission    Submission              @relation(fields: [submission_id], references: [id], onDelete: Cascade)
+  submission    Submission?             @relation(fields: [submission_id], references: [id], onDelete: SetNull)
   step_statuses Applicant_Step_Status[]
 
   @@unique([campaign_id, user_id])

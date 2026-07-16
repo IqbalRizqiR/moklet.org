@@ -6,10 +6,7 @@ import { revalidatePath } from "next/cache";
 import { ApplicantStatus, StepStatus, Prisma } from "@prisma/client";
 import { requireRecruitmentAccess } from "./shared";
 
-export async function registerApplicant(
-  campaignId: string,
-  submissionId: string,
-) {
+export async function registerApplicant(campaignId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -20,9 +17,6 @@ export async function registerApplicant(
       is_active: true,
       open_date: true,
       close_date: true,
-      form_id: true,
-      registration_success_message: true,
-      registration_success_links: true,
     },
   });
   if (!campaign) throw new Error("Campaign tidak ditemukan.");
@@ -33,29 +27,14 @@ export async function registerApplicant(
   if (campaign.close_date && campaign.close_date < now)
     throw new Error("Pendaftaran sudah ditutup.");
 
-  const submission = await prisma.submission.findUnique({
-    where: { id: submissionId },
-    select: { id: true, user_id: true, form_id: true },
-  });
-  if (!submission) throw new Error("Submission tidak ditemukan.");
-  if (submission.user_id !== session.user.id)
-    throw new Error("Submission bukan milik Anda.");
-  if (campaign.form_id && submission.form_id !== campaign.form_id)
-    throw new Error("Submission tidak sesuai dengan campaign ini.");
-
   try {
     const applicant = await prisma.recruitment_Applicant.create({
       data: {
         campaign_id: campaignId,
         user_id: session.user.id,
-        submission_id: submissionId,
       },
     });
-    return {
-      applicant,
-      registration_success_message: campaign.registration_success_message,
-      registration_success_links: campaign.registration_success_links as Array<{ label: string; url: string }> | null,
-    };
+    return { applicant };
   } catch (err: unknown) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&

@@ -1,11 +1,10 @@
 export {
   getOrCreateNextPeriodOrganisasi,
   createCampaign,
-  createCampaignWithForm,
   toggleCampaign,
   updateCampaign,
 } from "./recruitment/campaign";
-export type { SuccessLink } from "./recruitment/campaign";
+export type { SuccessLink } from "./recruitment/step";
 
 export {
   addStep,

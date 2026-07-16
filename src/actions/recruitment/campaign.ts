@@ -3,9 +3,7 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { Organisasi_Type, Prisma } from "@prisma/client";
-import generateRandomSlug from "@/utils/randomSlug";
-import type { FieldsWithOptions } from "@/types/entityRelations";
+import { Organisasi_Type } from "@prisma/client";
 import {
   findLatestPeriod,
   findPeriod,
@@ -15,7 +13,7 @@ import {
   findOrganisasi,
   createOrganisasi,
 } from "@/utils/database/organisasi.query";
-import { parseDateWIB, requireRecruitmentAccess, requireRecruitmentAccessByOrgId } from "./shared";
+import { parseDateWIB, requireRecruitmentAccess } from "./shared";
 
 export async function getOrCreateNextPeriodOrganisasi(organisasiStr: string) {
   const organisasiType = organisasiStr.toUpperCase() as Organisasi_Type;
@@ -64,8 +62,6 @@ export async function getOrCreateNextPeriodOrganisasi(organisasiStr: string) {
   return { organisasi: nextOrganisasi, period: nextPeriod };
 }
 
-export type SuccessLink = { label: string; url: string };
-
 export async function createCampaign(data: {
   organisasi_string: string;
   title: string;
@@ -94,90 +90,6 @@ export async function createCampaign(data: {
   });
 
   revalidatePath(`/admin/organisasi/${data.organisasi_string}/recruitment`);
-  return campaign;
-}
-
-export async function createCampaignWithForm(data: {
-  organisasi_string: string;
-  title: string;
-  description?: string;
-  open_date?: string;
-  close_date?: string;
-  default_role_id?: string;
-  questions: FieldsWithOptions[];
-  registration_success_message?: string;
-  registration_success_links?: SuccessLink[];
-}) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
-
-  await requireRecruitmentAccess(session.user.id, data.organisasi_string);
-
-  const { organisasi } = await getOrCreateNextPeriodOrganisasi(
-    data.organisasi_string,
-  );
-  const organisasi_id = organisasi.id;
-
-  const formId = generateRandomSlug();
-  const createdForm = await prisma.form.create({
-    data: {
-      id: formId,
-      user_id: session.user.id,
-      title: `Form: ${data.title}`,
-      description: data.description || "",
-      is_open: true,
-      allow_edit: false,
-      submit_once: true,
-      open_at: parseDateWIB(data.open_date),
-      close_at: parseDateWIB(data.close_date),
-    },
-  });
-
-  await Promise.all(
-    data.questions.map(async (field, index) => {
-      const fieldOptions = field.options.map((option) => {
-        return { value: option.value };
-      });
-
-      const newField = {
-        label: field.label,
-        type: field.type,
-        required: field.required,
-        fieldNumber: index + 1,
-        form_id: createdForm.id,
-        accept_types:
-          field.type === "file"
-            ? (field.accept_types ?? "image/*,application/pdf,.doc,.docx")
-            : null,
-      };
-
-      await prisma.field.create({
-        data: {
-          ...newField,
-          options: { createMany: { data: fieldOptions } },
-        },
-      });
-    }),
-  );
-
-  const campaign = await prisma.recruitment_Campaign.create({
-    data: {
-      organisasi_id: organisasi_id,
-      form_id: formId,
-      title: data.title,
-      description: data.description,
-      open_date: parseDateWIB(data.open_date),
-      close_date: parseDateWIB(data.close_date),
-      default_role_id: data.default_role_id,
-      is_active: false,
-      registration_success_message: data.registration_success_message || null,
-      registration_success_links: (data.registration_success_links || null) as unknown as Prisma.InputJsonValue,
-    },
-  });
-
-  revalidatePath(
-    `/admin/organisasi/${data.organisasi_string}/recruitment`,
-  );
   return campaign;
 }
 
@@ -216,8 +128,6 @@ export async function updateCampaign(
     description?: string | null;
     open_date?: string;
     close_date?: string;
-    registration_success_message?: string | null;
-    registration_success_links?: SuccessLink[] | null;
   },
 ) {
   const session = await auth();
@@ -241,8 +151,6 @@ export async function updateCampaign(
       description: data.description !== undefined ? (data.description || null) : undefined,
       open_date: data.open_date !== undefined ? parseDateWIB(data.open_date) : undefined,
       close_date: data.close_date !== undefined ? parseDateWIB(data.close_date) : undefined,
-      registration_success_message: data.registration_success_message !== undefined ? data.registration_success_message : undefined,
-      registration_success_links: data.registration_success_links !== undefined ? data.registration_success_links as unknown as Prisma.InputJsonValue : undefined,
     },
   });
 

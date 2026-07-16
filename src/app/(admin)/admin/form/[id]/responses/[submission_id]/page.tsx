@@ -27,10 +27,11 @@ export default async function SubmissionDetail({
 
   if (!form || !submission) return notFound();
 
-  const campaign = await prisma.recruitment_Campaign.findFirst({
+  const step = await prisma.recruitment_Step.findFirst({
     where: { form_id: id },
-    include: { organisasi: true }
+    include: { campaign: { include: { organisasi: true } } }
   });
+  const campaign = step?.campaign;
 
   return (
     <div className="block">

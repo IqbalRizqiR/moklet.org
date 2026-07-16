@@ -7,7 +7,8 @@ import { Prisma } from "@prisma/client";
 import generateRandomSlug from "@/utils/randomSlug";
 import { FieldsWithOptions } from "@/types/entityRelations";
 import { parseDateWIB, requireRecruitmentAccess } from "./shared";
-import type { SuccessLink } from "./campaign";
+
+export type SuccessLink = { label: string; url: string };
 
 export async function addStep(
   campaignId: string,

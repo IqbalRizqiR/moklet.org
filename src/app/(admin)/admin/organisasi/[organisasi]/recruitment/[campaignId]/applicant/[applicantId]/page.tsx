@@ -5,10 +5,6 @@ import { redirect, notFound } from "next/navigation";
 import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2, H3, P } from "@/app/_components/global/Text";
-import { TextField, TextArea, RadioField, CheckboxField } from "@/app/_components/global/Input";
-
-import { Submission_Field } from "@prisma/client";
-import { transformToArrayCheckbox } from "@/utils/atomics";
 
 type PageProps = {
   params: Promise<{ organisasi: string, campaignId: string, applicantId: string }>;
@@ -29,7 +25,6 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
       campaign: {
         include: {
           steps: { orderBy: { order: 'asc' } },
-          form: { include: { fields: { include: { options: true } } } }
         }
       },
       step_statuses: true,
@@ -38,109 +33,24 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
 
   if (!applicant || applicant.campaign_id !== campaignId) return notFound();
 
-  const submission = await prisma.submission.findUnique({
-    where: { id: applicant.submission_id },
-    include: { fields: true }
-  });
-
-  if (!submission) return notFound();
-
-  const form = applicant.campaign.form;
-  const submissionFields = transformToArrayCheckbox((submission.fields as any[]) || []) as Submission_Field[];
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <Link href={`/admin/organisasi/${orgTypeString}/recruitment/${campaignId}`} className="text-gray-500 hover:text-black mb-4 inline-block">&larr; Kembali ke Dashboard Campaign</Link>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Form Answers */}
+        {/* Left Column: Applicant Info */}
         <div className="lg:col-span-2 bg-white rounded-xl border shadow-sm">
           <div className="p-6 border-b">
-            <H2>Jawaban Pendaftar: {applicant.user.name}</H2>
-            <P className="text-gray-500">Email: {applicant.user.email}</P>
-          </div>
-          <div className="p-6">
-            {form?.fields && form.fields.map((field: any) => (
-              <div key={field.id}>
-                {["email", "text", "password", "number"].includes(field.type) && (
-                  <TextField
-                    type={field.type as string}
-                    label={field.label}
-                    name={field.id.toString()}
-                    className="mb-6 w-full"
-                    required={field.required}
-                    value={submissionFields.find((item) => item.field_id == field.id)?.value}
-                    disabled
-                  />
-                )}
-                {field.type === "longtext" && (
-                  <TextArea
-                    label={field.label}
-                    name={field.id.toString()}
-                    className="mb-6 w-full"
-                    required={field.required}
-                    value={submissionFields.find((item) => item.field_id == field.id)?.value}
-                    disabled
-                  />
-                )}
-                {field.type === "radio" && (
-                  <RadioField
-                    label={field.label}
-                    name={field.id.toString()}
-                    options={field.options.map((item: any) => ({
-                      id: item.field_id + "_" + item.id,
-                      value: item.value,
-                    }))}
-                    className="mb-6 w-full"
-                    required={field.required}
-                    value={submissionFields.find((item) => item.field_id === field.id)?.value}
-                    disabled
-                  />
-                )}
-                {field.type === "checkbox" && (
-                  <CheckboxField
-                    label={field.label}
-                    name={field.id.toString()}
-                    options={field.options.map((item: any) => ({
-                      id: item.field_id + "_" + item.id,
-                      value: item.value,
-                    }))}
-                    className="mb-6 w-full"
-                    required={field.required}
-                    value={submissionFields.find((item) => item.field_id === field.id)?.value}
-                    disabled
-                  />
-                )}
-                {field.type === "file" && (() => {
-                  const fileUrl = submissionFields.find((item) => item.field_id == field.id)?.value;
-                  const isImg = fileUrl && /\.(png|jpe?g|webp|gif)$/i.test(fileUrl);
-                  return (
-                    <div className="mb-6 w-full">
-                      <label className="block mb-2 font-medium text-neutral-900">{field.label}</label>
-                      {fileUrl ? (
-                        <div className="flex items-center gap-4 rounded-lg border border-gray-200 p-3">
-                          {isImg ? (
-                            <img src={fileUrl} alt="jawaban" className="h-20 w-20 rounded object-cover" />
-                          ) : (
-                            <div className="flex h-16 w-16 items-center justify-center rounded bg-primary-50 text-primary-500">
-                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </div>
-                          )}
-                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline text-sm font-medium">
-                            Buka / Unduh File
-                          </a>
-                        </div>
-                      ) : (
-                        <P className="text-sm text-gray-400 italic">Tidak ada file diunggah.</P>
-                      )}
-                    </div>
-                  );
-                })()}
+            <H2>Informasi Pendaftar</H2>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-3">
+                <img src={applicant.user.user_pic} alt="" className="w-12 h-12 rounded-full object-cover" />
+                <div>
+                  <P className="font-semibold">{applicant.user.name}</P>
+                  <P className="text-gray-500 text-sm">Email: {applicant.user.email}</P>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
