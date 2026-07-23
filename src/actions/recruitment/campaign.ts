@@ -17,8 +17,10 @@ import {
   requireDateWIB,
   parseDateWIB,
   requireRecruitmentAccess,
-  syncCampaignActiveStates,
 } from "./shared";
+import { syncCampaignActiveStates } from "@/utils/database/recruitment.query";
+
+
 
 export async function getOrCreateNextPeriodOrganisasi(organisasiStr: string) {
   const organisasiType = organisasiStr.toUpperCase() as Organisasi_Type;

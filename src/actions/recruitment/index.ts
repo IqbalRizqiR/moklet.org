@@ -1,3 +1,5 @@
+"use server";
+
 export {
   getOrCreateNextPeriodOrganisasi,
   createCampaign,
@@ -18,5 +20,3 @@ export {
   passApplicantStep,
   finalizeApplicant,
 } from "./applicant";
-
-export { parseDateWIB } from "./shared";
