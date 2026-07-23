@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2, H3, P } from "@/app/_components/global/Text";
+import ApplicantStepCard from "./ApplicantStepCard";
 
 type PageProps = {
   params: Promise<{ organisasi: string, campaignId: string, applicantId: string }>;
@@ -26,7 +27,22 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
           steps: { orderBy: { order: 'asc' } },
         }
       },
-      step_statuses: true,
+      step_statuses: {
+        include: {
+          submission: {
+            include: {
+              fields: {
+                include: { field: true },
+              },
+              form: {
+                include: {
+                  fields: { include: { options: true } },
+                },
+              },
+            },
+          },
+        },
+      },
     }
   });
 
@@ -37,7 +53,6 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
       <Link href={`/admin/organisasi/${orgTypeString}/recruitment/${campaignId}`} className="text-gray-500 hover:text-black mb-4 inline-block">&larr; Kembali ke Dashboard Campaign</Link>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Applicant Info */}
         <div className="lg:col-span-2 bg-white rounded-xl border shadow-sm">
           <div className="p-6 border-b">
             <H2>Informasi Pendaftar</H2>
@@ -53,50 +68,29 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Right Column: Step Status & Final Decision */}
         <div className="flex flex-col gap-6">
-          
-          {/* Steps Progress */}
           {applicant.campaign.steps.length > 0 && (
             <div className="bg-white p-6 rounded-xl border shadow-sm">
               <H3 className="mb-4">Evaluasi Tahapan</H3>
               <div className="flex flex-col gap-4">
                 {applicant.campaign.steps.map((step: any) => {
-                  const stepStatus = applicant.step_statuses.find((s: any) => s.step_id === step.id)?.status || "PENDING";
+                  const stepStatus = applicant.step_statuses.find((s: any) => s.step_id === step.id);
+                  const statusText = stepStatus?.status || "PENDING";
+                  const submission = stepStatus?.submission;
                   return (
-                    <div key={step.id} className="p-4 border rounded-lg bg-gray-50">
-                      <div className="font-semibold mb-2">{step.name}</div>
-                      <div className="flex gap-2">
-                        <form action={async () => {
-                          "use server";
-                          const { passApplicantStep } = await import("@/actions/recruitment");
-                          await passApplicantStep(applicant.id, step.id, "PASSED");
-                        }}>
-                          <button type="submit" disabled={stepStatus === "PASSED"} className={`px-3 py-1 rounded text-sm font-medium ${stepStatus === "PASSED" ? 'bg-green-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Lulus</button>
-                        </form>
-                        <form action={async () => {
-                          "use server";
-                          const { passApplicantStep } = await import("@/actions/recruitment");
-                          await passApplicantStep(applicant.id, step.id, "FAILED");
-                        }}>
-                          <button type="submit" disabled={stepStatus === "FAILED"} className={`px-3 py-1 rounded text-sm font-medium ${stepStatus === "FAILED" ? 'bg-red-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Gagal</button>
-                        </form>
-                        <form action={async () => {
-                          "use server";
-                          const { passApplicantStep } = await import("@/actions/recruitment");
-                          await passApplicantStep(applicant.id, step.id, "PENDING");
-                        }}>
-                          <button type="submit" disabled={stepStatus === "PENDING"} className={`px-3 py-1 rounded text-sm font-medium ${stepStatus === "PENDING" ? 'bg-yellow-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Pending</button>
-                        </form>
-                      </div>
-                    </div>
+                    <ApplicantStepCard
+                      key={step.id}
+                      applicantId={applicant.id}
+                      step={step}
+                      statusText={statusText}
+                      submission={submission}
+                    />
                   );
                 })}
               </div>
             </div>
           )}
 
-          {/* Final Decision */}
           <div className="bg-white p-6 rounded-xl border shadow-sm border-blue-200">
             <H3 className="mb-2">Keputusan Akhir</H3>
             <P className="text-sm text-gray-600 mb-4">Ubah status akhir pendaftar. Jika diluluskan, sistem akan otomatis mendaftarkan user ke dalam Organisasi periode ini.</P>
@@ -138,7 +132,6 @@ export default async function ApplicantReviewPage({ params }: PageProps) {
               </form>
             )}
           </div>
-
         </div>
       </div>
     </div>

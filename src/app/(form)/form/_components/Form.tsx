@@ -25,6 +25,87 @@ interface FormProps {
   onSuccess?: (submission_id: string) => void;
 }
 
+function renderField(
+  field: FormWithFields["fields"][number],
+  answers?: Submission_Field[],
+) {
+  const value = answers?.find((item) => item.field_id == field.id)?.value;
+
+  if (["email", "text", "password", "number"].includes(field.type)) {
+    return (
+      <TextField
+        key={field.id}
+        type={field.type}
+        label={field.label}
+        name={field.id.toString()}
+        placeholder="Jawaban Anda"
+        className="mb-6 w-full"
+        required={field.required}
+        value={value}
+      />
+    );
+  }
+  if (field.type === "longtext") {
+    return (
+      <TextArea
+        key={field.id}
+        label={field.label}
+        name={field.id.toString()}
+        placeholder="Jawaban Anda"
+        className="mb-6 w-full"
+        required={field.required}
+        value={value}
+      />
+    );
+  }
+  if (field.type === "radio") {
+    return (
+      <RadioField
+        key={field.id}
+        label={field.label}
+        name={field.id.toString()}
+        options={field.options.map((item) => ({
+          id: item.field_id + "_" + item.id,
+          value: item.value,
+        }))}
+        className="mb-6 w-full"
+        required={field.required}
+        value={value}
+      />
+    );
+  }
+  if (field.type === "checkbox") {
+    return (
+      <CheckboxField
+        key={field.id}
+        label={field.label}
+        name={field.id.toString()}
+        options={field.options.map((item) => ({
+          id: item.field_id + "_" + item.id,
+          value: item.value,
+        }))}
+        className="mb-6 w-full"
+        required={field.required}
+        value={value}
+      />
+    );
+  }
+  if (field.type === "file") {
+    return (
+      <FileField
+        key={field.id}
+        label={field.label}
+        name={field.id.toString()}
+        className="mb-6 w-full"
+        required={field.required}
+        acceptTypes={(field as unknown as { accept_types?: string | null }).accept_types}
+        value={value}
+      />
+    );
+  }
+  return null;
+}
+
 export default function Form({
   form,
   formId,
@@ -32,12 +113,12 @@ export default function Form({
   submission_id,
   onSuccess,
 }: FormProps) {
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const form = document.querySelector("#formApp");
-    const checkboxes = form?.querySelectorAll(
+    const formEl = document.querySelector("#formApp");
+    const checkboxes = formEl?.querySelectorAll(
       "input[type=checkbox][data-required=true]",
     );
     const checkboxLength = checkboxes?.length ?? 0;
@@ -48,17 +129,14 @@ export default function Form({
         for (let i = 0; i < checkboxLength; i++) {
           checkboxes?.[i].addEventListener("change", checkValidity);
         }
-
         checkValidity();
       }
     }
 
     function isChecked() {
       for (let i = 0; i < checkboxLength; i++) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((checkboxes?.[i] as any).checked) return true;
+        if ((checkboxes?.[i] as HTMLInputElement).checked) return true;
       }
-
       return false;
     }
 
@@ -74,8 +152,8 @@ export default function Form({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const toastId = toast.loading("Loading...");
     setLoading(true);
+    const toastId = toast.loading("Loading...");
     try {
       const jsonForm = formToJSON(e.target as HTMLFormElement);
       const arrayAnswers = Object.entries(jsonForm).flatMap(([key, value]) => {
@@ -86,93 +164,47 @@ export default function Form({
 
       const submission = await submitForm(formId, arrayAnswers, submission_id);
       if (submission.success) {
-        toast.success("Jawaban terkirim!", {
-          id: toastId,
-        });
+        toast.success("Jawaban terkirim!", { id: toastId });
         if (onSuccess) {
           onSuccess(submission.submission_id!);
         } else {
           router.push(`/form/${formId}/alreadysubmit`);
         }
       } else {
-        toast.error(submission.message, {
-          id: toastId,
-        });
-        setLoading(false);
+        toast.error(submission.message, { id: toastId });
       }
     } catch (e) {
+      toast.error((e as Error).message, { id: toastId });
+    } finally {
       setLoading(false);
-      toast.error((e as Error).message, {
-        id: toastId,
-      });
     }
   }
 
+  const sections = form.sections?.length ? form.sections : null;
+  const hasSections = sections && sections.length > 0;
+  const uncategorized = form.fields?.filter((f) => !f.section_id) || [];
+
   return (
     <form className="block mx-auto p-6" onSubmit={handleSubmit} id="formApp">
-      {form.fields?.map((field) => (
-        <div key={field.id}>
-          {["email", "text", "password", "number"].includes(field.type) && (
-            <TextField
-              type={field.type as string}
-              label={field.label}
-              name={field.id.toString()}
-              placeholder={"Jawaban Anda"}
-              className="mb-6 w-full"
-              required={field.required}
-              value={answers?.find((item) => item.field_id == field.id)?.value}
-            />
-          )}
-          {field.type === "longtext" && (
-            <TextArea
-              label={field.label}
-              name={field.id.toString()}
-              placeholder={"Jawaban Anda"}
-              className="mb-6 w-full"
-              required={field.required}
-              value={answers?.find((item) => item.field_id == field.id)?.value}
-            />
-          )}
-          {field.type === "radio" && (
-            <RadioField
-              label={field.label}
-              name={field.id.toString()}
-              options={field.options.map((item) => ({
-                id: item.field_id + "_" + item.id,
-                value: item.value,
-              }))}
-              className="mb-6 w-full"
-              required={field.required}
-              value={answers?.find((item) => item.field_id === field.id)?.value}
-            />
-          )}
-          {field.type === "checkbox" && (
-            <CheckboxField
-              label={field.label}
-              name={field.id.toString()}
-              options={field.options.map((item) => ({
-                id: item.field_id + "_" + item.id,
-                value: item.value,
-              }))}
-              className="mb-6 w-full"
-              required={field.required}
-              value={answers?.find((item) => item.field_id == field.id)?.value}
-            />
-          )}
-          {field.type === "file" && (
-            <FileField
-              label={field.label}
-              name={field.id.toString()}
-              className="mb-6 w-full"
-              required={field.required}
-              acceptTypes={(field as unknown as { accept_types?: string | null }).accept_types}
-              value={answers?.find((item) => item.field_id == field.id)?.value}
-            />
-          )}
-        </div>
-      ))}
+      {hasSections
+        ? sections.map((section) => {
+            const sectionFields = form.fields?.filter(
+              (f) => f.section_id === section.id,
+            );
+            if (!sectionFields?.length) return null;
+            return (
+              <div key={section.id} className="mb-10">
+                <h3 className="mb-4 text-xl font-bold text-black">
+                  {section.title || `Bagian ${section.order}`}
+                </h3>
+                {sectionFields.map((field) => renderField(field, answers))}
+              </div>
+            );
+          })
+        : null}
+      {uncategorized.map((field) => renderField(field, answers))}
       <div className="flex justify-between">
-        <Button variant={"primary"} type="submit" isDisabled={loading}>
+        <Button variant="primary" type="submit" isDisabled={loading}>
           Kirim
         </Button>
         <button

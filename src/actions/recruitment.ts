@@ -6,6 +6,7 @@ export {
   createCampaign,
   toggleCampaign,
   updateCampaign,
+  deleteCampaign,
 } from "./recruitment/campaign";
 
 export {

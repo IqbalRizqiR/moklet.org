@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 import cn from "@/lib/clsx";
 
@@ -26,6 +27,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     function handleScroll() {
@@ -73,6 +75,14 @@ export default function Navbar() {
               {navOption.title}
             </Link>
           ))}
+          {session?.user && (
+            <button
+              onClick={() => signOut()}
+              className="rounded-full py-2 text-center text-sm text-neutral-400 hover:text-red-500 transition-all duration-300 shrink-0"
+            >
+              Keluar
+            </button>
+          )}
         </div>
         <button
           className="block xl:hidden"
@@ -99,6 +109,14 @@ export default function Navbar() {
               {navOption.title}
             </Link>
           ))}
+          {session?.user && (
+            <button
+              onClick={() => signOut()}
+              className="rounded-full text-center text-[16px] text-neutral-400 hover:text-red-500 transition-all duration-300"
+            >
+              Keluar
+            </button>
+          )}
         </div>
       </div>
     </nav>

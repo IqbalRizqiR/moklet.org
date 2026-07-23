@@ -18,6 +18,7 @@ interface Props {
   openDate: Date;
   announcementDate: Date;
   closeDate?: Date | null;
+  formId?: string | null;
   description?: string | null;
   passMessage?: string | null;
   passLinks?: LinkItem[] | null;
@@ -100,6 +101,7 @@ export default function EditStepItem({
   openDate,
   announcementDate,
   closeDate,
+  formId,
   description,
   passMessage,
   passLinks,
@@ -302,6 +304,16 @@ export default function EditStepItem({
         )}
       </div>
       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {type === "FORM" && formId && (
+          <a
+            href={`/admin/form/${formId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-700 text-xs font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+          >
+            Edit Form
+          </a>
+        )}
         <button onClick={() => setIsEditing(true)} className="text-primary-500 hover:text-primary-700 text-xs font-medium px-2 py-1 rounded hover:bg-primary-50 transition-colors">
           Edit
         </button>

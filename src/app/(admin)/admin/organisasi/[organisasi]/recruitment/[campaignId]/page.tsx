@@ -10,6 +10,7 @@ import { toggleCampaign } from "@/actions/recruitment";
 import EditCampaignTime from "./_components/EditCampaignTime";
 import EditCampaignDetails from "./_components/EditCampaignDetails";
 import ApplicantTable from "./_components/ApplicantTable";
+import DeleteCampaignButton from "./_components/DeleteCampaignButton";
 
 type PageProps = {
   params: Promise<{ organisasi: string, campaignId: string }>;
@@ -91,6 +92,7 @@ export default async function CampaignDashboard({ params }: PageProps) {
                 </button>
               </form>
             )}
+            <DeleteCampaignButton campaignId={campaignId} orgTypeString={orgTypeString} />
           </div>
         </div>
       </div>

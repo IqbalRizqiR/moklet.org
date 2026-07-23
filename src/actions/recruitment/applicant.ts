@@ -6,6 +6,102 @@ import { revalidatePath } from "next/cache";
 import { ApplicantStatus, StepStatus, Prisma } from "@prisma/client";
 import { requireRecruitmentAccess } from "./shared";
 
+async function autoFinalizeApplicant(
+  applicantId: string,
+  tx: Prisma.TransactionClient,
+) {
+  const applicant = await tx.recruitment_Applicant.findUnique({
+    where: { id: applicantId },
+    include: {
+      campaign: {
+        include: {
+          organisasi: true,
+          steps: { orderBy: { order: "asc" } },
+        },
+      },
+      step_statuses: true,
+    },
+  });
+  if (!applicant) return;
+
+  const steps = applicant.campaign.steps;
+  if (steps.length === 0) return;
+
+  const allPassed = steps.every((step: { id: string }) =>
+    applicant.step_statuses.some(
+      (ss: { step_id: string; status: string }) =>
+        ss.step_id === step.id && ss.status === "PASSED",
+    ),
+  );
+
+  const anyFailed = steps.some((step: { id: string }) =>
+    applicant.step_statuses.some(
+      (ss: { step_id: string; status: string }) =>
+        ss.step_id === step.id && ss.status === "FAILED",
+    ),
+  );
+
+  let newStatus: ApplicantStatus | null = null;
+  if (allPassed) newStatus = "ACCEPTED";
+  else if (anyFailed) newStatus = "REJECTED";
+
+  if (!newStatus || applicant.status === newStatus) return;
+
+  await tx.recruitment_Applicant.update({
+    where: { id: applicantId },
+    data: { status: newStatus },
+  });
+
+  if (newStatus === "ACCEPTED" && applicant.campaign.default_role_id) {
+    const isOsisOrMpk =
+      applicant.campaign.organisasi.organisasi === "OSIS" ||
+      applicant.campaign.organisasi.organisasi === "MPK";
+    const existingCount = await tx.org_Member.count({
+      where: { user_id: applicant.user_id },
+    });
+
+    let isMain = false;
+    if (isOsisOrMpk || existingCount === 0) {
+      isMain = true;
+      if (existingCount > 0) {
+        await tx.org_Member.updateMany({
+          where: { user_id: applicant.user_id },
+          data: { is_main: false },
+        });
+      }
+    }
+
+    await tx.org_Member.upsert({
+      where: {
+        user_id_organisasi_id: {
+          user_id: applicant.user_id,
+          organisasi_id: applicant.campaign.organisasi_id,
+        },
+      },
+      create: {
+        user_id: applicant.user_id,
+        organisasi_id: applicant.campaign.organisasi_id,
+        role_id: applicant.campaign.default_role_id,
+        is_main: isMain,
+        recruitment_campaign_id: applicant.campaign_id,
+      },
+      update: {
+        role_id: applicant.campaign.default_role_id,
+        is_main: isMain,
+        recruitment_campaign_id: applicant.campaign_id,
+      },
+    });
+  } else if (newStatus === "REJECTED") {
+    await tx.org_Member.deleteMany({
+      where: {
+        user_id: applicant.user_id,
+        organisasi_id: applicant.campaign.organisasi_id,
+        recruitment_campaign_id: applicant.campaign_id,
+      },
+    });
+  }
+}
+
 export async function registerApplicant(campaignId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -157,7 +253,15 @@ export async function passApplicantStep(
 
   const applicant = await prisma.recruitment_Applicant.findUnique({
     where: { id: applicantId },
-    include: { campaign: { include: { organisasi: true } } },
+    include: {
+      campaign: {
+        include: {
+          organisasi: true,
+          steps: { orderBy: { order: "asc" } },
+        },
+      },
+      step_statuses: true,
+    },
   });
   if (!applicant) throw new Error("Applicant tidak ditemukan.");
 
@@ -166,26 +270,53 @@ export async function passApplicantStep(
     applicant.campaign.organisasi.organisasi,
   );
 
-  await prisma.applicant_Step_Status.upsert({
-    where: {
-      applicant_id_step_id: {
+  const stepIndex = applicant.campaign.steps.findIndex(
+    (s: { id: string }) => s.id === stepId,
+  );
+  if (stepIndex === -1) throw new Error("Tahapan tidak ditemukan.");
+
+  if (stepIndex > 0) {
+    const prevStep = applicant.campaign.steps[stepIndex - 1];
+    const prevStatus = applicant.step_statuses.find(
+      (ss: { step_id: string }) => ss.step_id === prevStep.id,
+    );
+    if (!prevStatus || prevStatus.status === "PENDING") {
+      throw new Error(
+        "Selesaikan penilaian tahap sebelumnya terlebih dahulu.",
+      );
+    }
+    if (prevStatus.status === "FAILED") {
+      throw new Error(
+        "Pendaftar sudah gugur di tahap sebelumnya.",
+      );
+    }
+  }
+
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await tx.applicant_Step_Status.upsert({
+      where: {
+        applicant_id_step_id: {
+          applicant_id: applicantId,
+          step_id: stepId,
+        },
+      },
+      create: {
         applicant_id: applicantId,
         step_id: stepId,
+        status,
       },
-    },
-    create: {
-      applicant_id: applicantId,
-      step_id: stepId,
-      status,
-    },
-    update: {
-      status,
-    },
+      update: {
+        status,
+      },
+    });
+
+    await autoFinalizeApplicant(applicantId, tx);
   });
 
   revalidatePath(
     `/admin/organisasi/${applicant.campaign.organisasi.organisasi.toLowerCase()}/recruitment`,
   );
+  revalidatePath(`/recruitment/${applicant.campaign_id}`);
 }
 
 export async function finalizeApplicant(
@@ -231,6 +362,32 @@ export async function finalizeApplicant(
       throw new Error(
         "Tidak bisa menerima pendaftar yang belum lulus semua tahapan.",
       );
+    }
+  }
+
+  if (status === "REJECTED" && applicant.campaign.steps.length > 0) {
+    const anyFailed = applicant.campaign.steps.some(
+      (step: { id: string }) => {
+        const stepStatus = applicant.step_statuses.find(
+          (ss: { step_id: string }) => ss.step_id === step.id,
+        );
+        return stepStatus?.status === "FAILED";
+      },
+    );
+    if (!anyFailed) {
+      const allPending = applicant.campaign.steps.every(
+        (step: { id: string }) => {
+          const stepStatus = applicant.step_statuses.find(
+            (ss: { step_id: string }) => ss.step_id === step.id,
+          );
+          return !stepStatus || stepStatus.status === "PENDING";
+        },
+      );
+      if (allPending) {
+        throw new Error(
+          "Belum ada tahapan yang dinilai. Tidak bisa menolak pendaftar.",
+        );
+      }
     }
   }
 

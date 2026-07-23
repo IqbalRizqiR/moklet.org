@@ -189,3 +189,27 @@ export async function updateCampaign(
     `/admin/organisasi/${campaign.organisasi.organisasi.toLowerCase()}/recruitment`,
   );
 }
+
+export async function deleteCampaign(campaignId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const campaign = await prisma.recruitment_Campaign.findUnique({
+    where: { id: campaignId },
+    include: { organisasi: true },
+  });
+  if (!campaign) throw new Error("Campaign tidak ditemukan.");
+
+  await requireRecruitmentAccess(
+    session.user.id,
+    campaign.organisasi.organisasi,
+  );
+
+  await prisma.recruitment_Campaign.delete({
+    where: { id: campaignId },
+  });
+
+  revalidatePath(
+    `/admin/organisasi/${campaign.organisasi.organisasi.toLowerCase()}/recruitment`,
+  );
+}

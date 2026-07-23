@@ -22,6 +22,9 @@ export default function FormEditContent({
 }) {
   const [formData, setFormData] = useState(form);
   const [questions, setQuestions] = useState(form.fields);
+  const [sections, setSections] = useState(
+    form.sections.map((s) => ({ id: s.id, title: s.title || "", order: s.order })),
+  );
   const [saved, setSaved] = useState(true);
   const router = useRouter();
 
@@ -40,12 +43,16 @@ export default function FormEditContent({
 
   useLayoutEffect(() => {
     setSaved(false);
-  }, [formData, questions]);
+  }, [formData, questions, sections]);
 
   async function save() {
     const toastId = toast.loading("Loading...");
     const action = await saveForm(
-      { ...formData, fields: questions },
+      {
+        ...formData,
+        fields: questions,
+        sections: sections.map((s) => ({ ...s, form_id: form.id })),
+      },
       isNewForm,
       JSON.stringify(questions) != JSON.stringify(form.fields),
     );
@@ -203,6 +210,8 @@ export default function FormEditContent({
         fields={questions}
         setFields={setQuestions}
         formId={form.id}
+        sections={sections}
+        setSections={setSections}
       />
     </>
   );

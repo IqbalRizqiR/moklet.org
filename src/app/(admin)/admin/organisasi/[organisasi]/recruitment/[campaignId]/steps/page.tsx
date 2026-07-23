@@ -57,6 +57,7 @@ export default async function CampaignStepsDashboard({ params }: { params: Promi
                   openDate={step.open_date}
                   announcementDate={step.announcement_date}
                   closeDate={step.close_date}
+                  formId={step.form_id}
                   description={step.description}
                   passMessage={step.pass_message}
                   passLinks={step.pass_links as Array<{ label: string; url: string }> | null}

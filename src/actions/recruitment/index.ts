@@ -5,6 +5,7 @@ export {
   createCampaign,
   toggleCampaign,
   updateCampaign,
+  deleteCampaign,
 } from "./campaign";
 
 export {

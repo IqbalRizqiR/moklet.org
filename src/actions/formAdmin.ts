@@ -63,13 +63,64 @@ export const saveForm = async (
       }
 
       // eslint-disable-next-line no-unused-vars
-      const { _count, fields, sections: _sections, ...formData } = data;
+      const { _count, fields, sections: submittedSections, ...formData } = data;
       const updateInput = formData;
 
       await prisma.form.update({
         where: { id: updateInput.id },
         data: { ...updateInput },
       });
+
+      // Sync sections: delete removed, update existing, create new
+      const sectionIdMap = new Map<number, number>();
+      if (submittedSections) {
+        const existingSections = await prisma.field_Section.findMany({
+          where: { form_id: data.id },
+          select: { id: true },
+        });
+        const existingIds = existingSections.map((s) => s.id);
+        const submittedIds = submittedSections
+          .filter((s: { id: number }) => s.id > 0)
+          .map((s: { id: number }) => s.id);
+
+        // Delete sections removed from the list
+        const toDelete = existingIds.filter((id) => !submittedIds.includes(id));
+        if (toDelete.length > 0) {
+          await prisma.field_Section.deleteMany({
+            where: { id: { in: toDelete } },
+          });
+          // Unlink fields from deleted sections
+          await prisma.field.updateMany({
+            where: { section_id: { in: toDelete } },
+            data: { section_id: null },
+          });
+        }
+
+        // Upsert each submitted section
+        for (const section of submittedSections) {
+          if (section.id > 0) {
+            await prisma.field_Section.update({
+              where: { id: section.id },
+              data: { title: section.title, order: section.order },
+            });
+            sectionIdMap.set(section.id, section.id);
+          } else {
+            const created = await prisma.field_Section.create({
+              data: {
+                form_id: data.id,
+                title: section.title,
+                order: section.order,
+              },
+            });
+            sectionIdMap.set(section.id, created.id);
+            // Remap field section_ids from temp ID to real ID
+            await prisma.field.updateMany({
+              where: { form_id: data.id, section_id: section.id },
+              data: { section_id: created.id },
+            });
+          }
+        }
+      }
 
       if (isFieldsEdited) {
         const fieldsToDelete = form?.fields.filter(
@@ -94,6 +145,7 @@ export const saveForm = async (
               fieldNumber: index + 1,
               form_id: data.id,
               options: undefined,
+              section_id: field.section_id != null ? (sectionIdMap.get(field.section_id) ?? null) : null,
             };
 
             if (field.id === 0) {
@@ -127,7 +179,7 @@ export const saveForm = async (
       };
     } else {
       // eslint-disable-next-line no-unused-vars
-      const { _count, fields, sections: _sections, ...formData } = data;
+      const { _count, fields, sections: submittedSections, ...formData } = data;
       const createInput: Prisma.FormUncheckedCreateInput = formData;
 
       const createdForm = await prisma.form.create({
@@ -137,6 +189,21 @@ export const saveForm = async (
           user_id: user?.id || "",
         },
       });
+
+      // Create sections and build temp-ID → real-ID map
+      const sectionIdMap = new Map<number, number>();
+      if (submittedSections && submittedSections.length > 0) {
+        for (const section of submittedSections) {
+          const created = await prisma.field_Section.create({
+            data: {
+              form_id: createdForm.id,
+              title: section.title,
+              order: section.order,
+            },
+          });
+          sectionIdMap.set(section.id, created.id);
+        }
+      }
 
       await Promise.all(
         fields.map(async (field, index) => {
@@ -150,6 +217,7 @@ export const saveForm = async (
             form_id: createdForm.id,
             id: undefined,
             options: undefined,
+            section_id: field.section_id != null ? (sectionIdMap.get(field.section_id) ?? null) : null,
           };
 
           await prisma.field.create({
