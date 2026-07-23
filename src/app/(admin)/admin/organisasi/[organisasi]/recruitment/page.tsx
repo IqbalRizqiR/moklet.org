@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2 } from "@/app/_components/global/Text";
-import { getOrCreateNextPeriodOrganisasi, syncCampaignActiveStates } from "@/actions/recruitment";
+import { getOrCreateNextPeriodOrganisasi } from "@/actions/recruitment";
+import { syncCampaignActiveStates } from "@/utils/database/recruitment.query";
 
 type PageProps = {
   params: Promise<{ organisasi: string }>;

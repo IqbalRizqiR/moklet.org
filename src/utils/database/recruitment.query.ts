@@ -1,6 +1,15 @@
 import { Organisasi_Type } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { syncCampaignActiveStates } from "@/actions/recruitment";
+
+export async function syncCampaignActiveStates() {
+  await prisma.recruitment_Campaign.updateMany({
+    where: {
+      is_active: true,
+      close_date: { lt: new Date() },
+    },
+    data: { is_active: false },
+  });
+}
 
 /**
  * Returns recruitment campaigns the given user can manage.

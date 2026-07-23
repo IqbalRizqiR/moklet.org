@@ -19,4 +19,4 @@ export {
   finalizeApplicant,
 } from "./applicant";
 
-export { parseDateWIB, syncCampaignActiveStates } from "./shared";
+export { parseDateWIB } from "./shared";

@@ -2,7 +2,7 @@ import React from "react";
 import prisma from "@/lib/prisma";
 import CampaignList from "./CampaignList";
 import { auth } from "@/lib/auth";
-import { syncCampaignActiveStates } from "@/actions/recruitment";
+import { syncCampaignActiveStates } from "@/utils/database/recruitment.query";
 import { H2, P } from "@/app/_components/global/Text";
 
 export const metadata = {

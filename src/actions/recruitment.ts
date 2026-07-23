@@ -20,4 +20,4 @@ export {
   finalizeApplicant,
 } from "./recruitment/applicant";
 
-export { syncCampaignActiveStates } from "./recruitment/shared";
+export { parseDateWIB } from "./recruitment/shared";

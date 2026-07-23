@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import { canManageRecruitment } from "@/utils/permissions";
 
+export { syncCampaignActiveStates } from "@/utils/database/recruitment.query";
+
 export function parseDateWIB(d?: string): Date | null {
   if (!d) return null;
   if (d.includes("Z") || /[+-]\d{2}:\d{2}$/.test(d)) {
@@ -43,16 +45,6 @@ export function validateStepDates(
       throw new Error("Batas waktu formulir harus sebelum tanggal pengumuman.");
     }
   }
-}
-
-export async function syncCampaignActiveStates() {
-  await prisma.recruitment_Campaign.updateMany({
-    where: {
-      is_active: true,
-      close_date: { lt: new Date() },
-    },
-    data: { is_active: false },
-  });
 }
 
 export async function requireRecruitmentAccess(
