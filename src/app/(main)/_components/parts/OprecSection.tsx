@@ -3,10 +3,12 @@ import { P } from "@/app/_components/global/Text";
 import { SectionWrapper } from "@/app/_components/global/Wrapper";
 import { syncCampaignActiveStates } from "@/utils/database/recruitment.query";
 import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import Link from "next/link";
 import CampaignCard from "./CampaignCard";
 
 export default async function OprecSection() {
+  const session = await auth();
   await syncCampaignActiveStates();
 
   const campaigns = await prisma.recruitment_Campaign.findMany({
@@ -55,6 +57,7 @@ export default async function OprecSection() {
               }
               orgLogo={campaign.organisasi.logo}
               closeDate={campaign.close_date.toISOString()}
+              isLoggedIn={!!session?.user?.id}
             />
           ))}
         </div>

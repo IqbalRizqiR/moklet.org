@@ -8,13 +8,19 @@ export default function CampaignCard({
   orgName,
   orgLogo,
   closeDate,
+  isLoggedIn,
 }: {
   id: string;
   title: string;
   orgName: string;
   orgLogo: string | null;
   closeDate: string;
+  isLoggedIn: boolean;
 }) {
+  const ctaHref = isLoggedIn
+    ? `/recruitment/${id}`
+    : `/api/auth/signin?callbackUrl=/recruitment/${encodeURIComponent(id)}`;
+
   return (
     <div className="group relative flex flex-col rounded-xl border border-neutral-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="h-1 w-full rounded-t-xl bg-gradient-to-r from-primary-500 to-primary-400" />
@@ -61,11 +67,11 @@ export default function CampaignCard({
         </div>
 
         <LinkButton
-          href={`/recruitment/${id}`}
+          href={ctaHref}
           variant="primary"
           className="mt-auto w-full text-sm"
         >
-          Daftar Sekarang
+          {isLoggedIn ? "Daftar Sekarang" : "Masuk untuk Mendaftar"}
         </LinkButton>
       </div>
     </div>
