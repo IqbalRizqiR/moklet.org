@@ -13,12 +13,24 @@ interface Step {
   name: string;
   description?: string | null;
   type: "ANNOUNCEMENT" | "FORM";
-  announcement_date?: Date | string | null;
+  open_date: Date | string;
+  announcement_date: Date | string;
   close_date?: Date | string | null;
   form_id?: string | null;
-  success_message?: string | null;
-  success_links?: Array<{ label: string; url: string }> | null;
+  pass_message?: string | null;
+  pass_links?: Array<{ label: string; url: string }> | null;
+  fail_message?: string | null;
+  fail_links?: Array<{ label: string; url: string }> | null;
 }
+
+export type StepDisplayStatus =
+  | "LOCKED"
+  | "BEFORE_OPEN"
+  | "ACTIVE"
+  | "FORM_SUBMITTED"
+  | "WAITING_ANNOUNCEMENT"
+  | "PASSED"
+  | "FAILED";
 
 interface StatusTimelineProps {
   steps: Step[];
@@ -35,18 +47,12 @@ export default function StatusTimeline({
 }: StatusTimelineProps) {
   const computeStatus = (
     step: Step,
-    index: number
-  ):
-    | "LOCKED"
-    | "ACTIVE"
-    | "FORM_SUBMITTED"
-    | "WAITING_ANNOUNCEMENT"
-    | "PASSED"
-    | "FAILED" => {
+    index: number,
+  ): StepDisplayStatus => {
     if (index > 0) {
       const prevStep = steps[index - 1];
       const prevStatus = applicantStepStatuses.find(
-        (s) => s.step_id === prevStep.id
+        (s) => s.step_id === prevStep.id,
       );
       if (!prevStatus || prevStatus.status !== "PASSED") {
         return "LOCKED";
@@ -54,32 +60,76 @@ export default function StatusTimeline({
     }
 
     const statusRecord = applicantStepStatuses.find(
-      (s) => s.step_id === step.id
+      (s) => s.step_id === step.id,
     );
 
     if (statusRecord) {
-      if (statusRecord.status === "PASSED") {
-        return "PASSED";
-      }
-      if (statusRecord.status === "FAILED") {
-        return "FAILED";
-      }
+      if (statusRecord.status === "PASSED") return "PASSED";
+      if (statusRecord.status === "FAILED") return "FAILED";
     }
 
+    const now = Date.now();
+    const openDate = new Date(step.open_date).getTime();
+    const announcementDate = new Date(step.announcement_date).getTime();
+
+    if (now < openDate) return "BEFORE_OPEN";
+
     if (step.type === "FORM" && statusRecord?.submission_id) {
-      const announcementDate = step.announcement_date
-        ? new Date(step.announcement_date)
-        : null;
-      if (announcementDate && announcementDate.getTime() > Date.now()) {
-        return "FORM_SUBMITTED";
-      }
+      if (now < announcementDate) return "FORM_SUBMITTED";
     }
 
     if (step.type === "ANNOUNCEMENT" && !statusRecord) {
-      return "WAITING_ANNOUNCEMENT";
+      if (now < announcementDate) return "WAITING_ANNOUNCEMENT";
     }
 
     return "ACTIVE";
+  };
+
+  const getStatusColor = (status: StepDisplayStatus) => {
+    switch (status) {
+      case "PASSED": return "bg-green-500";
+      case "FAILED": return "bg-red-500";
+      case "LOCKED":
+      case "BEFORE_OPEN": return "bg-neutral-300";
+      default: return "bg-yellow-500";
+    }
+  };
+
+  const getLineColor = (status: StepDisplayStatus) => {
+    switch (status) {
+      case "PASSED": return "bg-green-300";
+      case "FAILED": return "bg-red-300";
+      default: return "bg-neutral-300";
+    }
+  };
+
+  const renderIcon = (status: StepDisplayStatus) => {
+    if (status === "PASSED") {
+      return (
+        <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      );
+    }
+    if (status === "FAILED") {
+      return (
+        <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      );
+    }
+    if (status === "LOCKED" || status === "BEFORE_OPEN") {
+      return (
+        <svg className="h-5 w-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      );
+    }
+    return (
+      <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
   };
 
   return (
@@ -94,89 +144,13 @@ export default function StatusTimeline({
               <div
                 className={cn(
                   "z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white shadow-sm",
-                  status === "PASSED"
-                    ? "bg-green-500"
-                    : status === "FAILED"
-                      ? "bg-red-500"
-                      : status === "LOCKED"
-                        ? "bg-neutral-300"
-                        : "bg-yellow-500"
+                  getStatusColor(status),
                 )}
               >
-                {status === "PASSED" && (
-                  <svg
-                    className="h-5 w-5 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-                {status === "FAILED" && (
-                  <svg
-                    className="h-5 w-5 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                )}
-                {status === "LOCKED" && (
-                  <svg
-                    className="h-5 w-5 text-neutral-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                )}
-                {(status === "ACTIVE" ||
-                  status === "FORM_SUBMITTED" ||
-                  status === "WAITING_ANNOUNCEMENT") && (
-                  <svg
-                    className="h-5 w-5 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                )}
+                {renderIcon(status)}
               </div>
               {!isLast && (
-                <div
-                  className={cn(
-                    "w-1 flex-1 min-h-[80px]",
-                    status === "PASSED"
-                      ? "bg-green-300"
-                      : status === "FAILED"
-                        ? "bg-red-300"
-                        : "bg-neutral-300"
-                  )}
-                />
+                <div className={cn("w-1 flex-1 min-h-[80px]", getLineColor(status))} />
               )}
             </div>
 

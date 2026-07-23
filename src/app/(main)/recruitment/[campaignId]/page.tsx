@@ -51,8 +51,8 @@ export default async function CampaignDetailPage({ params }: PageProps) {
   });
 
   const now = new Date();
-  const notYetOpen = campaign.open_date && campaign.open_date > now;
-  const isClosed = campaign.close_date && campaign.close_date < now;
+  const notYetOpen = campaign.open_date > now;
+  const isClosed = campaign.close_date < now;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -63,7 +63,6 @@ export default async function CampaignDetailPage({ params }: PageProps) {
         &larr; Kembali
       </Link>
 
-      {/* Campaign Header */}
       <div className="bg-white rounded-xl p-8 shadow-sm border mb-8 text-center">
         <h1 className="text-3xl font-bold mb-2">{campaign.title}</h1>
         <p className="text-gray-600">
@@ -76,44 +75,38 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           </p>
         )}
 
-        {/* Dates */}
         <div className="flex justify-center gap-8 mt-6 text-sm">
-          {campaign.open_date && (
-            <div>
-              <span className="text-gray-400 block text-xs uppercase tracking-wide">
-                Dibuka
-              </span>
-              <span className="font-medium">
-                {new Date(campaign.open_date).toLocaleDateString("id-ID", {
-                  dateStyle: "medium",
-                })}
-              </span>
-            </div>
-          )}
-          {campaign.close_date && (
-            <div>
-              <span className="text-gray-400 block text-xs uppercase tracking-wide">
-                Ditutup
-              </span>
-              <span className="font-medium">
-                {new Date(campaign.close_date).toLocaleDateString("id-ID", {
-                  dateStyle: "medium",
-                })}
-              </span>
-            </div>
-          )}
+          <div>
+            <span className="text-gray-400 block text-xs uppercase tracking-wide">
+              Dibuka
+            </span>
+            <span className="font-medium">
+              {new Date(campaign.open_date).toLocaleDateString("id-ID", {
+                dateStyle: "medium",
+              })}
+            </span>
+          </div>
+          <div>
+            <span className="text-gray-400 block text-xs uppercase tracking-wide">
+              Ditutup
+            </span>
+            <span className="font-medium">
+              {new Date(campaign.close_date).toLocaleDateString("id-ID", {
+                dateStyle: "medium",
+              })}
+            </span>
+          </div>
         </div>
       </div>
 
       {!applicant ? (
-        /* Not registered yet — show registration CTA */
         <div className="bg-white rounded-xl p-8 shadow-sm border text-center">
           <H2>Daftar {campaign.title}</H2>
           {notYetOpen ? (
             <div className="mt-4">
               <p className="text-gray-600 mb-4">Pendaftaran akan dibuka dalam:</p>
               <CountdownTimer
-                targetDate={campaign.open_date!.toISOString()}
+                targetDate={campaign.open_date.toISOString()}
               />
             </div>
           ) : isClosed ? (
@@ -127,13 +120,11 @@ export default async function CampaignDetailPage({ params }: PageProps) {
               </p>
               <CampaignDetailClient
                 campaignId={campaign.id}
-                userId={session.user.id}
               />
             </div>
           )}
         </div>
       ) : (
-        /* Already registered — show status timeline */
         <div>
           <p className="text-sm text-gray-500 mb-6">
             Status pendaftaran Anda untuk {campaign.title}
@@ -146,11 +137,16 @@ export default async function CampaignDetailPage({ params }: PageProps) {
                 name: s.name,
                 description: s.description,
                 type: s.type,
+                open_date: s.open_date,
                 announcement_date: s.announcement_date,
                 close_date: s.close_date,
                 form_id: s.form_id,
-                success_message: s.success_message,
-                success_links: s.success_links as
+                pass_message: s.pass_message,
+                pass_links: s.pass_links as
+                  | Array<{ label: string; url: string }>
+                  | undefined,
+                fail_message: s.fail_message,
+                fail_links: s.fail_links as
                   | Array<{ label: string; url: string }>
                   | undefined,
               }))}
@@ -168,7 +164,6 @@ export default async function CampaignDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Final Status */}
           {applicant.status !== "PENDING" && (
             <div
               className={`mt-8 p-6 rounded-xl border-2 text-center ${

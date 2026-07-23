@@ -6,21 +6,29 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import generateRandomSlug from "@/utils/randomSlug";
 import { FieldsWithOptions } from "@/types/entityRelations";
-import { parseDateWIB, requireRecruitmentAccess } from "./shared";
+import {
+  parseDateWIB,
+  requireDateWIB,
+  requireRecruitmentAccess,
+  validateStepDates,
+} from "./shared";
 
 export type SuccessLink = { label: string; url: string };
 
 export async function addStep(
   campaignId: string,
-  name: string,
-  announcementDate?: string,
-  options?: {
-    type?: "ANNOUNCEMENT" | "FORM";
+  data: {
+    name: string;
+    type: "ANNOUNCEMENT" | "FORM";
     description?: string;
-    closeDate?: string;
+    open_date: string;
+    announcement_date: string;
+    close_date?: string;
     questions?: FieldsWithOptions[];
-    success_message?: string;
-    success_links?: SuccessLink[];
+    pass_message?: string;
+    pass_links?: SuccessLink[];
+    fail_message?: string;
+    fail_links?: SuccessLink[];
     sections?: { tempId: number; title: string; order: number }[];
   },
 ) {
@@ -38,11 +46,23 @@ export async function addStep(
     campaign.organisasi.organisasi,
   );
 
-  const type = options?.type ?? "ANNOUNCEMENT";
+  const type = data.type;
+  const stepOpenDate = requireDateWIB(data.open_date, "Tanggal buka tahapan");
+  const stepAnnouncementDate = requireDateWIB(data.announcement_date, "Tanggal pengumuman");
+  const stepCloseDate = type === "FORM" ? parseDateWIB(data.close_date) : null;
+
+  validateStepDates(
+    campaign.open_date,
+    campaign.close_date,
+    stepOpenDate,
+    stepAnnouncementDate,
+    stepCloseDate,
+    type,
+  );
 
   if (
     type === "FORM" &&
-    (!options?.questions || options.questions.length === 0)
+    (!data.questions || data.questions.length === 0)
   )
     throw new Error(
       "Tahapan tipe Formulir harus memiliki minimal 1 pertanyaan.",
@@ -50,25 +70,25 @@ export async function addStep(
 
   let formId: string | null = null;
 
-  if (type === "FORM" && options?.questions && options.questions.length > 0) {
+  if (type === "FORM" && data.questions && data.questions.length > 0) {
     formId = generateRandomSlug();
     const stepForm = await prisma.form.create({
       data: {
         id: formId,
         user_id: session.user.id,
-        title: `Form Tahap: ${name}`,
-        description: options.description || "",
+        title: `Form Tahap: ${data.name}`,
+        description: data.description || "",
         is_open: true,
         allow_edit: false,
         submit_once: true,
-        close_at: parseDateWIB(options.closeDate),
+        close_at: stepCloseDate,
       },
     });
 
     const sectionIdMap = new Map<number, number>();
-    if (options.sections && options.sections.length > 0) {
-      for (let i = 0; i < options.sections.length; i++) {
-        const s = options.sections[i];
+    if (data.sections && data.sections.length > 0) {
+      for (let i = 0; i < data.sections.length; i++) {
+        const s = data.sections[i];
         const created = await prisma.field_Section.create({
           data: { form_id: stepForm.id, title: s.title, order: s.order },
         });
@@ -77,7 +97,7 @@ export async function addStep(
     }
 
     await Promise.all(
-      options.questions.map(async (field, index) => {
+      data.questions.map(async (field, index) => {
         const fieldOptions = field.options.map((option) => ({ value: option.value }));
         const resolvedSectionId = field.section_id != null
           ? (sectionIdMap.get(field.section_id) ?? null)
@@ -108,15 +128,18 @@ export async function addStep(
   const step = await prisma.recruitment_Step.create({
     data: {
       campaign_id: campaignId,
-      name,
-      description: options?.description || null,
+      name: data.name,
+      description: data.description || null,
       type,
       order: existingSteps + 1,
-      announcement_date: parseDateWIB(announcementDate),
-      close_date: parseDateWIB(options?.closeDate),
+      open_date: stepOpenDate,
+      announcement_date: stepAnnouncementDate,
+      close_date: stepCloseDate,
       form_id: formId,
-      success_message: options?.success_message || null,
-      success_links: (options?.success_links || null) as unknown as Prisma.InputJsonValue,
+      pass_message: data.pass_message || null,
+      pass_links: (data.pass_links || null) as unknown as Prisma.InputJsonValue,
+      fail_message: data.fail_message || null,
+      fail_links: (data.fail_links || null) as unknown as Prisma.InputJsonValue,
     },
   });
 
@@ -128,8 +151,13 @@ export async function addStep(
 
 export async function editStep(
   stepId: string,
-  name: string,
-  announcementDate?: string,
+  data: {
+    name: string;
+    description?: string | null;
+    open_date: string;
+    announcement_date: string;
+    close_date?: string;
+  },
 ) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -145,11 +173,27 @@ export async function editStep(
     step.campaign.organisasi.organisasi,
   );
 
+  const stepOpenDate = requireDateWIB(data.open_date, "Tanggal buka tahapan");
+  const stepAnnouncementDate = requireDateWIB(data.announcement_date, "Tanggal pengumuman");
+  const stepCloseDate = step.type === "FORM" ? parseDateWIB(data.close_date) : null;
+
+  validateStepDates(
+    step.campaign.open_date,
+    step.campaign.close_date,
+    stepOpenDate,
+    stepAnnouncementDate,
+    stepCloseDate,
+    step.type,
+  );
+
   await prisma.recruitment_Step.update({
     where: { id: stepId },
     data: {
-      name,
-      announcement_date: parseDateWIB(announcementDate),
+      name: data.name,
+      description: data.description !== undefined ? data.description : undefined,
+      open_date: stepOpenDate,
+      announcement_date: stepAnnouncementDate,
+      close_date: stepCloseDate,
     },
   });
 
@@ -158,12 +202,13 @@ export async function editStep(
   );
 }
 
-export async function updateStepConfig(
+export async function updateStepOutcome(
   stepId: string,
   data: {
-    success_message?: string | null;
-    success_links?: SuccessLink[] | null;
-    description?: string | null;
+    pass_message?: string | null;
+    pass_links?: SuccessLink[] | null;
+    fail_message?: string | null;
+    fail_links?: SuccessLink[] | null;
   },
 ) {
   const session = await auth();
@@ -183,9 +228,10 @@ export async function updateStepConfig(
   await prisma.recruitment_Step.update({
     where: { id: stepId },
     data: {
-      success_message: data.success_message !== undefined ? data.success_message : undefined,
-      success_links: data.success_links !== undefined ? data.success_links as unknown as Prisma.InputJsonValue : undefined,
-      description: data.description !== undefined ? data.description : undefined,
+      pass_message: data.pass_message !== undefined ? data.pass_message : undefined,
+      pass_links: data.pass_links !== undefined ? data.pass_links as unknown as Prisma.InputJsonValue : undefined,
+      fail_message: data.fail_message !== undefined ? data.fail_message : undefined,
+      fail_links: data.fail_links !== undefined ? data.fail_links as unknown as Prisma.InputJsonValue : undefined,
     },
   });
 
@@ -224,34 +270,6 @@ export async function deleteStep(stepId: string) {
         data: { order: i + 1 },
       });
     }
-  });
-
-  revalidatePath(
-    `/admin/organisasi/${step.campaign.organisasi.organisasi.toLowerCase()}/recruitment`,
-  );
-}
-
-export async function editStepTime(
-  stepId: string,
-  announcementDate?: string,
-) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
-
-  const step = await prisma.recruitment_Step.findUnique({
-    where: { id: stepId },
-    include: { campaign: { include: { organisasi: true } } },
-  });
-  if (!step) throw new Error("Step tidak ditemukan.");
-
-  await requireRecruitmentAccess(
-    session.user.id,
-    step.campaign.organisasi.organisasi,
-  );
-
-  await prisma.recruitment_Step.update({
-    where: { id: stepId },
-    data: { announcement_date: parseDateWIB(announcementDate) },
   });
 
   revalidatePath(

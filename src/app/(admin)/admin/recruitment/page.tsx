@@ -84,9 +84,7 @@ export default async function AdminRecruitmentOverview() {
                         <p>Masa Bakti: <span className="font-medium text-gray-700">{c.organisasi.period.period}</span></p>
                         <p>Pendaftar: <span className="font-bold text-black">{c._count.applicants}</span></p>
                         <p>Tahapan: <span className="font-bold text-black">{c._count.steps}</span></p>
-                        {c.close_date && (
-                          <p>Tutup: {new Date(c.close_date).toLocaleDateString("id-ID", { dateStyle: "medium" })}</p>
-                        )}
+                        <p>Tutup: {new Date(c.close_date).toLocaleDateString("id-ID", { dateStyle: "medium" })}</p>
                       </div>
                     </div>
                   </Link>

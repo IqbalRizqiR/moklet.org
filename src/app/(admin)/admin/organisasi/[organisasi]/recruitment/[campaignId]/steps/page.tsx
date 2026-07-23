@@ -35,7 +35,11 @@ export default async function CampaignStepsDashboard({ params }: { params: Promi
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <AddStepForm campaignId={campaignId} />
+        <AddStepForm
+          campaignId={campaignId}
+          campaignOpenDate={campaign.open_date.toISOString()}
+          campaignCloseDate={campaign.close_date.toISOString()}
+        />
 
         <div className="bg-white rounded-xl border shadow-sm overflow-hidden h-fit">
           <div className="bg-gray-50 p-4 border-b">
@@ -49,11 +53,17 @@ export default async function CampaignStepsDashboard({ params }: { params: Promi
                   stepId={step.id}
                   name={step.name}
                   order={index + 1}
-                  announcementDate={step.announcement_date}
                   type={step.type}
+                  openDate={step.open_date}
+                  announcementDate={step.announcement_date}
+                  closeDate={step.close_date}
                   description={step.description}
-                  successMessage={step.success_message}
-                  successLinks={step.success_links as Array<{ label: string; url: string }> | null}
+                  passMessage={step.pass_message}
+                  passLinks={step.pass_links as Array<{ label: string; url: string }> | null}
+                  failMessage={step.fail_message}
+                  failLinks={step.fail_links as Array<{ label: string; url: string }> | null}
+                  campaignOpenDate={campaign.open_date.toISOString()}
+                  campaignCloseDate={campaign.close_date.toISOString()}
                 />
               ))}
             </ul>

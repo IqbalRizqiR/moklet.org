@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { canManageRecruitment } from "@/utils/permissions";
 import Link from "next/link";
 import { H2 } from "@/app/_components/global/Text";
-import { getOrCreateNextPeriodOrganisasi } from "@/actions/recruitment";
+import { getOrCreateNextPeriodOrganisasi, syncCampaignActiveStates } from "@/actions/recruitment";
 
 type PageProps = {
   params: Promise<{ organisasi: string }>;
@@ -18,6 +18,8 @@ export default async function AdminRecruitmentPage({ params }: PageProps) {
 
   const { hasAccess } = await canManageRecruitment(session.user.id, orgTypeString);
   if (!hasAccess) redirect("/admin/organisasi");
+
+  await syncCampaignActiveStates();
 
   const { organisasi, period: nextPeriod } = await getOrCreateNextPeriodOrganisasi(orgTypeString);
 
@@ -53,22 +55,25 @@ export default async function AdminRecruitmentPage({ params }: PageProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {organisasiWithCampaigns.recruitment_campaigns.map((c: any) => (
-            <Link key={c.id} href={`/admin/organisasi/${orgTypeString}/recruitment/${c.id}`}>
-              <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-bold text-lg">{c.title}</h3>
-                  <span className={`px-2 py-1 text-xs font-bold rounded-full ${c.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                    {c.is_active ? 'Aktif' : 'Draft'}
-                  </span>
+          {organisasiWithCampaigns.recruitment_campaigns.map((c: any) => {
+            const isExpired = c.close_date < new Date();
+            return (
+              <Link key={c.id} href={`/admin/organisasi/${orgTypeString}/recruitment/${c.id}`}>
+                <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="font-bold text-lg">{c.title}</h3>
+                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${c.is_active ? 'bg-green-100 text-green-700' : isExpired ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}`}>
+                      {c.is_active ? 'Aktif' : isExpired ? 'Kedaluwarsa' : 'Draft'}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 space-y-1">
+                    <p>Total Pendaftar: <span className="font-bold text-black">{c._count.applicants}</span></p>
+                    <p>Buka: {new Date(c.open_date).toLocaleDateString('id-ID')}</p>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500 space-y-1">
-                  <p>Total Pendaftar: <span className="font-bold text-black">{c._count.applicants}</span></p>
-                  {c.open_date && <p>Buka: {new Date(c.open_date).toLocaleDateString('id-ID')}</p>}
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

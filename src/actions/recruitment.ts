@@ -9,9 +9,8 @@ export type { SuccessLink } from "./recruitment/step";
 export {
   addStep,
   editStep,
-  updateStepConfig,
+  updateStepOutcome,
   deleteStep,
-  editStepTime,
 } from "./recruitment/step";
 
 export {
@@ -20,3 +19,5 @@ export {
   passApplicantStep,
   finalizeApplicant,
 } from "./recruitment/applicant";
+
+export { syncCampaignActiveStates } from "./recruitment/shared";

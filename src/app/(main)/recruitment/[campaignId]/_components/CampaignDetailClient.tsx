@@ -8,12 +8,10 @@ import { useRouter } from "next-nprogress-bar";
 
 interface CampaignDetailClientProps {
   campaignId: string;
-  userId: string;
 }
 
 export default function CampaignDetailClient({
   campaignId,
-  userId,
 }: CampaignDetailClientProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();

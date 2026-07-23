@@ -12,6 +12,49 @@ export function parseDateWIB(d?: string): Date | null {
   return isNaN(parsed.getTime()) ? null : parsed;
 }
 
+export function requireDateWIB(d?: string, fieldName = "Tanggal"): Date {
+  const parsed = parseDateWIB(d);
+  if (!parsed) throw new Error(`${fieldName} wajib diisi.`);
+  return parsed;
+}
+
+export function validateStepDates(
+  campaignOpenDate: Date,
+  campaignCloseDate: Date,
+  stepOpenDate: Date,
+  stepAnnouncementDate: Date,
+  stepCloseDate: Date | null,
+  stepType: "ANNOUNCEMENT" | "FORM",
+) {
+  if (stepOpenDate < campaignOpenDate) {
+    throw new Error("Tanggal buka tahapan tidak boleh sebelum tanggal buka campaign.");
+  }
+  if (stepAnnouncementDate > campaignCloseDate) {
+    throw new Error("Tanggal pengumuman tahapan tidak boleh setelah tanggal tutup campaign.");
+  }
+  if (stepOpenDate > stepAnnouncementDate) {
+    throw new Error("Tanggal buka tahapan harus sebelum tanggal pengumuman.");
+  }
+  if (stepType === "FORM" && stepCloseDate) {
+    if (stepCloseDate < stepOpenDate) {
+      throw new Error("Batas waktu formulir harus setelah tanggal buka tahapan.");
+    }
+    if (stepCloseDate > stepAnnouncementDate) {
+      throw new Error("Batas waktu formulir harus sebelum tanggal pengumuman.");
+    }
+  }
+}
+
+export async function syncCampaignActiveStates() {
+  await prisma.recruitment_Campaign.updateMany({
+    where: {
+      is_active: true,
+      close_date: { lt: new Date() },
+    },
+    data: { is_active: false },
+  });
+}
+
 export async function requireRecruitmentAccess(
   userId: string,
   orgTypeString: string,

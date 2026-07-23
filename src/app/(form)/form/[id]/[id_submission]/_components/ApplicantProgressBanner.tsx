@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { H3, P } from "@/app/_components/global/Text";
 
 interface ApplicantProgressBannerProps {
@@ -11,6 +12,7 @@ interface ApplicantProgressBannerProps {
 }
 
 export default function ApplicantProgressBanner({ status, stepName, announcementDate, passedStepName }: ApplicantProgressBannerProps) {
+  const router = useRouter();
   const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
 
   useEffect(() => {
@@ -24,8 +26,7 @@ export default function ApplicantProgressBanner({ status, stepName, announcement
 
       if (difference <= 0) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        // Optionally refresh page when countdown hits zero
-        window.location.reload();
+        router.refresh();
         return;
       }
 

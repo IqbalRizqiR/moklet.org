@@ -38,6 +38,8 @@ export default async function CampaignDashboard({ params }: PageProps) {
 
   if (!campaign) return <div>Campaign tidak ditemukan</div>;
 
+  const isExpired = campaign.close_date < new Date();
+
   const applicantsData = campaign.applicants.map((app: any) => ({
     id: app.id,
     name: app.user.name,
@@ -60,6 +62,14 @@ export default async function CampaignDashboard({ params }: PageProps) {
               currentDescription={campaign.description}
             />
             <p className="text-gray-500 mt-2">Total Pendaftar: {campaign.applicants.length}</p>
+
+            {isExpired && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                Campaign sudah melewati tanggal tutup
+              </div>
+            )}
+
             <div className="mt-4 max-w-sm">
               <EditCampaignTime campaignId={campaignId} currentOpenDate={campaign.open_date} currentCloseDate={campaign.close_date} />
             </div>
@@ -74,11 +84,13 @@ export default async function CampaignDashboard({ params }: PageProps) {
             >
               Export Excel
             </a>
-            <form action={toggleCampaign.bind(null, campaignId, !campaign.is_active)}>
-              <button type="submit" className={`px-4 py-2 rounded text-white text-sm font-medium ${campaign.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'} transition-colors`}>
-                {campaign.is_active ? 'Tutup Campaign' : 'Buka Campaign'}
-              </button>
-            </form>
+            {!isExpired && (
+              <form action={toggleCampaign.bind(null, campaignId, !campaign.is_active)}>
+                <button type="submit" className={`px-4 py-2 rounded text-white text-sm font-medium ${campaign.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'} transition-colors`}>
+                  {campaign.is_active ? 'Nonaktifkan' : 'Aktifkan Campaign'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

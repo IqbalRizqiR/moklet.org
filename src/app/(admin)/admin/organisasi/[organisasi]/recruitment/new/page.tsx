@@ -17,15 +17,28 @@ export default function NewCampaignPage({ params }: { params: Promise<{ organisa
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
+    const openDate = formData.get("open_date") as string;
+    const closeDate = formData.get("close_date") as string;
+
+    if (!openDate || !closeDate) {
+      toast.error("Tanggal buka dan tanggal tutup wajib diisi.");
+      return;
+    }
+
+    if (new Date(openDate) >= new Date(closeDate)) {
+      toast.error("Tanggal buka harus sebelum tanggal tutup.");
+      return;
+    }
+
     setLoading(true);
-    
     try {
       const campaign = await createCampaign({
         organisasi_string: id,
         title: formData.get("title") as string,
         description: formData.get("description") as string,
-        open_date: formData.get("open_date") as string,
-        close_date: formData.get("close_date") as string,
+        open_date: openDate,
+        close_date: closeDate,
       });
       toast.success("Campaign berhasil dibuat! Silakan atur tahapan.");
       router.push(`/admin/organisasi/${id}/recruitment/${campaign.id}/steps`);
@@ -59,12 +72,14 @@ export default function NewCampaignPage({ params }: { params: Promise<{ organisa
           <TextField 
             label="Tanggal Buka" 
             name="open_date" 
-            type="datetime-local" 
+            type="datetime-local"
+            required
           />
           <TextField 
             label="Tanggal Tutup" 
             name="close_date" 
-            type="datetime-local" 
+            type="datetime-local"
+            required
           />
         </div>
 

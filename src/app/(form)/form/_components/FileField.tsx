@@ -29,7 +29,32 @@ export default function FileField({
   const accept = acceptTypes || "image/*,application/pdf,.doc,.docx";
   const isImageUrl = /\.(png|jpe?g|webp|gif)$/i.test(url);
 
+  const MAX_SIZE = 10 * 1024 * 1024;
+  const ALLOWED_TYPES = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp",
+    "image/gif",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+
+  const validateFile = (file: File): string | null => {
+    if (file.size > MAX_SIZE) return "File terlalu besar (maksimal 10MB)";
+    if (!ALLOWED_TYPES.includes(file.type))
+      return "Hanya file gambar, PDF, atau dokumen Word yang diizinkan";
+    return null;
+  };
+
   const handleFile = async (file: File) => {
+    const error = validateFile(file);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
     setUploading(true);
     const toastId = toast.loading("Mengupload file...");
     try {

@@ -1,47 +1,160 @@
 "use client";
 
 import React, { useState } from "react";
-import { editStep, deleteStep, updateStepConfig } from "@/actions/recruitment";
+import { editStep, deleteStep, updateStepOutcome } from "@/actions/recruitment";
 import { FaTrash } from "react-icons/fa";
+import { toast } from "sonner";
+
+interface LinkItem {
+  label: string;
+  url: string;
+}
 
 interface Props {
   stepId: string;
   name: string;
   order: number;
-  announcementDate?: Date | null;
-  type?: "ANNOUNCEMENT" | "FORM";
+  type: "ANNOUNCEMENT" | "FORM";
+  openDate: Date;
+  announcementDate: Date;
+  closeDate?: Date | null;
   description?: string | null;
-  successMessage?: string | null;
-  successLinks?: Array<{ label: string; url: string }> | null;
+  passMessage?: string | null;
+  passLinks?: LinkItem[] | null;
+  failMessage?: string | null;
+  failLinks?: LinkItem[] | null;
+  campaignOpenDate: string;
+  campaignCloseDate: string;
 }
 
-export default function EditStepItem({ stepId, name, order, announcementDate, type = "ANNOUNCEMENT", description, successMessage, successLinks }: Props) {
+function formatDateForInput(d?: Date | null) {
+  if (!d) return "";
+  const date = new Date(d);
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+}
+
+function LinksEditor({
+  title,
+  links,
+  setLinks,
+}: {
+  title: string;
+  links: LinkItem[];
+  setLinks: (links: LinkItem[]) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</label>
+        <button
+          type="button"
+          onClick={() => setLinks([...links, { label: "", url: "" }])}
+          className="text-xs text-primary-500 hover:underline"
+        >
+          + Tambah
+        </button>
+      </div>
+      {links.map((link, i) => (
+        <div key={i} className="flex gap-1 items-center">
+          <input
+            type="text"
+            placeholder="Label"
+            value={link.label}
+            onChange={(e) => {
+              const updated = [...links];
+              updated[i] = { ...updated[i], label: e.target.value };
+              setLinks(updated);
+            }}
+            className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs text-black"
+          />
+          <input
+            type="url"
+            placeholder="URL"
+            value={link.url}
+            onChange={(e) => {
+              const updated = [...links];
+              updated[i] = { ...updated[i], url: e.target.value };
+              setLinks(updated);
+            }}
+            className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs text-black"
+          />
+          <button
+            type="button"
+            onClick={() => setLinks(links.filter((_, j) => j !== i))}
+            className="text-red-400 hover:text-red-600 p-1"
+          >
+            <FaTrash size={10} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function EditStepItem({
+  stepId,
+  name,
+  order,
+  type,
+  openDate,
+  announcementDate,
+  closeDate,
+  description,
+  passMessage,
+  passLinks,
+  failMessage,
+  failLinks,
+  campaignOpenDate,
+  campaignCloseDate,
+}: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const [editName, setEditName] = useState(name);
-  const [editDate, setEditDate] = useState(() => {
-    if (!announcementDate) return "";
-    const d = new Date(announcementDate);
-    const tzOffset = d.getTimezoneOffset() * 60000;
-    return (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
-  });
-  const [editSuccessMsg, setEditSuccessMsg] = useState(successMessage || "");
-  const [editSuccessLinks, setEditSuccessLinks] = useState<{ label: string; url: string }[]>(successLinks || []);
+  const [editDescription, setEditDescription] = useState(description || "");
+  const [editOpenDate, setEditOpenDate] = useState(() => formatDateForInput(openDate));
+  const [editAnnouncementDate, setEditAnnouncementDate] = useState(() => formatDateForInput(announcementDate));
+  const [editCloseDate, setEditCloseDate] = useState(() => formatDateForInput(closeDate));
+  const [editPassMsg, setEditPassMsg] = useState(passMessage || "");
+  const [editPassLinks, setEditPassLinks] = useState<LinkItem[]>(passLinks || []);
+  const [editFailMsg, setEditFailMsg] = useState(failMessage || "");
+  const [editFailLinks, setEditFailLinks] = useState<LinkItem[]>(failLinks || []);
 
   const handleSave = async () => {
     if (!editName.trim()) return;
+    if (!editOpenDate || !editAnnouncementDate) {
+      toast.error("Tanggal buka dan pengumuman wajib diisi.");
+      return;
+    }
+    if (new Date(editOpenDate) < new Date(campaignOpenDate)) {
+      toast.error("Tanggal buka tahapan tidak boleh sebelum tanggal buka campaign.");
+      return;
+    }
+    if (new Date(editAnnouncementDate) > new Date(campaignCloseDate)) {
+      toast.error("Tanggal pengumuman tidak boleh setelah tanggal tutup campaign.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await editStep(stepId, editName, editDate || undefined);
-      await updateStepConfig(stepId, {
-        success_message: editSuccessMsg || null,
-        success_links: editSuccessLinks.length > 0 ? editSuccessLinks : null,
-        description: description || null,
+      await editStep(stepId, {
+        name: editName,
+        description: editDescription || null,
+        open_date: editOpenDate,
+        announcement_date: editAnnouncementDate,
+        close_date: type === "FORM" ? editCloseDate : undefined,
       });
+      await updateStepOutcome(stepId, {
+        pass_message: editPassMsg || null,
+        pass_links: editPassLinks.filter((l) => l.label && l.url).length > 0 ? editPassLinks.filter((l) => l.label && l.url) : null,
+        fail_message: editFailMsg || null,
+        fail_links: editFailLinks.filter((l) => l.label && l.url).length > 0 ? editFailLinks.filter((l) => l.label && l.url) : null,
+      });
+      toast.success("Perubahan berhasil disimpan.");
       setIsEditing(false);
-    } catch (error) {
-      console.error(error);
-      alert("Gagal menyimpan perubahan.");
+    } catch (error: any) {
+      toast.error(error.message || "Gagal menyimpan perubahan.");
     } finally {
       setLoading(false);
     }
@@ -52,9 +165,9 @@ export default function EditStepItem({ stepId, name, order, announcementDate, ty
     setLoading(true);
     try {
       await deleteStep(stepId);
-    } catch (error) {
-      console.error(error);
-      alert("Gagal menghapus tahapan.");
+      toast.success("Tahapan berhasil dihapus.");
+    } catch (error: any) {
+      toast.error(error.message || "Gagal menghapus tahapan.");
       setLoading(false);
     }
   };
@@ -73,70 +186,79 @@ export default function EditStepItem({ stepId, name, order, announcementDate, ty
               placeholder="Nama Tahapan"
             />
           </div>
+
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Waktu Pengumuman</label>
-            <input
-              type="datetime-local"
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm text-black"
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Deskripsi</label>
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 text-sm text-black resize-none"
+              rows={2}
+              placeholder="Deskripsi tahapan..."
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pesan Sukses (setelah lulus)</label>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal Buka</label>
+              <input
+                type="datetime-local"
+                value={editOpenDate}
+                onChange={(e) => setEditOpenDate(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm text-black"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal Pengumuman</label>
+              <input
+                type="datetime-local"
+                value={editAnnouncementDate}
+                onChange={(e) => setEditAnnouncementDate(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm text-black"
+              />
+            </div>
+          </div>
+
+          {type === "FORM" && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Batas Waktu Formulir</label>
+              <input
+                type="datetime-local"
+                value={editCloseDate}
+                onChange={(e) => setEditCloseDate(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm text-black"
+              />
+            </div>
+          )}
+
+          <div className="border-t pt-3">
+            <h5 className="text-xs font-semibold text-gray-600 mb-2">Pesan Lulus</h5>
             <textarea
-              value={editSuccessMsg}
-              onChange={(e) => setEditSuccessMsg(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm text-black resize-none"
+              value={editPassMsg}
+              onChange={(e) => setEditPassMsg(e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 text-sm text-black resize-none w-full"
               rows={2}
               placeholder="Selamat! Silakan bergabung ke grup berikut."
             />
-          </div>
-          <div className="flex flex-col gap-1">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tautan</label>
-              <button
-                type="button"
-                onClick={() => setEditSuccessLinks([...editSuccessLinks, { label: "", url: "" }])}
-                className="text-xs text-primary-500 hover:underline"
-              >
-                + Tambah
-              </button>
+            <div className="mt-2">
+              <LinksEditor title="Tautan Lulus" links={editPassLinks} setLinks={setEditPassLinks} />
             </div>
-            {editSuccessLinks.map((link, i) => (
-              <div key={i} className="flex gap-1 items-center">
-                <input
-                  type="text"
-                  placeholder="Label"
-                  value={link.label}
-                  onChange={(e) => {
-                    const updated = [...editSuccessLinks];
-                    updated[i] = { ...updated[i], label: e.target.value };
-                    setEditSuccessLinks(updated);
-                  }}
-                  className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs text-black"
-                />
-                <input
-                  type="url"
-                  placeholder="URL"
-                  value={link.url}
-                  onChange={(e) => {
-                    const updated = [...editSuccessLinks];
-                    updated[i] = { ...updated[i], url: e.target.value };
-                    setEditSuccessLinks(updated);
-                  }}
-                  className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs text-black"
-                />
-                <button
-                  type="button"
-                  onClick={() => setEditSuccessLinks(editSuccessLinks.filter((_, j) => j !== i))}
-                  className="text-red-400 hover:text-red-600 p-1"
-                >
-                  <FaTrash size={10} />
-                </button>
-              </div>
-            ))}
           </div>
+
+          <div className="border-t pt-3">
+            <h5 className="text-xs font-semibold text-gray-600 mb-2">Pesan Tidak Lulus</h5>
+            <textarea
+              value={editFailMsg}
+              onChange={(e) => setEditFailMsg(e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 text-sm text-black resize-none w-full"
+              rows={2}
+              placeholder="Mohon maaf, Anda belum lolos pada tahap ini."
+            />
+            <div className="mt-2">
+              <LinksEditor title="Tautan Tidak Lulus" links={editFailLinks} setLinks={setEditFailLinks} />
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <button onClick={handleSave} disabled={loading} className="bg-primary-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-primary-600 disabled:opacity-50">
               {loading ? "Menyimpan..." : "Simpan"}
@@ -150,6 +272,8 @@ export default function EditStepItem({ stepId, name, order, announcementDate, ty
     );
   }
 
+  const formatDisplay = (d?: Date | null) => d ? new Date(d).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "Belum diatur";
+
   return (
     <li className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors group">
       <div>
@@ -161,16 +285,16 @@ export default function EditStepItem({ stepId, name, order, announcementDate, ty
           </span>
         </div>
         {description && <div className="text-xs text-gray-400 mt-0.5">{description}</div>}
-        <div className="text-sm text-gray-500 mt-1">
-          Pengumuman: {announcementDate ? new Date(announcementDate).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : "Belum diatur"}
+        <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+          <div>Buka: {formatDisplay(openDate)} &bull; Pengumuman: {formatDisplay(announcementDate)}</div>
+          {type === "FORM" && closeDate && <div>Batas Formulir: {formatDisplay(closeDate)}</div>}
         </div>
-        {successMessage && (
-          <div className="text-xs text-gray-400 mt-0.5">Pesan: {successMessage}</div>
-        )}
-        {successLinks && successLinks.length > 0 && (
+        {passMessage && <div className="text-xs text-green-600 mt-0.5">Lulus: {passMessage}</div>}
+        {failMessage && <div className="text-xs text-red-500 mt-0.5">Tidak Lulus: {failMessage}</div>}
+        {passLinks && passLinks.length > 0 && (
           <div className="flex gap-1 mt-1">
-            {successLinks.map((link, i) => (
-              <span key={i} className="text-[10px] bg-primary-50 text-primary-600 px-1.5 py-0.5 rounded-full">
+            {passLinks.map((link, i) => (
+              <span key={i} className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full">
                 {link.label}
               </span>
             ))}

@@ -9,7 +9,7 @@ export default async function EventBannerSlider() {
     prisma.recruitment_Campaign.findMany({
       where: {
         is_active: true,
-        OR: [{ close_date: null }, { close_date: { gt: now } }],
+        close_date: { gt: now },
       },
       include: { organisasi: true },
       orderBy: { close_date: "asc" },
@@ -22,8 +22,8 @@ export default async function EventBannerSlider() {
   ]);
 
   const campaignSlides: BannerSlide[] = campaigns
-    .filter((c: { open_date: Date | null }) => !c.open_date || c.open_date <= now)
-    .map((c: typeof campaigns[number]) => ({
+    .filter((c) => c.open_date <= now)
+    .map((c) => ({
       id: `campaign-${c.id}`,
       kind: "recruitment" as const,
       title: c.title,
@@ -32,7 +32,7 @@ export default async function EventBannerSlider() {
       orgLogo: c.organisasi.logo || null,
       href: "/recruitment",
       ctaLabel: "Daftar Sekarang",
-      closeDate: c.close_date ? c.close_date.toISOString() : null,
+      closeDate: c.close_date.toISOString(),
     }));
 
   const eventSlides: BannerSlide[] = events.map((e: typeof events[number]) => ({

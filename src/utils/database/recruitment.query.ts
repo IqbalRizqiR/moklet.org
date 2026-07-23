@@ -1,5 +1,6 @@
 import { Organisasi_Type } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { syncCampaignActiveStates } from "@/actions/recruitment";
 
 /**
  * Returns recruitment campaigns the given user can manage.
@@ -13,6 +14,7 @@ export const findAccessibleCampaigns = async (
   userId: string,
   role: string,
 ) => {
+  await syncCampaignActiveStates();
   const include = {
     organisasi: { include: { period: true } },
     _count: { select: { applicants: true, steps: true } },

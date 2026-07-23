@@ -21,10 +21,11 @@ export async function registerApplicant(campaignId: string) {
   });
   if (!campaign) throw new Error("Campaign tidak ditemukan.");
   if (!campaign.is_active) throw new Error("Campaign tidak aktif.");
+
   const now = new Date();
-  if (campaign.open_date && campaign.open_date > now)
+  if (campaign.open_date > now)
     throw new Error("Campaign belum dibuka.");
-  if (campaign.close_date && campaign.close_date < now)
+  if (campaign.close_date < now)
     throw new Error("Pendaftaran sudah ditutup.");
 
   const userExists = await prisma.user.findUnique({
@@ -90,7 +91,10 @@ export async function submitStepForm(
 
   if (!step.form_id)
     throw new Error("Tahapan formulir belum memiliki form.");
+
   const now = new Date();
+  if (step.open_date > now)
+    throw new Error("Tahapan ini belum dibuka.");
   if (step.close_date && step.close_date < now)
     throw new Error("Batas waktu pengisian formulir sudah lewat.");
 

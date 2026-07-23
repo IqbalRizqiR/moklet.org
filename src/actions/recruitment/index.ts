@@ -8,9 +8,8 @@ export {
 export {
   addStep,
   editStep,
-  updateStepConfig,
+  updateStepOutcome,
   deleteStep,
-  editStepTime,
 } from "./step";
 
 export {
@@ -20,4 +19,4 @@ export {
   finalizeApplicant,
 } from "./applicant";
 
-export { parseDateWIB } from "./shared";
+export { parseDateWIB, syncCampaignActiveStates } from "./shared";

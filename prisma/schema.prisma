@@ -486,14 +486,14 @@ enum TwibbonType {
 }
 
 model Recruitment_Campaign {
-  id              String    @id @default(uuid()) @db.Char(36)
-  organisasi_id   String    @db.Char(36)
-  default_role_id String?   @db.Char(36)
+  id              String   @id @default(uuid()) @db.Char(36)
+  organisasi_id   String   @db.Char(36)
+  default_role_id String?  @db.Char(36)
   title           String
-  description     String?   @db.Text
-  is_active       Boolean   @default(false)
-  open_date       DateTime?
-  close_date      DateTime?
+  description     String?  @db.Text
+  is_active       Boolean  @default(false)
+  open_date       DateTime
+  close_date      DateTime
 
   organisasi Organisasi              @relation(fields: [organisasi_id], references: [id], onDelete: Cascade)
   steps      Recruitment_Step[]
@@ -512,11 +512,14 @@ model Recruitment_Step {
   description       String?   @db.Text
   order             Int       @default(0)
   type              StepType  @default(ANNOUNCEMENT)
-  announcement_date DateTime?
+  open_date         DateTime
   close_date        DateTime?
+  announcement_date DateTime
   form_id           String?
-  success_message   String?   @db.Text
-  success_links     Json?
+  pass_message      String?   @db.Text
+  pass_links        Json?
+  fail_message      String?   @db.Text
+  fail_links        Json?
 
   campaign           Recruitment_Campaign    @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   form               Form?                   @relation(fields: [form_id], references: [id])

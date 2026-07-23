@@ -13,7 +13,12 @@ import {
   findOrganisasi,
   createOrganisasi,
 } from "@/utils/database/organisasi.query";
-import { parseDateWIB, requireRecruitmentAccess } from "./shared";
+import {
+  requireDateWIB,
+  parseDateWIB,
+  requireRecruitmentAccess,
+  syncCampaignActiveStates,
+} from "./shared";
 
 export async function getOrCreateNextPeriodOrganisasi(organisasiStr: string) {
   const organisasiType = organisasiStr.toUpperCase() as Organisasi_Type;
@@ -66,13 +71,21 @@ export async function createCampaign(data: {
   organisasi_string: string;
   title: string;
   description?: string;
-  open_date?: string;
-  close_date?: string;
+  open_date: string;
+  close_date: string;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
   await requireRecruitmentAccess(session.user.id, data.organisasi_string);
+  await syncCampaignActiveStates();
+
+  const openDate = requireDateWIB(data.open_date, "Tanggal buka");
+  const closeDate = requireDateWIB(data.close_date, "Tanggal tutup");
+
+  if (openDate >= closeDate) {
+    throw new Error("Tanggal buka harus sebelum tanggal tutup.");
+  }
 
   const { organisasi } = await getOrCreateNextPeriodOrganisasi(
     data.organisasi_string,
@@ -83,8 +96,8 @@ export async function createCampaign(data: {
       organisasi_id: organisasi.id,
       title: data.title,
       description: data.description || null,
-      open_date: parseDateWIB(data.open_date),
-      close_date: parseDateWIB(data.close_date),
+      open_date: openDate,
+      close_date: closeDate,
       is_active: false,
     },
   });
@@ -110,6 +123,10 @@ export async function toggleCampaign(
     session.user.id,
     campaign.organisasi.organisasi,
   );
+
+  if (isActive && campaign.close_date < new Date()) {
+    throw new Error("Tidak bisa mengaktifkan campaign yang sudah lewat tanggal tutup.");
+  }
 
   await prisma.recruitment_Campaign.update({
     where: { id: campaignId },
@@ -144,15 +161,27 @@ export async function updateCampaign(
     campaign.organisasi.organisasi,
   );
 
+  const openDate = data.open_date !== undefined ? parseDateWIB(data.open_date) : undefined;
+  const closeDate = data.close_date !== undefined ? parseDateWIB(data.close_date) : undefined;
+
+  const effectiveOpen = openDate ?? campaign.open_date;
+  const effectiveClose = closeDate ?? campaign.close_date;
+
+  if (effectiveOpen && effectiveClose && effectiveOpen >= effectiveClose) {
+    throw new Error("Tanggal buka harus sebelum tanggal tutup.");
+  }
+
   await prisma.recruitment_Campaign.update({
     where: { id: campaignId },
     data: {
       title: data.title ?? undefined,
       description: data.description !== undefined ? (data.description || null) : undefined,
-      open_date: data.open_date !== undefined ? parseDateWIB(data.open_date) : undefined,
-      close_date: data.close_date !== undefined ? parseDateWIB(data.close_date) : undefined,
+      open_date: openDate ?? undefined,
+      close_date: closeDate ?? undefined,
     },
   });
+
+  await syncCampaignActiveStates();
 
   revalidatePath(
     `/admin/organisasi/${campaign.organisasi.organisasi.toLowerCase()}/recruitment`,

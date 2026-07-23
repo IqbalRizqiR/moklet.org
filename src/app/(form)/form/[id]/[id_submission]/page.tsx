@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { redirect, RedirectType, notFound } from "next/navigation";
-import React from "react";
 
 import { H2, P } from "@/app/_components/global/Text";
 import { auth } from "@/lib/auth";

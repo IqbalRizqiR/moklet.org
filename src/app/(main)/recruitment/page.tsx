@@ -2,6 +2,7 @@ import React from "react";
 import prisma from "@/lib/prisma";
 import CampaignList from "./CampaignList";
 import { auth } from "@/lib/auth";
+import { syncCampaignActiveStates } from "@/actions/recruitment";
 import { H2, P } from "@/app/_components/global/Text";
 
 export const metadata = {
@@ -12,6 +13,8 @@ export const metadata = {
 export default async function RecruitmentPage() {
   const session = await auth();
   
+  await syncCampaignActiveStates();
+
   const campaigns = await prisma.recruitment_Campaign.findMany({
       where: { is_active: true },
       include: {
