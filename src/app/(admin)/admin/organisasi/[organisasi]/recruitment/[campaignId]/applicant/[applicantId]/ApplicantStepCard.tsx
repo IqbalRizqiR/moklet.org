@@ -3,6 +3,10 @@
 import { useState, useCallback } from "react";
 import { passApplicantStep } from "@/actions/recruitment";
 
+function proxyUrl(url: string) {
+  return `/api/file?url=${encodeURIComponent(url)}`;
+}
+
 function SubmissionAnswers({
   submission,
 }: {
@@ -44,14 +48,14 @@ function SubmissionAnswers({
             <div className="mt-0.5 text-gray-900">
               {field.type === "file" && answer ? (
                 <a
-                  href={answer}
+                  href={proxyUrl(answer)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-500 hover:underline inline-flex items-center gap-1"
                 >
                   {isImage ? (
                     <img
-                      src={answer}
+                      src={proxyUrl(answer)}
                       alt={field.label}
                       className="h-12 w-12 rounded object-cover"
                     />
