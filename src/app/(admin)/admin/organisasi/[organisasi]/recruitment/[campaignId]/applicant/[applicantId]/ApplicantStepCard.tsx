@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { passApplicantStep } from "@/actions/recruitment";
 
 function SubmissionAnswers({
   submission,
@@ -93,31 +94,43 @@ export default function ApplicantStepCard({
 }) {
   const [showAnswers, setShowAnswers] = useState(false);
 
+  const handlePass = useCallback(async () => {
+    await passApplicantStep(applicantId, step.id, "PASSED");
+  }, [applicantId, step.id]);
+
+  const handleFail = useCallback(async () => {
+    await passApplicantStep(applicantId, step.id, "FAILED");
+  }, [applicantId, step.id]);
+
+  const handlePending = useCallback(async () => {
+    await passApplicantStep(applicantId, step.id, "PENDING");
+  }, [applicantId, step.id]);
+
   return (
     <div className="p-4 border rounded-lg bg-gray-50">
       <div className="font-semibold mb-2">{step.name}</div>
       <div className="flex flex-wrap gap-2">
-        <form action={async () => {
-          "use server";
-          const { passApplicantStep } = await import("@/actions/recruitment");
-          await passApplicantStep(applicantId, step.id, "PASSED");
-        }}>
-          <button type="submit" disabled={statusText === "PASSED"} className={`px-3 py-1 rounded text-sm font-medium ${statusText === "PASSED" ? 'bg-green-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Lulus</button>
-        </form>
-        <form action={async () => {
-          "use server";
-          const { passApplicantStep } = await import("@/actions/recruitment");
-          await passApplicantStep(applicantId, step.id, "FAILED");
-        }}>
-          <button type="submit" disabled={statusText === "FAILED"} className={`px-3 py-1 rounded text-sm font-medium ${statusText === "FAILED" ? 'bg-red-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Gagal</button>
-        </form>
-        <form action={async () => {
-          "use server";
-          const { passApplicantStep } = await import("@/actions/recruitment");
-          await passApplicantStep(applicantId, step.id, "PENDING");
-        }}>
-          <button type="submit" disabled={statusText === "PENDING"} className={`px-3 py-1 rounded text-sm font-medium ${statusText === "PENDING" ? 'bg-yellow-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Pending</button>
-        </form>
+        <button
+          onClick={handlePass}
+          disabled={statusText === "PASSED"}
+          className={`px-3 py-1 rounded text-sm font-medium ${statusText === "PASSED" ? 'bg-green-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+        >
+          Lulus
+        </button>
+        <button
+          onClick={handleFail}
+          disabled={statusText === "FAILED"}
+          className={`px-3 py-1 rounded text-sm font-medium ${statusText === "FAILED" ? 'bg-red-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+        >
+          Gagal
+        </button>
+        <button
+          onClick={handlePending}
+          disabled={statusText === "PENDING"}
+          className={`px-3 py-1 rounded text-sm font-medium ${statusText === "PENDING" ? 'bg-yellow-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+        >
+          Pending
+        </button>
         {step.type === "FORM" && submission && (
           <button
             type="button"
