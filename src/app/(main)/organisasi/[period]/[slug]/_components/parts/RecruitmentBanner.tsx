@@ -90,7 +90,7 @@ export default function RecruitmentBanner({ campaigns, orgName, applicantStatus,
 
         <div className="relative z-10 shrink-0 w-full md:w-auto">
           {!applicantStatus ? (
-            <Link href={!session?.user ? "/api/auth/signin?callbackUrl=/recruitment/" + campaign.id : `/recruitment/${campaign.id}`} className="w-full md:w-auto">
+            <Link href={!!session?.user?.id ? "/api/auth/signin?callbackUrl=/recruitment/" + campaign.id : `/recruitment/${campaign.id}`} className="w-full md:w-auto">
               <Button variant="secondary" className="w-full md:w-auto text-lg font-bold px-10 py-4 shadow-xl hover:scale-105 transition-transform">
                 Daftar Sekarang
               </Button>
